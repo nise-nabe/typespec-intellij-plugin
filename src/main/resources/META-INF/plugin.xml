@@ -5,6 +5,7 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lsp</depends>
+    <depends>com.intellij.modules.nodejs</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="TypeSpec"

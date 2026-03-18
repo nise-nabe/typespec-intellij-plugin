@@ -14,6 +14,7 @@ dependencies {
     intellijPlatform {
         intellijIdea("2025.3.4")
         bundledPlugin("com.intellij.modules.lsp")
+        bundledPlugin("NodeJS")
     }
 }
 
