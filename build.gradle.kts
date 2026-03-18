@@ -22,6 +22,8 @@ dependencies {
 intellijPlatform {
     projectName = "TypeSpecPlugin"
 
+    buildSearchableOptions = false
+
     pluginConfiguration {
         id = "com.example.typespec"
         name = "TypeSpec Support"
