@@ -5,7 +5,8 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lsp</depends>
-    <depends>com.intellij.modules.nodejs</depends>
+    <depends>JavaScript</depends>
+    <depends>NodeJS</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="TypeSpec Notifications" displayType="BALLOON"/>
