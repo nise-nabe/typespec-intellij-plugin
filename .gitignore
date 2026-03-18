@@ -1,6 +1,8 @@
 ## Project.gitignore ##
 # project specific gitignore
 
+.intellijPlatform
+
 ## Kotlin.gitignore ##
 
 # Compiled class file
