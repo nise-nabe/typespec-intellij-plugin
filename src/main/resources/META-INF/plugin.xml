@@ -1,0 +1,18 @@
+<idea-plugin>
+    <id>com.example.typespec</id>
+    <name>TypeSpec Support</name>
+    <vendor>Example</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lsp</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="TypeSpec"
+                  implementationClass="com.example.typespec.TypeSpecFileType"
+                  fieldName="INSTANCE"
+                  language="TypeSpec"
+                  extensions="tsp"/>
+
+        <platform.lsp.serverSupportProvider implementation="com.example.typespec.TypeSpecLspServerSupportProvider"/>
+    </extensions>
+</idea-plugin>
