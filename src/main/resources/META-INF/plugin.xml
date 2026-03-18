@@ -8,6 +8,8 @@
     <depends>com.intellij.modules.nodejs</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="TypeSpec Notifications" displayType="BALLOON"/>
+
         <fileType name="TypeSpec"
                   implementationClass="com.example.typespec.TypeSpecFileType"
                   fieldName="INSTANCE"
