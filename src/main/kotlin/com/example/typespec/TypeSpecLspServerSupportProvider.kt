@@ -2,10 +2,12 @@ package com.example.typespec
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+import kotlin.text.Charsets
 
 class TypeSpecLspServerSupportProvider : LspServerSupportProvider {
     override fun fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerSupportProvider.LspServerStarter) {
@@ -19,17 +21,30 @@ class TypeSpecLspServerDescriptor(project: Project) : ProjectWideLspServerDescri
     override fun isSupportedFile(file: VirtualFile): Boolean = file.fileType == TypeSpecFileType
 
     override fun createCommandLine(): GeneralCommandLine {
-        if (!TypeSpecUtil.isNodeJsConfigured(project)) {
+        if (NodeJsInterpreterManager.getInstance(project).interpreter == null) {
             throw ExecutionException("Node.js interpreter is not configured")
         }
-
-        val commandLine = GeneralCommandLine()
-        val tspPath = TypeSpecUtil.findTspExecutable(project)
         
-        commandLine.exePath = tspPath
-        commandLine.addParameter("compile")
-        commandLine.addParameter("--lsp")
+        val tspCliJs = TypeSpecUtil.findTspCliJs(project)
+        val tspExecutable = TypeSpecUtil.findTspExecutable(project)
+        val commandLine = GeneralCommandLine()
+        
+        if (tspCliJs != null) {
+            commandLine.exePath = "node" // Rely on PATH for node, but use absolute path for cli.js
+            commandLine.addParameter(tspCliJs)
+            commandLine.addParameter("server")
+            commandLine.addParameter("--stdio")
+        } else if (tspExecutable.contains("tsp-server")) {
+            commandLine.exePath = tspExecutable
+            commandLine.addParameter("--stdio")
+        } else {
+            commandLine.exePath = tspExecutable
+            commandLine.addParameter("server")
+            commandLine.addParameter("--stdio")
+        }
+
         commandLine.setWorkDirectory(project.basePath)
+        commandLine.charset = Charsets.UTF_8
         
         return commandLine
     }
