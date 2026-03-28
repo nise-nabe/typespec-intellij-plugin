@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>com.example.typespec</id>
-    <name>TypeSpec Support</name>
+    <name>TypeSpec Language</name>
     <vendor>Example</vendor>
 
     <depends>com.intellij.modules.platform</depends>
