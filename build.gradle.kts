@@ -12,7 +12,7 @@ version = "1.0.0"
 
 dependencies {
     intellijPlatform {
-        intellijIdea("2025.3.4")
+        intellijIdea("2026.1")
         bundledPlugin("com.intellij.modules.lsp")
         bundledPlugin("JavaScript")
         bundledPlugin("NodeJS")
@@ -31,7 +31,7 @@ intellijPlatform {
             name = "Example"
         }
         ideaVersion {
-            sinceBuild = "252.25557"
+            sinceBuild = "261.22158"
         }
     }
 }
