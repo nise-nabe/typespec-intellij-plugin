@@ -18,6 +18,8 @@ plugins {
 }
 
 dependencyResolutionManagement {
+    rulesMode = RulesMode.FAIL_ON_PROJECT_RULES
+
     @Suppress("UnstableApiUsage")
     repositories {
         mavenCentral()
