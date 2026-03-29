@@ -1,3 +1,4 @@
+import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
 
@@ -42,5 +43,14 @@ java {
         languageVersion = JavaLanguageVersion.of(21)
         @Suppress("UnstableApiUsage")
         vendor = JvmVendorSpec.JETBRAINS
+    }
+}
+
+testing {
+    suites {
+        @Suppress("UnstableApiUsage")
+        named<JvmTestSuite>("test") {
+            useJUnitJupiter()
+        }
     }
 }
