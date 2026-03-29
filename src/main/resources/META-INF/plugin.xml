@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.example.typespec</id>
     <name>TypeSpec Language</name>
-    <vendor>Example</vendor>
+    <vendor>nise_nabe</vendor>
 
     <description><![CDATA[
         A plugin that makes working with TypeSpec `.tsp` files easier in IntelliJ Platform IDEs.<br>
