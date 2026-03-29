@@ -1,5 +1,9 @@
 # Junie Guidelines
 
+## Basic
+
+* 基本操作は JetBrains MCP Server を利用してください
+
 ## Build
 - 通常のビルド確認では、原則として JetBrains MCP の `build` ツールを利用すること。
 - ビルドが必要な場面では、まず `build()` を実行してプロジェクト全体の成否を確認すること。
