@@ -9,6 +9,7 @@ pluginManagement {
 
     plugins {
         kotlin("jvm") version "2.3.0"
+        id("org.jetbrains.changelog") version "2.2.1"
     }
 }
 

@@ -1,11 +1,13 @@
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
+import org.jetbrains.changelog.Changelog
 
 plugins {
     java
     kotlin("jvm")
     id("org.jetbrains.intellij.platform")
+    id("org.jetbrains.changelog")
 }
 
 group = "com.example.typespec"
@@ -33,6 +35,12 @@ intellijPlatform {
         }
         ideaVersion {
             sinceBuild = "261.22158"
+        }
+        changeNotes = provider {
+            changelog.renderItem(
+                changelog.getOrNull(project.version.toString()) ?: changelog.getUnreleased(),
+                Changelog.OutputType.HTML,
+            )
         }
     }
 }
