@@ -3,6 +3,18 @@
     <name>TypeSpec Language</name>
     <vendor>Example</vendor>
 
+    <description><![CDATA[
+        A plugin that makes working with TypeSpec `.tsp` files easier in IntelliJ Platform IDEs.<br>
+        It integrates with the TypeSpec Language Server to provide the essential editing experience for TypeSpec development.<br>
+        <br>
+        Key features:<br>
+        <ul>
+            <li>Recognition of `.tsp` files</li>
+            <li>Code completion, diagnostics, and navigation support powered by the TypeSpec Language Server</li>
+            <li>LSP-based editing support for TypeSpec projects</li>
+        </ul>
+    ]]></description>
+
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.lsp</depends>
     <depends>JavaScript</depends>
