@@ -3,7 +3,7 @@
 ## Basic
 
 * 基本操作は JetBrains MCP Server を利用してください
-* github 上のコードを取得する際は GitHub MCP Server を利用してください
+* github 上のコードを取得する際は docker-mcp-proxy 上の `get_file_contents` を利用してください
 
 ## Build
 - 通常のビルド確認では、原則として JetBrains MCP の `build` ツールを利用すること。
