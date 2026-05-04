@@ -15,7 +15,7 @@ version = "0.1.0"
 
 dependencies {
     intellijPlatform {
-        intellijIdea("2026.1")
+        intellijIdea("2026.1.1")
         bundledPlugin("JavaScript")
         bundledPlugin("NodeJS")
     }
