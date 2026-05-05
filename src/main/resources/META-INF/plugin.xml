@@ -20,6 +20,7 @@
     <depends>com.intellij.modules.lsp</depends>
     <depends>JavaScript</depends>
     <depends>NodeJS</depends>
+    <depends>com.intellij.modules.spellchecker</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="TypeSpec Notifications" displayType="BALLOON"/>
