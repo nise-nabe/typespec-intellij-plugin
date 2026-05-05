@@ -31,5 +31,6 @@
                   extensions="tsp"/>
 
         <platform.lsp.serverSupportProvider implementation="com.example.typespec.TypeSpecLspServerSupportProvider"/>
+        <spellchecker.bundledDictionaryProvider implementation="com.example.typespec.TypeSpecBundledDictionaryProvider"/>
     </extensions>
 </idea-plugin>
