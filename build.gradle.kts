@@ -1,3 +1,6 @@
+
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
@@ -15,7 +18,7 @@ version = "0.1.1"
 
 dependencies {
     intellijPlatform {
-        intellijIdea("2026.1.1")
+        intellijIdea("262.6228.19")
         bundledPlugin("JavaScript")
         bundledPlugin("NodeJS")
     }
