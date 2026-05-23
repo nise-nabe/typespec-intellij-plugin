@@ -127,13 +127,14 @@ internal object TypeSpecPackageJsonEditor {
                     """{ ${jsonString(TYPESPEC_COMPILER_PACKAGE)}: ${jsonString(compilerVersion)} }""",
                 ),
             )
-            return
+        } else {
+            val peerDependenciesObject = metadata.peerDependenciesProperty.value as JsonObject
+            peerDependenciesObject.add(
+                generator.createProperty(TYPESPEC_COMPILER_PACKAGE, jsonString(compilerVersion)),
+            )
         }
 
-        val peerDependenciesObject = metadata.peerDependenciesProperty.value as JsonObject
-        peerDependenciesObject.add(
-            generator.createProperty(TYPESPEC_COMPILER_PACKAGE, jsonString(compilerVersion)),
-        )
+        metadata.compilerDependencyProperty?.delete()
     }
 
     private fun runWrite(project: Project, metadata: TypeSpecPackageMetadata, action: () -> Unit) {
