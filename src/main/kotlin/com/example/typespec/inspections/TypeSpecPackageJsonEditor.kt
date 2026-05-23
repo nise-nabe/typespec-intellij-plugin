@@ -9,14 +9,29 @@ import com.intellij.psi.PsiElement
 internal object TypeSpecPackageJsonEditor {
     fun applyRecommendedMetadata(project: Project, metadata: TypeSpecPackageMetadata) {
         val rules = metadata.rules
+        val psi = metadata.psi
+        val generator = JsonElementGenerator(project)
+
         if (rules.type != RECOMMENDED_TYPE_MODULE) {
-            setTypeModuleChanges(project, metadata)
+            upsertStringProperty(
+                container = psi.rootObject,
+                existing = psi.typeProperty,
+                name = "type",
+                value = RECOMMENDED_TYPE_MODULE,
+                generator = generator,
+            )
         }
         if (rules.main.isNullOrBlank()) {
-            addMainEntrypointChanges(project, metadata)
+            upsertStringProperty(
+                container = psi.rootObject,
+                existing = psi.mainProperty,
+                name = "main",
+                value = RECOMMENDED_MAIN,
+                generator = generator,
+            )
         }
         if (rules.typespecExport.isNullOrBlank()) {
-            addTypespecExportChanges(project, metadata)
+            psi.exportsDot.applyRecommendedTypespecExport(psi.rootObject, generator)
         }
     }
 
@@ -31,10 +46,6 @@ internal object TypeSpecPackageJsonEditor {
 
         val psi = metadata.psi
         val generator = JsonElementGenerator(project)
-        val compilerPeerProperty = generator.createProperty(
-            TYPESPEC_COMPILER_PACKAGE,
-            jsonString(compilerVersion),
-        )
         val peerDependenciesSnippet =
             """{ ${jsonString(TYPESPEC_COMPILER_PACKAGE)}: ${jsonString(compilerVersion)} }"""
 
@@ -49,12 +60,13 @@ internal object TypeSpecPackageJsonEditor {
                         generator.createProperty("peerDependencies", peerDependenciesSnippet),
                     )
                 } else {
-                    val existingCompilerProperty = peerDependenciesObject.findProperty(TYPESPEC_COMPILER_PACKAGE)
-                    if (existingCompilerProperty != null) {
-                        existingCompilerProperty.replace(compilerPeerProperty)
-                    } else {
-                        peerDependenciesObject.add(compilerPeerProperty)
-                    }
+                    upsertStringProperty(
+                        container = peerDependenciesObject,
+                        existing = peerDependenciesObject.findProperty(TYPESPEC_COMPILER_PACKAGE),
+                        name = TYPESPEC_COMPILER_PACKAGE,
+                        value = compilerVersion,
+                        generator = generator,
+                    )
                 }
             }
         }
@@ -62,35 +74,6 @@ internal object TypeSpecPackageJsonEditor {
         psi.compilerDependencyProperty?.delete()
         psi.devCompilerDependencyProperty?.delete()
     }
-
-    private fun setTypeModuleChanges(project: Project, metadata: TypeSpecPackageMetadata) {
-        val psi = metadata.psi
-        val generator = JsonElementGenerator(project)
-        val newProperty = generator.createProperty("type", jsonString(RECOMMENDED_TYPE_MODULE))
-        if (psi.typeProperty != null) {
-            psi.typeProperty.replace(newProperty)
-        } else {
-            psi.rootObject.add(newProperty)
-        }
-    }
-
-    private fun addMainEntrypointChanges(project: Project, metadata: TypeSpecPackageMetadata) {
-        val psi = metadata.psi
-        val generator = JsonElementGenerator(project)
-        val newProperty = generator.createProperty("main", jsonString(RECOMMENDED_MAIN))
-        if (psi.mainProperty != null) {
-            psi.mainProperty.replace(newProperty)
-        } else {
-            psi.rootObject.add(newProperty)
-        }
-    }
-
-    private fun addTypespecExportChanges(project: Project, metadata: TypeSpecPackageMetadata) {
-        val psi = metadata.psi
-        val generator = JsonElementGenerator(project)
-        psi.exportsDot.applyRecommendedTypespecExport(psi.rootObject, generator)
-    }
-
 }
 
 internal fun metadataFromElement(element: PsiElement): TypeSpecPackageMetadata? {
