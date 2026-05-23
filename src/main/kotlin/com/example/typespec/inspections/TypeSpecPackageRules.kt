@@ -8,8 +8,6 @@ internal data class TypeSpecPackageRulesInput(
     val dependencies: Map<String, String>,
     val devDependencies: Map<String, String>,
     val peerDependencies: Map<String, String>,
-    val supportingSignals: Set<TypeSpecSupportingSignal>,
-    val packageShapeSignals: Set<TypeSpecPackageShapeSignal>,
     val isLikelyTypeSpecExtensionPackage: Boolean,
     val recommendedLayoutStatus: TypeSpecRecommendedLayoutStatus,
 )
@@ -70,15 +68,8 @@ internal fun buildRulesInput(
     dependencies: Map<String, String> = emptyMap(),
     devDependencies: Map<String, String> = emptyMap(),
     peerDependencies: Map<String, String> = emptyMap(),
-): TypeSpecPackageRulesInput {
-    val supportingSignals = collectSupportingSignals(dependencies, devDependencies, peerDependencies)
-    val packageShapeSignals = collectPackageShapeSignals(
-        typespecExport = typespecExport,
-        tspMain = tspMain,
-        main = main,
-        supportingSignals = supportingSignals,
-    )
-    return TypeSpecPackageRulesInput(
+): TypeSpecPackageRulesInput =
+    TypeSpecPackageRulesInput(
         type = type,
         main = main,
         tspMain = tspMain,
@@ -86,50 +77,46 @@ internal fun buildRulesInput(
         dependencies = dependencies,
         devDependencies = devDependencies,
         peerDependencies = peerDependencies,
-        supportingSignals = supportingSignals,
-        packageShapeSignals = packageShapeSignals,
-        isLikelyTypeSpecExtensionPackage = packageShapeSignals.isNotEmpty(),
+        isLikelyTypeSpecExtensionPackage = isLikelyTypeSpecExtensionPackage(
+            typespecExport = typespecExport,
+            tspMain = tspMain,
+            main = main,
+            dependencies = dependencies,
+            devDependencies = devDependencies,
+            peerDependencies = peerDependencies,
+        ),
         recommendedLayoutStatus = resolveRecommendedLayoutStatus(
             typespecExport = typespecExport,
             tspMain = tspMain,
             main = main,
         ),
     )
-}
 
-private fun collectSupportingSignals(
-    dependencies: Map<String, String>,
-    devDependencies: Map<String, String>,
-    peerDependencies: Map<String, String>,
-): Set<TypeSpecSupportingSignal> {
-    val allDependencies = dependencies.keys + devDependencies.keys + peerDependencies.keys
-    val signals = linkedSetOf<TypeSpecSupportingSignal>()
-    if (allDependencies.contains(TYPESPEC_COMPILER_PACKAGE)) {
-        signals += TypeSpecSupportingSignal.TYPESPEC_COMPILER_DEPENDENCY
-    }
-    if (allDependencies.any { it.startsWith(TYPESPEC_SCOPE_PREFIX) }) {
-        signals += TypeSpecSupportingSignal.TYPESPEC_SCOPED_DEPENDENCY
-    }
-    return signals
-}
-
-private fun collectPackageShapeSignals(
+private fun isLikelyTypeSpecExtensionPackage(
     typespecExport: String?,
     tspMain: String?,
     main: String?,
-    supportingSignals: Set<TypeSpecSupportingSignal>,
-): Set<TypeSpecPackageShapeSignal> {
-    val signals = linkedSetOf<TypeSpecPackageShapeSignal>()
-    if (!typespecExport.isNullOrBlank()) {
-        signals += TypeSpecPackageShapeSignal.TYPESPEC_EXPORT
+    dependencies: Map<String, String>,
+    devDependencies: Map<String, String>,
+    peerDependencies: Map<String, String>,
+): Boolean {
+    if (!typespecExport.isNullOrBlank() || !tspMain.isNullOrBlank()) {
+        return true
     }
-    if (!tspMain.isNullOrBlank()) {
-        signals += TypeSpecPackageShapeSignal.TSP_MAIN
+    if (main.isNullOrBlank()) {
+        return false
     }
-    if (!main.isNullOrBlank() && supportingSignals.isNotEmpty()) {
-        signals += TypeSpecPackageShapeSignal.MAIN
-    }
-    return signals
+    return hasTypespecDependencySignals(dependencies, devDependencies, peerDependencies)
+}
+
+private fun hasTypespecDependencySignals(
+    dependencies: Map<String, String>,
+    devDependencies: Map<String, String>,
+    peerDependencies: Map<String, String>,
+): Boolean {
+    val allDependencies = dependencies.keys + devDependencies.keys + peerDependencies.keys
+    return allDependencies.contains(TYPESPEC_COMPILER_PACKAGE) ||
+        allDependencies.any { it.startsWith(TYPESPEC_SCOPE_PREFIX) }
 }
 
 private fun resolveRecommendedLayoutStatus(

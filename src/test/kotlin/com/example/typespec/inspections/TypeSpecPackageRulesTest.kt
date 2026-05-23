@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 class TypeSpecPackageRulesTest {
     @Test
-    fun supportingSignalsAloneDoNotClassifyPackage() {
+    fun typespecDependenciesAloneDoNotClassifyPackage() {
         val input = buildRulesInput(
             typespecExport = null,
             main = null,
@@ -59,7 +59,7 @@ class TypeSpecPackageRulesTest {
     }
 
     @Test
-    fun mainWithSupportingSignalUsesFallbackInsteadOfMissingExportWarning() {
+    fun mainWithTypespecDependencyUsesFallbackInsteadOfMissingExportWarning() {
         val input = buildRulesInput(
             typespecExport = null,
             main = "dist/custom.js",
