@@ -77,8 +77,14 @@ internal object TypeSpecPackageJsonEditor {
     }
 
     private fun addMainEntrypointChanges(project: Project, metadata: TypeSpecPackageMetadata) {
+        val psi = metadata.psi
         val generator = JsonElementGenerator(project)
-        metadata.psi.rootObject.add(generator.createProperty("main", jsonString(RECOMMENDED_MAIN)))
+        val newProperty = generator.createProperty("main", jsonString(RECOMMENDED_MAIN))
+        if (psi.mainProperty != null) {
+            psi.mainProperty.replace(newProperty)
+        } else {
+            psi.rootObject.add(newProperty)
+        }
     }
 
     private fun addTypespecExportChanges(project: Project, metadata: TypeSpecPackageMetadata) {
