@@ -3,27 +3,11 @@ package com.example.typespec.inspections
 import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 
 internal object TypeSpecPackageJsonEditor {
-    fun applyFix(
-        action: TypeSpecPackageJsonFixAction,
-        project: Project,
-        metadata: TypeSpecPackageMetadata,
-    ) {
-        runWrite(project) {
-            when (action) {
-                TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA ->
-                    applyRecommendedMetadataChanges(project, metadata)
-                TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES ->
-                    moveCompilerToPeerDependenciesChanges(project, metadata)
-            }
-        }
-    }
-
-    private fun applyRecommendedMetadataChanges(project: Project, metadata: TypeSpecPackageMetadata) {
+    fun applyRecommendedMetadata(project: Project, metadata: TypeSpecPackageMetadata) {
         val rules = metadata.rules
         if (rules.type != RECOMMENDED_TYPE_MODULE) {
             setTypeModuleChanges(project, metadata)
@@ -36,7 +20,7 @@ internal object TypeSpecPackageJsonEditor {
         }
     }
 
-    private fun moveCompilerToPeerDependenciesChanges(project: Project, metadata: TypeSpecPackageMetadata) {
+    fun moveCompilerToPeerDependencies(project: Project, metadata: TypeSpecPackageMetadata) {
         val rules = metadata.rules
         val compilerVersion = rules.dependencies[TYPESPEC_COMPILER_PACKAGE]
             ?: rules.devDependencies[TYPESPEC_COMPILER_PACKAGE]
@@ -107,9 +91,6 @@ internal object TypeSpecPackageJsonEditor {
         psi.exportsDot.applyRecommendedTypespecExport(psi.rootObject, generator)
     }
 
-    private fun runWrite(project: Project, action: () -> Unit) {
-        WriteCommandAction.runWriteCommandAction(project, Runnable { action() })
-    }
 }
 
 internal fun metadataFromElement(element: PsiElement): TypeSpecPackageMetadata? {

@@ -15,8 +15,3 @@ internal enum class TypeSpecFindingSeverity {
     WARNING,
     INFORMATION,
 }
-
-internal enum class TypeSpecPackageJsonFixAction {
-    APPLY_RECOMMENDED_METADATA,
-    MOVE_COMPILER_TO_PEER_DEPENDENCIES,
-}
