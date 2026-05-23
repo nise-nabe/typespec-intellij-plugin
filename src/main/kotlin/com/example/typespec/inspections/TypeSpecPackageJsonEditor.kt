@@ -115,9 +115,25 @@ internal object TypeSpecPackageJsonEditor {
                 }
                 metadata.exportsDotProperty.replace(generator.createProperty(".", exportObject))
             }
-            metadata.typespecExportProperty == null -> {
-                val dotObject = metadata.exportsDotProperty.value as JsonObject
-                dotObject.add(generator.createProperty("typespec", jsonString(RECOMMENDED_TYPESPEC_EXPORT)))
+            else -> {
+                val typespecProperty = generator.createProperty(
+                    "typespec",
+                    jsonString(RECOMMENDED_TYPESPEC_EXPORT),
+                )
+                val dotObject = metadata.exportsDotProperty.value as? JsonObject
+                when {
+                    dotObject != null && metadata.typespecExportProperty == null ->
+                        dotObject.add(typespecProperty)
+                    metadata.typespecExportProperty != null ->
+                        metadata.typespecExportProperty.replace(typespecProperty)
+                    else ->
+                        metadata.exportsDotProperty.replace(
+                            generator.createProperty(
+                                ".",
+                                """{ "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""",
+                            ),
+                        )
+                }
             }
         }
     }
