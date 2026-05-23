@@ -3,8 +3,6 @@ package com.example.typespec
 import com.intellij.lang.typescript.compiler.languageService.TypeScriptLanguageServiceUtil
 import com.intellij.lang.typescript.lsp.JSNodeLspServerDescriptor
 import com.intellij.lang.typescript.lsp.LspServerActivationRule
-import com.intellij.lang.typescript.lsp.LspServerPackageDescriptor
-import com.intellij.lang.typescript.lsp.PackageVersion
 import com.intellij.lang.typescript.lsp.ServiceActivationHelper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
