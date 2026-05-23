@@ -57,7 +57,7 @@ internal fun buildRulesInput(
         dependencies = dependencies,
         devDependencies = devDependencies,
         peerDependencies = peerDependencies,
-        isLikelyTypeSpecExtensionPackage = isLikelyTypeSpecExtensionPackage(
+        isLikelyTypeSpecExtensionPackage = TypeSpecPackageClassifier.isLikelyTypeSpecExtensionPackage(
             typespecExport = typespecExport,
             tspMain = tspMain,
             main = main,
@@ -72,40 +72,6 @@ internal fun buildRulesInput(
         ),
     )
 
-private fun isLikelyTypeSpecExtensionPackage(
-    typespecExport: String?,
-    tspMain: String?,
-    main: String?,
-    dependencies: Map<String, String>,
-    devDependencies: Map<String, String>,
-    peerDependencies: Map<String, String>,
-): Boolean {
-    if (!typespecExport.isNullOrBlank() || !tspMain.isNullOrBlank()) {
-        return true
-    }
-    if (hasTypespecPeerDependencySignals(peerDependencies)) {
-        return true
-    }
-    if (main.isNullOrBlank()) {
-        return false
-    }
-    return hasTypespecDependencySignals(dependencies, devDependencies, peerDependencies)
-}
-
-private fun hasTypespecPeerDependencySignals(peerDependencies: Map<String, String>): Boolean =
-    peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) ||
-        peerDependencies.keys.any { it.startsWith(TYPESPEC_SCOPE_PREFIX) }
-
-private fun hasTypespecDependencySignals(
-    dependencies: Map<String, String>,
-    devDependencies: Map<String, String>,
-    peerDependencies: Map<String, String>,
-): Boolean {
-    val allDependencies = dependencies.keys + devDependencies.keys + peerDependencies.keys
-    return allDependencies.contains(TYPESPEC_COMPILER_PACKAGE) ||
-        allDependencies.any { it.startsWith(TYPESPEC_SCOPE_PREFIX) }
-}
-
 private fun resolveRecommendedLayoutStatus(
     typespecExport: String?,
     tspMain: String?,
@@ -115,5 +81,3 @@ private fun resolveRecommendedLayoutStatus(
     !tspMain.isNullOrBlank() || !main.isNullOrBlank() -> TypeSpecRecommendedLayoutStatus.VALID_FALLBACK
     else -> TypeSpecRecommendedLayoutStatus.MISSING
 }
-
-private const val TYPESPEC_SCOPE_PREFIX = "@typespec/"
