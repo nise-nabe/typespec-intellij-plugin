@@ -70,7 +70,7 @@ internal enum class TypeSpecPackageJsonRule(
             metadata: TypeSpecPackageMetadata,
             generator: JsonElementGenerator,
         ) {
-            metadata.psi.exportsDot.applyRecommendedTypespecExport(metadata.psi.rootObject, generator)
+            applyRecommendedTypespecExportFix(metadata, generator)
         }
     },
     TPKG004(
@@ -112,7 +112,7 @@ internal enum class TypeSpecPackageJsonRule(
             metadata: TypeSpecPackageMetadata,
             generator: JsonElementGenerator,
         ) {
-            metadata.psi.exportsDot.applyRecommendedTypespecExport(metadata.psi.rootObject, generator)
+            applyRecommendedTypespecExportFix(metadata, generator)
         }
     },
     ;
@@ -134,6 +134,14 @@ internal data class TypeSpecInspectionFinding(
     val rule: TypeSpecPackageJsonRule,
     val anchor: PsiElement,
 )
+
+private fun applyRecommendedTypespecExportFix(
+    metadata: TypeSpecPackageMetadata,
+    generator: JsonElementGenerator,
+) {
+    val psi = metadata.psi
+    psi.exportsDot.applyRecommendedTypespecExport(psi.rootObject, generator)
+}
 
 internal fun applyViolatedRules(
     metadata: TypeSpecPackageMetadata,
