@@ -1,6 +1,8 @@
 package com.example.typespec.inspections
 
 import com.example.typespec.TypeSpecBundle
+import com.intellij.json.psi.JsonElementGenerator
+import com.intellij.json.psi.JsonObject
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 
@@ -15,13 +17,47 @@ internal enum class TypeSpecPackageJsonRule(
         TypeSpecFindingSeverity.WARNING,
         TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
         { it.typeProperty ?: it.rootObject },
-    ),
+    ) {
+        override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
+            input.type != RECOMMENDED_TYPE_MODULE
+
+        override fun applyFix(
+            metadata: TypeSpecPackageMetadata,
+            generator: JsonElementGenerator,
+        ) {
+            val psi = metadata.psi
+            upsertStringProperty(
+                container = psi.rootObject,
+                existing = psi.typeProperty,
+                name = "type",
+                value = RECOMMENDED_TYPE_MODULE,
+                generator = generator,
+            )
+        }
+    },
     TPKG002(
         "inspection.tpkg002",
         TypeSpecFindingSeverity.WARNING,
         TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
         { it.mainProperty ?: it.rootObject },
-    ),
+    ) {
+        override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
+            input.main.isNullOrBlank()
+
+        override fun applyFix(
+            metadata: TypeSpecPackageMetadata,
+            generator: JsonElementGenerator,
+        ) {
+            val psi = metadata.psi
+            upsertStringProperty(
+                container = psi.rootObject,
+                existing = psi.mainProperty,
+                name = "main",
+                value = RECOMMENDED_MAIN,
+                generator = generator,
+            )
+        }
+    },
     TPKG003(
         "inspection.tpkg003",
         TypeSpecFindingSeverity.WARNING,
@@ -32,7 +68,17 @@ internal enum class TypeSpecPackageJsonRule(
                 ?: it.exportsDot.typespecExportProperty
                 ?: it.rootObject
         },
-    ),
+    ) {
+        override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
+            input.recommendedLayoutStatus == TypeSpecRecommendedLayoutStatus.MISSING
+
+        override fun applyFix(
+            metadata: TypeSpecPackageMetadata,
+            generator: JsonElementGenerator,
+        ) {
+            metadata.psi.exportsDot.applyRecommendedTypespecExport(metadata.psi.rootObject, generator)
+        }
+    },
     TPKG004(
         "inspection.tpkg004",
         TypeSpecFindingSeverity.WARNING,
@@ -44,22 +90,95 @@ internal enum class TypeSpecPackageJsonRule(
                 ?: it.devDependenciesProperty
                 ?: it.rootObject
         },
-    ),
+    ) {
+        override fun isViolated(input: TypeSpecPackageRulesInput): Boolean {
+            val hasCompilerOutsidePeerDependencies = input.dependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) ||
+                input.devDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
+            return hasCompilerOutsidePeerDependencies &&
+                !input.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
+        }
+
+        override fun applyFix(
+            metadata: TypeSpecPackageMetadata,
+            generator: JsonElementGenerator,
+        ) {
+            val input = metadata.rules
+            val compilerVersion = input.dependencies[TYPESPEC_COMPILER_PACKAGE]
+                ?: input.devDependencies[TYPESPEC_COMPILER_PACKAGE]
+                ?: return
+
+            val psi = metadata.psi
+            val peerDependenciesSnippet =
+                """{ ${jsonString(TYPESPEC_COMPILER_PACKAGE)}: ${jsonString(compilerVersion)} }"""
+
+            when (val peerDependenciesProperty = psi.peerDependenciesProperty) {
+                null -> psi.rootObject.add(
+                    generator.createProperty("peerDependencies", peerDependenciesSnippet),
+                )
+                else -> {
+                    val peerDependenciesObject = peerDependenciesProperty.value as? JsonObject
+                    if (peerDependenciesObject == null) {
+                        peerDependenciesProperty.replace(
+                            generator.createProperty("peerDependencies", peerDependenciesSnippet),
+                        )
+                    } else {
+                        upsertStringProperty(
+                            container = peerDependenciesObject,
+                            existing = peerDependenciesObject.findProperty(TYPESPEC_COMPILER_PACKAGE),
+                            name = TYPESPEC_COMPILER_PACKAGE,
+                            value = compilerVersion,
+                            generator = generator,
+                        )
+                    }
+                }
+            }
+
+            psi.compilerDependencyProperty?.delete()
+            psi.devCompilerDependencyProperty?.delete()
+        }
+    },
     TPKG005(
         "inspection.tpkg005",
         TypeSpecFindingSeverity.INFORMATION,
         TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
         { it.exportsProperty ?: it.tspMainProperty ?: it.mainProperty ?: it.rootObject },
-    ),
+    ) {
+        override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
+            input.recommendedLayoutStatus == TypeSpecRecommendedLayoutStatus.VALID_FALLBACK
+
+        override fun applyFix(
+            metadata: TypeSpecPackageMetadata,
+            generator: JsonElementGenerator,
+        ) {
+            metadata.psi.exportsDot.applyRecommendedTypespecExport(metadata.psi.rootObject, generator)
+        }
+    },
     ;
 
     fun anchor(psi: TypeSpecPackageJsonPsiAnchors): PsiElement = anchorSelector(psi)
 
     @Nls
     fun localizedMessage(): String = TypeSpecBundle.message(messageKey)
+
+    abstract fun isViolated(input: TypeSpecPackageRulesInput): Boolean
+
+    abstract fun applyFix(
+        metadata: TypeSpecPackageMetadata,
+        generator: JsonElementGenerator,
+    )
 }
 
 internal data class TypeSpecInspectionFinding(
     val rule: TypeSpecPackageJsonRule,
     val anchor: PsiElement,
 )
+
+internal fun applyViolatedRules(
+    metadata: TypeSpecPackageMetadata,
+    fixAction: TypeSpecPackageJsonFixAction,
+    generator: JsonElementGenerator,
+) {
+    evaluateRules(metadata.rules)
+        .filter { it.fixAction == fixAction }
+        .forEach { it.applyFix(metadata, generator) }
+}

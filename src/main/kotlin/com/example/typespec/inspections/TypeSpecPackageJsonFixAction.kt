@@ -17,12 +17,7 @@ internal enum class TypeSpecPackageJsonFixAction(
 
     fun apply(project: Project, metadata: TypeSpecPackageMetadata) {
         WriteCommandAction.runWriteCommandAction(project) {
-            when (this) {
-                APPLY_RECOMMENDED_METADATA ->
-                    TypeSpecPackageJsonEditor.applyRecommendedMetadata(project, metadata)
-                MOVE_COMPILER_TO_PEER_DEPENDENCIES ->
-                    TypeSpecPackageJsonEditor.moveCompilerToPeerDependencies(project, metadata)
-            }
+            TypeSpecPackageJsonEditor.applyFixAction(project, metadata, this)
         }
     }
 }
