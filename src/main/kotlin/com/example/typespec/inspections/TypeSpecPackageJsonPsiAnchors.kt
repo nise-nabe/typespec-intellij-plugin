@@ -9,7 +9,7 @@ internal data class TypeSpecPackageJsonPsiAnchors(
     val mainProperty: JsonProperty?,
     val tspMainProperty: JsonProperty?,
     val exportsProperty: JsonProperty?,
-    val exportsDot: ExportsDotState,
+    val exportsLayout: ExportsLayout,
     val dependenciesProperty: JsonProperty?,
     val devDependenciesProperty: JsonProperty?,
     val peerDependenciesProperty: JsonProperty?,
