@@ -1,102 +1,8 @@
 package com.example.typespec.inspections
 
-import com.example.typespec.TypeSpecBundle
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
-import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.Nls
-
-internal const val TYPESPEC_COMPILER_PACKAGE = "@typespec/compiler"
-internal const val RECOMMENDED_MAIN = "dist/index.js"
-internal const val RECOMMENDED_TYPESPEC_EXPORT = "./lib/main.tsp"
-internal const val RECOMMENDED_TYPE_MODULE = "module"
-
-enum class TypeSpecRecommendedLayoutStatus {
-    PREFERRED,
-    VALID_FALLBACK,
-    MISSING,
-}
-
-enum class TypeSpecFindingSeverity {
-    WARNING,
-    INFORMATION,
-}
-
-enum class TypeSpecPackageJsonFixAction {
-    APPLY_RECOMMENDED_METADATA,
-    MOVE_COMPILER_TO_PEER_DEPENDENCIES,
-}
-
-enum class TypeSpecPackageJsonRule(
-    val messageKey: String,
-    val severity: TypeSpecFindingSeverity,
-    val fixAction: TypeSpecPackageJsonFixAction,
-) {
-    TPKG001(
-        "inspection.tpkg001",
-        TypeSpecFindingSeverity.WARNING,
-        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
-    ),
-    TPKG002(
-        "inspection.tpkg002",
-        TypeSpecFindingSeverity.WARNING,
-        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
-    ),
-    TPKG003(
-        "inspection.tpkg003",
-        TypeSpecFindingSeverity.WARNING,
-        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
-    ),
-    TPKG004(
-        "inspection.tpkg004",
-        TypeSpecFindingSeverity.WARNING,
-        TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES,
-    ),
-    TPKG005(
-        "inspection.tpkg005",
-        TypeSpecFindingSeverity.INFORMATION,
-        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
-    ),
-    ;
-
-    @Nls
-    fun localizedMessage(): String = TypeSpecBundle.message(messageKey)
-}
-
-data class TypeSpecInspectionFinding(
-    val rule: TypeSpecPackageJsonRule,
-    val anchor: PsiElement,
-)
-
-internal data class TypeSpecPackageJsonPsiAnchors(
-    val rootObject: JsonObject,
-    val typeProperty: JsonProperty?,
-    val mainProperty: JsonProperty?,
-    val tspMainProperty: JsonProperty?,
-    val exportsProperty: JsonProperty?,
-    val exportsDot: ExportsDotState,
-    val dependenciesProperty: JsonProperty?,
-    val devDependenciesProperty: JsonProperty?,
-    val peerDependenciesProperty: JsonProperty?,
-    val compilerDependencyProperty: JsonProperty?,
-    val devCompilerDependencyProperty: JsonProperty?,
-) {
-    fun anchorForRule(rule: TypeSpecPackageJsonRule): PsiElement = when (rule) {
-        TypeSpecPackageJsonRule.TPKG001 -> typeProperty ?: rootObject
-        TypeSpecPackageJsonRule.TPKG002 -> mainProperty ?: rootObject
-        TypeSpecPackageJsonRule.TPKG003 -> exportsProperty
-            ?: exportsDot.dotProperty
-            ?: exportsDot.typespecExportProperty
-            ?: rootObject
-        TypeSpecPackageJsonRule.TPKG004 -> compilerDependencyProperty
-            ?: devCompilerDependencyProperty
-            ?: dependenciesProperty
-            ?: devDependenciesProperty
-            ?: rootObject
-        TypeSpecPackageJsonRule.TPKG005 -> exportsProperty ?: tspMainProperty ?: mainProperty ?: rootObject
-    }
-}
 
 internal data class TypeSpecPackageMetadata(
     val rules: TypeSpecPackageRulesInput,
@@ -106,7 +12,7 @@ internal data class TypeSpecPackageMetadata(
         evaluateRules(rules).map { rule ->
             TypeSpecInspectionFinding(
                 rule = rule,
-                anchor = psi.anchorForRule(rule),
+                anchor = rule.anchor(psi),
             )
         }
 
