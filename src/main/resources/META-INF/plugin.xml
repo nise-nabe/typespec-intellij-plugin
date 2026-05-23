@@ -12,6 +12,7 @@
             <li>Recognition of `.tsp` files</li>
             <li>Code completion, diagnostics, and navigation support powered by the TypeSpec Language Server</li>
             <li>LSP-based editing support for TypeSpec projects</li>
+            <li>Inspections and quick fixes for TypeSpec extension package <code>package.json</code> metadata</li>
         </ul>
     ]]></description>
 
@@ -21,6 +22,7 @@
     <depends>JavaScript</depends>
     <depends>NodeJS</depends>
     <depends>com.intellij.modules.spellchecker</depends>
+    <depends>com.intellij.modules.json</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="TypeSpec Notifications" displayType="BALLOON"/>
@@ -34,5 +36,15 @@
         <platform.lsp.serverSupportProvider implementation="com.example.typespec.TypeSpecLspServerSupportProvider"/>
         <spellchecker.bundledDictionaryProvider implementation="com.example.typespec.TypeSpecBundledDictionaryProvider"/>
         <projectSettings service="com.example.typespec.TypeSpecServiceSettings" />
+
+        <localInspection language="JSON"
+                         shortName="TypeSpecPackageJsonInspection"
+                         bundle="messages.TypeSpecBundle"
+                         key="inspection.typeSpecPackageJson.displayName"
+                         groupPath="JavaScript and TypeScript,TypeSpec"
+                         groupKey="inspection.group.typeSpecPackageJson"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="com.example.typespec.inspections.TypeSpecPackageJsonInspection"/>
     </extensions>
 </idea-plugin>
