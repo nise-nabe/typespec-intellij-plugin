@@ -129,25 +129,5 @@ internal sealed class ExportsDotState {
                 )
             }
         }
-
-        private fun readStringProperty(property: JsonProperty?): String? {
-            val value = property?.value as? JsonStringLiteral ?: return null
-            return value.value
-        }
     }
 }
-
-private fun recommendedExportsSnippet(): String =
-    """{ ".": { "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} } }"""
-
-private fun recommendedDotObjectSnippet(): String =
-    """{ "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }"""
-
-private fun dotObjectWithDefaultAndTypespec(defaultExport: String): String = buildString {
-    append("{ ")
-    append(""""default": ${jsonString(defaultExport)}, """)
-    append(""""typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""")
-}
-
-private fun jsonString(value: String): String =
-    "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
