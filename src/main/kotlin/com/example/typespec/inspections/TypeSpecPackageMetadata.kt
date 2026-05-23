@@ -11,17 +11,6 @@ internal const val RECOMMENDED_MAIN = "dist/index.js"
 internal const val RECOMMENDED_TYPESPEC_EXPORT = "./lib/main.tsp"
 internal const val RECOMMENDED_TYPE_MODULE = "module"
 
-enum class TypeSpecSupportingSignal {
-    TYPESPEC_COMPILER_DEPENDENCY,
-    TYPESPEC_SCOPED_DEPENDENCY,
-}
-
-enum class TypeSpecPackageShapeSignal {
-    TYPESPEC_EXPORT,
-    TSP_MAIN,
-    MAIN,
-}
-
 enum class TypeSpecRecommendedLayoutStatus {
     PREFERRED,
     VALID_FALLBACK,
