@@ -62,12 +62,7 @@ internal enum class TypeSpecPackageJsonRule(
         "inspection.tpkg003",
         TypeSpecFindingSeverity.WARNING,
         TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
-        {
-            it.exportsProperty
-                ?: it.exportsDot.dotProperty
-                ?: it.exportsDot.typespecExportProperty
-                ?: it.rootObject
-        },
+        { it.exportsDot.missingLayoutInspectionAnchor(it.rootObject) },
     ) {
         override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
             input.recommendedLayoutStatus == TypeSpecRecommendedLayoutStatus.MISSING
@@ -102,7 +97,7 @@ internal enum class TypeSpecPackageJsonRule(
             metadata: TypeSpecPackageMetadata,
             generator: JsonElementGenerator,
         ) {
-            val input = metadata.rules
+            val input = metadata.input
             val compilerVersion = input.dependencies[TYPESPEC_COMPILER_PACKAGE]
                 ?: input.devDependencies[TYPESPEC_COMPILER_PACKAGE]
                 ?: return
@@ -141,7 +136,7 @@ internal enum class TypeSpecPackageJsonRule(
         "inspection.tpkg005",
         TypeSpecFindingSeverity.INFORMATION,
         TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
-        { it.exportsProperty ?: it.tspMainProperty ?: it.mainProperty ?: it.rootObject },
+        { it.exportsDot.fallbackLayoutInspectionAnchor(it.tspMainProperty, it.mainProperty, it.rootObject) },
     ) {
         override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
             input.recommendedLayoutStatus == TypeSpecRecommendedLayoutStatus.VALID_FALLBACK
@@ -178,7 +173,7 @@ internal fun applyViolatedRules(
     fixAction: TypeSpecPackageJsonFixAction,
     generator: JsonElementGenerator,
 ) {
-    evaluateRules(metadata.rules)
+    evaluateRules(metadata.input)
         .filter { it.fixAction == fixAction }
         .forEach { it.applyFix(metadata, generator) }
 }
