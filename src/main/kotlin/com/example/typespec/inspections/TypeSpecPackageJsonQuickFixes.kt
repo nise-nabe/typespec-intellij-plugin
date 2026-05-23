@@ -5,48 +5,36 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 
-internal class AddTypeModuleFix : LocalQuickFix {
-    override fun getFamilyName(): String = TypeSpecBundle.message("fix.addTypeModule")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val metadata = metadataFromElement(descriptor.psiElement) ?: return
-        TypeSpecPackageJsonEditor.setTypeModule(project, metadata)
-    }
+private enum class TypeSpecPackageJsonFixAction(
+    val messageKey: String,
+    val apply: (Project, TypeSpecPackageMetadata) -> Unit,
+) {
+    ADD_TYPE_MODULE("fix.addTypeModule", TypeSpecPackageJsonEditor::setTypeModule),
+    ADD_MAIN_ENTRYPOINT("fix.addMainEntrypoint", TypeSpecPackageJsonEditor::addMainEntrypoint),
+    ADD_TYPESPEC_EXPORT("fix.addTypespecExport", TypeSpecPackageJsonEditor::addTypespecExport),
+    MOVE_COMPILER_TO_PEER_DEPENDENCIES(
+        "fix.moveCompilerToPeerDependencies",
+        TypeSpecPackageJsonEditor::moveCompilerToPeerDependencies,
+    ),
+    APPLY_RECOMMENDED_METADATA("fix.applyRecommendedMetadata", TypeSpecPackageJsonEditor::applyRecommendedMetadata),
 }
 
-internal class AddMainEntrypointFix : LocalQuickFix {
-    override fun getFamilyName(): String = TypeSpecBundle.message("fix.addMainEntrypoint")
+private val RULE_FIX_ACTIONS = mapOf(
+    TypeSpecPackageJsonRule.TPKG001 to TypeSpecPackageJsonFixAction.ADD_TYPE_MODULE,
+    TypeSpecPackageJsonRule.TPKG002 to TypeSpecPackageJsonFixAction.ADD_MAIN_ENTRYPOINT,
+    TypeSpecPackageJsonRule.TPKG003 to TypeSpecPackageJsonFixAction.ADD_TYPESPEC_EXPORT,
+    TypeSpecPackageJsonRule.TPKG004 to TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES,
+    TypeSpecPackageJsonRule.TPKG005 to TypeSpecPackageJsonFixAction.ADD_TYPESPEC_EXPORT,
+)
+
+private class TypeSpecPackageJsonQuickFix(
+    private val action: TypeSpecPackageJsonFixAction,
+) : LocalQuickFix {
+    override fun getFamilyName(): String = TypeSpecBundle.message(action.messageKey)
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val metadata = metadataFromElement(descriptor.psiElement) ?: return
-        TypeSpecPackageJsonEditor.addMainEntrypoint(project, metadata)
-    }
-}
-
-internal class AddTypespecExportFix : LocalQuickFix {
-    override fun getFamilyName(): String = TypeSpecBundle.message("fix.addTypespecExport")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val metadata = metadataFromElement(descriptor.psiElement) ?: return
-        TypeSpecPackageJsonEditor.addTypespecExport(project, metadata)
-    }
-}
-
-internal class MoveCompilerDependencyToPeerDependenciesFix : LocalQuickFix {
-    override fun getFamilyName(): String = TypeSpecBundle.message("fix.moveCompilerToPeerDependencies")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val metadata = metadataFromElement(descriptor.psiElement) ?: return
-        TypeSpecPackageJsonEditor.moveCompilerToPeerDependencies(project, metadata)
-    }
-}
-
-internal class ApplyRecommendedTypeSpecPackageMetadataFix : LocalQuickFix {
-    override fun getFamilyName(): String = TypeSpecBundle.message("fix.applyRecommendedMetadata")
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val metadata = metadataFromElement(descriptor.psiElement) ?: return
-        TypeSpecPackageJsonEditor.applyRecommendedMetadata(project, metadata)
+        action.apply(project, metadata)
     }
 }
 
@@ -55,20 +43,11 @@ internal fun quickFixesForRule(
     metadata: TypeSpecPackageMetadata,
 ): Array<LocalQuickFix> {
     val fixes = linkedSetOf<LocalQuickFix>()
-    when (rule) {
-        TypeSpecPackageJsonRule.TPKG001 -> fixes += AddTypeModuleFix()
-        TypeSpecPackageJsonRule.TPKG002 -> fixes += AddMainEntrypointFix()
-        TypeSpecPackageJsonRule.TPKG003 -> fixes += AddTypespecExportFix()
-        TypeSpecPackageJsonRule.TPKG004 -> fixes += MoveCompilerDependencyToPeerDependenciesFix()
-        TypeSpecPackageJsonRule.TPKG005 -> fixes += AddTypespecExportFix()
-    }
+    RULE_FIX_ACTIONS[rule]?.let { fixes += TypeSpecPackageJsonQuickFix(it) }
 
-    if (rule != TypeSpecPackageJsonRule.TPKG004 && hasRecommendedMetadataFix(metadata)) {
-        fixes += ApplyRecommendedTypeSpecPackageMetadataFix()
+    if (rule != TypeSpecPackageJsonRule.TPKG004 && metadata.rules.needsRecommendedMetadataFix()) {
+        fixes += TypeSpecPackageJsonQuickFix(TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA)
     }
 
     return fixes.toTypedArray()
 }
-
-internal fun hasRecommendedMetadataFix(metadata: TypeSpecPackageMetadata): Boolean =
-    metadata.rules.needsRecommendedMetadataFix()
