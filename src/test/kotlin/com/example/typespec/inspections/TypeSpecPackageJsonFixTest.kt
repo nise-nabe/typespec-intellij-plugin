@@ -1,8 +1,9 @@
 package com.example.typespec.inspections
 
-import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonElementGenerator
+import com.intellij.json.psi.JsonFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.lang.annotations.Language
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -210,7 +211,7 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
         )
     }
 
-    private fun configurePackageJson(json: String): TypeSpecPackageMetadata {
+    private fun configurePackageJson(@Language("JSON") json: String): TypeSpecPackageMetadata {
         myFixture.configureByText("package.json", json)
         return metadata()
     }
