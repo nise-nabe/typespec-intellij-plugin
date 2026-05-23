@@ -90,8 +90,6 @@ internal object TypeSpecPackageJsonEditor {
     private fun runWrite(project: Project, action: () -> Unit) {
         WriteCommandAction.runWriteCommandAction(project, Runnable { action() })
     }
-
-    private fun jsonString(value: String): String = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
 }
 
 internal fun metadataFromElement(element: PsiElement): TypeSpecPackageMetadata? {

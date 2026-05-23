@@ -3,7 +3,6 @@ package com.example.typespec.inspections
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
-import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.psi.PsiElement
 
 internal const val TYPESPEC_COMPILER_PACKAGE = "@typespec/compiler"
@@ -133,11 +132,6 @@ internal data class TypeSpecPackageMetadata(
                     devCompilerDependencyProperty = findDependencyProperty(devDependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
                 ),
             )
-        }
-
-        private fun readStringProperty(property: JsonProperty?): String? {
-            val value = property?.value as? JsonStringLiteral ?: return null
-            return value.value
         }
 
         private fun readDependencyMap(property: JsonProperty?): Map<String, String> {
