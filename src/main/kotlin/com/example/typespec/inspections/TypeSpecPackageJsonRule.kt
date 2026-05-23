@@ -6,10 +6,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 
 internal enum class TypeSpecPackageJsonRule(
-    val messageKey: String,
-    val severity: TypeSpecFindingSeverity,
+    internal val defaultMessageKey: String,
+    internal val defaultSeverity: TypeSpecFindingSeverity,
     val fixAction: TypeSpecPackageJsonFixAction,
-    private val anchorSelector: (TypeSpecPackageJsonPsiAnchors) -> PsiElement,
+    internal val anchorSelector: (TypeSpecPackageJsonPsiAnchors) -> PsiElement,
 ) {
     TPKG001(
         "inspection.tpkg001",
@@ -64,7 +64,38 @@ internal enum class TypeSpecPackageJsonRule(
         { it.exportsLayout.missingLayoutInspectionAnchor(it.rootObject) },
     ) {
         override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
-            input.recommendedLayoutStatus == TypeSpecRecommendedLayoutStatus.MISSING
+            input.recommendedLayoutStatus != TypeSpecRecommendedLayoutStatus.PREFERRED
+
+        override fun severity(input: TypeSpecPackageRulesInput): TypeSpecFindingSeverity =
+            when (input.recommendedLayoutStatus) {
+                TypeSpecRecommendedLayoutStatus.MISSING -> TypeSpecFindingSeverity.WARNING
+                TypeSpecRecommendedLayoutStatus.VALID_FALLBACK -> TypeSpecFindingSeverity.INFORMATION
+                TypeSpecRecommendedLayoutStatus.PREFERRED -> defaultSeverity
+            }
+
+        override fun messageKey(input: TypeSpecPackageRulesInput): String =
+            when (input.recommendedLayoutStatus) {
+                TypeSpecRecommendedLayoutStatus.MISSING -> "inspection.tpkg003"
+                TypeSpecRecommendedLayoutStatus.VALID_FALLBACK -> "inspection.tpkg005"
+                TypeSpecRecommendedLayoutStatus.PREFERRED -> defaultMessageKey
+            }
+
+        override fun anchor(
+            psi: TypeSpecPackageJsonPsiAnchors,
+            input: TypeSpecPackageRulesInput,
+        ): PsiElement =
+            when (input.recommendedLayoutStatus) {
+                TypeSpecRecommendedLayoutStatus.MISSING ->
+                    psi.exportsLayout.missingLayoutInspectionAnchor(psi.rootObject)
+                TypeSpecRecommendedLayoutStatus.VALID_FALLBACK ->
+                    psi.exportsLayout.fallbackLayoutInspectionAnchor(
+                        psi.tspMainProperty,
+                        psi.mainProperty,
+                        psi.rootObject,
+                    )
+                TypeSpecRecommendedLayoutStatus.PREFERRED ->
+                    anchorSelector(psi)
+            }
 
         override fun applyFix(
             metadata: TypeSpecPackageMetadata,
@@ -99,28 +130,20 @@ internal enum class TypeSpecPackageJsonRule(
             moveCompilerToPeerDependencies(metadata, generator)
         }
     },
-    TPKG005(
-        "inspection.tpkg005",
-        TypeSpecFindingSeverity.INFORMATION,
-        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
-        { it.exportsLayout.fallbackLayoutInspectionAnchor(it.tspMainProperty, it.mainProperty, it.rootObject) },
-    ) {
-        override fun isViolated(input: TypeSpecPackageRulesInput): Boolean =
-            input.recommendedLayoutStatus == TypeSpecRecommendedLayoutStatus.VALID_FALLBACK
-
-        override fun applyFix(
-            metadata: TypeSpecPackageMetadata,
-            generator: JsonElementGenerator,
-        ) {
-            applyRecommendedTypespecExportFix(metadata, generator)
-        }
-    },
     ;
 
-    fun anchor(psi: TypeSpecPackageJsonPsiAnchors): PsiElement = anchorSelector(psi)
+    open fun severity(input: TypeSpecPackageRulesInput): TypeSpecFindingSeverity = defaultSeverity
+
+    open fun messageKey(input: TypeSpecPackageRulesInput): String = defaultMessageKey
+
+    open fun anchor(
+        psi: TypeSpecPackageJsonPsiAnchors,
+        input: TypeSpecPackageRulesInput,
+    ): PsiElement = anchorSelector(psi)
 
     @Nls
-    fun localizedMessage(): String = TypeSpecBundle.message(messageKey)
+    fun localizedMessage(input: TypeSpecPackageRulesInput): String =
+        TypeSpecBundle.message(messageKey(input))
 
     abstract fun isViolated(input: TypeSpecPackageRulesInput): Boolean
 
