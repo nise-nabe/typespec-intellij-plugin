@@ -15,13 +15,24 @@ class TypeSpecPackageJsonInspection : LocalInspectionTool() {
                 }
 
                 val metadata = TypeSpecPackageMetadata.fromJsonFile(file) ?: return
+                val registeredFixActions = mutableSetOf<TypeSpecPackageJsonFixAction>()
                 for (finding in metadata.evaluateFindings()) {
-                    holder.registerProblem(
-                        finding.anchor,
-                        finding.rule.localizedMessage(),
-                        highlightTypeForSeverity(finding.rule.severity),
-                        *quickFixFor(finding.rule.fixAction),
-                    )
+                    val highlightType = highlightTypeForSeverity(finding.rule.severity)
+                    val message = finding.rule.localizedMessage()
+                    if (registeredFixActions.add(finding.rule.fixAction)) {
+                        holder.registerProblem(
+                            finding.anchor,
+                            message,
+                            highlightType,
+                            quickFixFor(finding.rule.fixAction),
+                        )
+                    } else {
+                        holder.registerProblem(
+                            finding.anchor,
+                            message,
+                            highlightType,
+                        )
+                    }
                 }
             }
         }

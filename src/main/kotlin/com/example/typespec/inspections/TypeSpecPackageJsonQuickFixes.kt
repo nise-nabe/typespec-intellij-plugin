@@ -22,5 +22,9 @@ private class TypeSpecPackageJsonQuickFix(
     }
 }
 
-internal fun quickFixFor(action: TypeSpecPackageJsonFixAction): Array<LocalQuickFix> =
-    arrayOf(TypeSpecPackageJsonQuickFix(action))
+private val quickFixByAction = TypeSpecPackageJsonFixAction.entries.associateWith { action ->
+    TypeSpecPackageJsonQuickFix(action)
+}
+
+internal fun quickFixFor(action: TypeSpecPackageJsonFixAction): LocalQuickFix =
+    quickFixByAction.getValue(action)
