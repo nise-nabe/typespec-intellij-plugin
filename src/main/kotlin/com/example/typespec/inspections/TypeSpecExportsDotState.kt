@@ -5,129 +5,141 @@ import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.JsonStringLiteral
 
-internal sealed class ExportsDotState {
-    abstract val exportsProperty: JsonProperty?
-    abstract val dotProperty: JsonProperty?
-    abstract val typespecExportProperty: JsonProperty?
-    abstract val typespecExport: String?
-    abstract val defaultExport: String?
-
-    data class ExportsMissing(
-        override val exportsProperty: JsonProperty? = null,
-    ) : ExportsDotState() {
-        override val dotProperty: JsonProperty? = null
-        override val typespecExportProperty: JsonProperty? = null
-        override val typespecExport: String? = null
-        override val defaultExport: String? = null
-    }
-
-    data class ExportsNotObject(
-        override val exportsProperty: JsonProperty,
-    ) : ExportsDotState() {
-        override val dotProperty: JsonProperty? = null
-        override val typespecExportProperty: JsonProperty? = null
-        override val typespecExport: String? = null
-        override val defaultExport: String? = null
-    }
-
-    data class DotMissing(
-        override val exportsProperty: JsonProperty,
-        val exportsObject: JsonObject,
-    ) : ExportsDotState() {
-        override val dotProperty: JsonProperty? = null
-        override val typespecExportProperty: JsonProperty? = null
-        override val typespecExport: String? = null
-        override val defaultExport: String? = null
-    }
+internal sealed class DotKind {
+    data object Missing : DotKind()
 
     data class StringDefault(
-        override val exportsProperty: JsonProperty,
-        override val dotProperty: JsonProperty,
-        override val defaultExport: String,
+        val defaultExport: String,
+    ) : DotKind()
+
+    data class ObjectDot(
+        val dotObject: JsonObject,
+        val typespecExportProperty: JsonProperty?,
+        val typespecExport: String?,
+        val defaultExport: String?,
+    ) : DotKind()
+
+    data class Invalid(
+        val dotProperty: JsonProperty,
+    ) : DotKind()
+}
+
+internal sealed class ExportsDotState {
+    abstract val typespecExport: String?
+
+    val dotProperty: JsonProperty?
+        get() = (this as? Ready)?.dotPropertyElement
+
+    val typespecExportProperty: JsonProperty?
+        get() = when (val kind = (this as? Ready)?.dotKind) {
+            is DotKind.ObjectDot -> kind.typespecExportProperty
+            else -> null
+        }
+
+    data class Missing(
+        val exportsProperty: JsonProperty? = null,
     ) : ExportsDotState() {
-        override val typespecExportProperty: JsonProperty? = null
         override val typespecExport: String? = null
     }
 
-    data class ObjectDot(
-        override val exportsProperty: JsonProperty,
-        override val dotProperty: JsonProperty,
-        override val typespecExportProperty: JsonProperty?,
-        override val typespecExport: String?,
-        override val defaultExport: String?,
-        val dotObject: JsonObject?,
-    ) : ExportsDotState()
+    data class InvalidExports(
+        val exportsProperty: JsonProperty,
+    ) : ExportsDotState() {
+        override val typespecExport: String? = null
+    }
+
+    data class Ready(
+        val exportsProperty: JsonProperty,
+        val exportsObject: JsonObject,
+        val dotPropertyElement: JsonProperty?,
+        val dotKind: DotKind,
+    ) : ExportsDotState() {
+        override val typespecExport: String?
+            get() = (dotKind as? DotKind.ObjectDot)?.typespecExport
+    }
 
     fun applyRecommendedTypespecExport(rootObject: JsonObject, generator: JsonElementGenerator) {
         when (this) {
-            is ExportsMissing -> rootObject.add(
+            is Missing -> rootObject.add(
                 generator.createProperty("exports", recommendedExportsSnippet()),
             )
-            is ExportsNotObject -> exportsProperty.replace(
+            is InvalidExports -> exportsProperty.replace(
                 generator.createProperty("exports", recommendedExportsSnippet()),
             )
-            is DotMissing -> exportsObject.add(
-                generator.createProperty(".", recommendedDotObjectSnippet()),
-            )
-            is StringDefault -> dotProperty.replace(
-                generator.createProperty(".", dotObjectWithDefaultAndTypespec(defaultExport)),
-            )
-            is ObjectDot -> applyTypespecToObjectDot(generator)
+            is Ready -> applyRecommendedTypespecExportToReady(generator)
         }
     }
 
-    private fun ObjectDot.applyTypespecToObjectDot(generator: JsonElementGenerator) {
+    private fun Ready.applyRecommendedTypespecExportToReady(generator: JsonElementGenerator) {
+        when (dotKind) {
+            DotKind.Missing -> exportsObject.add(
+                generator.createProperty(".", recommendedDotObjectSnippet()),
+            )
+            is DotKind.StringDefault -> checkNotNull(dotPropertyElement).replace(
+                generator.createProperty(".", dotObjectWithDefaultAndTypespec(dotKind.defaultExport)),
+            )
+            is DotKind.ObjectDot -> applyTypespecToObjectDot(generator, dotKind)
+            is DotKind.Invalid -> dotKind.dotProperty.replace(
+                generator.createProperty(".", recommendedDotObjectSnippet()),
+            )
+        }
+    }
+
+    private fun Ready.applyTypespecToObjectDot(
+        generator: JsonElementGenerator,
+        objectDot: DotKind.ObjectDot,
+    ) {
         val typespecProperty = generator.createProperty(
             "typespec",
             jsonString(RECOMMENDED_TYPESPEC_EXPORT),
         )
         when {
-            dotObject != null && typespecExportProperty == null ->
-                dotObject.add(typespecProperty)
-            typespecExportProperty != null ->
-                typespecExportProperty.replace(typespecProperty)
+            objectDot.typespecExportProperty != null ->
+                objectDot.typespecExportProperty.replace(typespecProperty)
             else ->
-                dotProperty.replace(
-                    generator.createProperty(".", recommendedDotObjectSnippet()),
-                )
+                objectDot.dotObject.add(typespecProperty)
         }
     }
 
     companion object {
         fun fromExportsProperty(exportsProperty: JsonProperty?): ExportsDotState {
             if (exportsProperty == null) {
-                return ExportsMissing()
+                return Missing()
             }
 
             val exportsObject = exportsProperty.value as? JsonObject
-                ?: return ExportsNotObject(exportsProperty)
+                ?: return InvalidExports(exportsProperty)
 
-            val dotProperty = exportsObject.findProperty(".")
-                ?: return DotMissing(exportsProperty, exportsObject)
-
-            return when (val dotValue = dotProperty.value) {
-                is JsonStringLiteral -> StringDefault(
+            val dotPropertyElement = exportsObject.findProperty(".")
+            if (dotPropertyElement == null) {
+                return Ready(
                     exportsProperty = exportsProperty,
-                    dotProperty = dotProperty,
-                    defaultExport = dotValue.value,
-                )
-                is JsonObject -> ObjectDot(
-                    exportsProperty = exportsProperty,
-                    dotProperty = dotProperty,
-                    typespecExportProperty = dotValue.findProperty("typespec"),
-                    typespecExport = readStringProperty(dotValue.findProperty("typespec")),
-                    defaultExport = readStringProperty(dotValue.findProperty("default")),
-                    dotObject = dotValue,
-                )
-                else -> ObjectDot(
-                    exportsProperty = exportsProperty,
-                    dotProperty = dotProperty,
-                    typespecExportProperty = null,
-                    typespecExport = null,
-                    defaultExport = null,
-                    dotObject = null,
+                    exportsObject = exportsObject,
+                    dotPropertyElement = null,
+                    dotKind = DotKind.Missing,
                 )
             }
+
+            val dotKind = when (val dotValue = dotPropertyElement.value) {
+                is JsonStringLiteral -> DotKind.StringDefault(dotValue.value)
+                is JsonObject -> {
+                    val typespecExportProperty = dotValue.findProperty("typespec")
+                    DotKind.ObjectDot(
+                        dotObject = dotValue,
+                        typespecExportProperty = typespecExportProperty,
+                        typespecExport = readStringProperty(typespecExportProperty),
+                        defaultExport = readStringProperty(dotValue.findProperty("default")),
+                    )
+                }
+                else -> DotKind.Invalid(dotPropertyElement)
+            }
+
+            return Ready(
+                exportsProperty = exportsProperty,
+                exportsObject = exportsObject,
+                dotPropertyElement = dotPropertyElement,
+                dotKind = dotKind,
+            )
         }
     }
 }
