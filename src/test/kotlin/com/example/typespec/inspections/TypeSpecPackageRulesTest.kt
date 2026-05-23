@@ -38,6 +38,26 @@ class TypeSpecPackageRulesTest {
     }
 
     @Test
+    fun peerDependenciesClassifyPackageAndReportMissingTypespecExport() {
+        val input = buildRulesInput(
+            typespecExport = null,
+            main = null,
+            tspMain = null,
+            peerDependencies = mapOf("@typespec/http" to "~1.0.0"),
+        )
+
+        assertTrue(input.isLikelyTypeSpecExtensionPackage)
+        assertEquals(
+            setOf(
+                TypeSpecPackageJsonRule.TPKG001,
+                TypeSpecPackageJsonRule.TPKG002,
+                TypeSpecPackageJsonRule.TPKG003,
+            ),
+            evaluateRules(input).toSet(),
+        )
+    }
+
+    @Test
     fun tspMainFallbackReportsInformationalRecommendation() {
         val input = buildRulesInput(
             typespecExport = null,

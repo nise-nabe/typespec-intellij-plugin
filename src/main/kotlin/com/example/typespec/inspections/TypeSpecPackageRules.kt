@@ -83,11 +83,18 @@ private fun isLikelyTypeSpecExtensionPackage(
     if (!typespecExport.isNullOrBlank() || !tspMain.isNullOrBlank()) {
         return true
     }
+    if (hasTypespecPeerDependencySignals(peerDependencies)) {
+        return true
+    }
     if (main.isNullOrBlank()) {
         return false
     }
     return hasTypespecDependencySignals(dependencies, devDependencies, peerDependencies)
 }
+
+private fun hasTypespecPeerDependencySignals(peerDependencies: Map<String, String>): Boolean =
+    peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) ||
+        peerDependencies.keys.any { it.startsWith(TYPESPEC_SCOPE_PREFIX) }
 
 private fun hasTypespecDependencySignals(
     dependencies: Map<String, String>,
