@@ -71,23 +71,4 @@ internal fun quickFixesForRule(
 }
 
 internal fun hasRecommendedMetadataFix(metadata: TypeSpecPackageMetadata): Boolean =
-    hasRecommendedMetadataFix(
-        TypeSpecPackageRulesInput(
-            type = metadata.type,
-            main = metadata.main,
-            tspMain = metadata.tspMain,
-            typespecExport = metadata.typespecExport,
-            dependencies = metadata.dependencies,
-            devDependencies = metadata.devDependencies,
-            peerDependencies = metadata.peerDependencies,
-            supportingSignals = metadata.supportingSignals,
-            packageShapeSignals = metadata.packageShapeSignals,
-            isLikelyTypeSpecExtensionPackage = metadata.isLikelyTypeSpecExtensionPackage,
-            recommendedLayoutStatus = metadata.recommendedLayoutStatus,
-        ),
-    )
-
-private fun hasRecommendedMetadataFix(input: TypeSpecPackageRulesInput): Boolean =
-    input.type != RECOMMENDED_TYPE_MODULE ||
-        input.main.isNullOrBlank() ||
-        input.typespecExport.isNullOrBlank()
+    metadata.rules.needsRecommendedMetadataFix()

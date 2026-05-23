@@ -135,18 +135,13 @@ class TypeSpecPackageRulesTest {
             tspMain = null,
         )
 
-        assertFalse(hasRecommendedMetadataFix(metadata))
+        assertFalse(metadata.needsRecommendedMetadataFix())
 
         val missingMetadata = buildRulesInput(
             typespecExport = "./lib/main.tsp",
             main = null,
             tspMain = null,
         )
-        assertTrue(hasRecommendedMetadataFix(missingMetadata))
+        assertTrue(missingMetadata.needsRecommendedMetadataFix())
     }
 }
-
-private fun hasRecommendedMetadataFix(input: TypeSpecPackageRulesInput): Boolean =
-    input.type != RECOMMENDED_TYPE_MODULE ||
-        input.main.isNullOrBlank() ||
-        input.typespecExport.isNullOrBlank()
