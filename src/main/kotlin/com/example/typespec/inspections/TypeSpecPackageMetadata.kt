@@ -44,14 +44,14 @@ internal data class TypeSpecPackageMetadata(
             val devDependencies = readDependencyMap(devDependenciesProperty)
             val peerDependencies = readDependencyMap(peerDependenciesProperty)
 
-            val exportsDot = ExportsDotState.fromExportsProperty(exportsProperty)
+            val exportsLayout = ExportsLayout.fromExportsProperty(exportsProperty)
 
             return TypeSpecPackageMetadata(
                 input = buildRulesInput(
                     type = type,
                     main = main,
                     tspMain = tspMain,
-                    typespecExport = exportsDot.typespecExport,
+                    typespecExport = exportsLayout.typespecExport,
                     dependencies = dependencies,
                     devDependencies = devDependencies,
                     peerDependencies = peerDependencies,
@@ -62,7 +62,7 @@ internal data class TypeSpecPackageMetadata(
                     mainProperty = mainProperty,
                     tspMainProperty = tspMainProperty,
                     exportsProperty = exportsProperty,
-                    exportsDot = exportsDot,
+                    exportsLayout = exportsLayout,
                     dependenciesProperty = dependenciesProperty,
                     devDependenciesProperty = devDependenciesProperty,
                     peerDependenciesProperty = peerDependenciesProperty,
