@@ -3,7 +3,6 @@ package com.example.typespec.inspections
 import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
-import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
