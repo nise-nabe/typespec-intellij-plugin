@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "com.example.typespec"
-version = "0.1.1"
+version = "0.2.0-eap.1"
 
 dependencies {
     intellijPlatform {
@@ -36,7 +36,7 @@ intellijPlatform {
             name = "Example"
         }
         ideaVersion {
-            sinceBuild = "261.22158"
+            sinceBuild = "262.0"
         }
         changeNotes = provider {
             changelog.renderItem(
