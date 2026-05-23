@@ -6,6 +6,7 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     java
+    `java-test-fixtures`
     alias(libs.plugins.kotlin.jvm)
     id("org.jetbrains.intellij.platform")
     alias(libs.plugins.changelog)
@@ -63,6 +64,7 @@ testing {
             useJUnitJupiter(libs.versions.junit.get())
 
             dependencies {
+                implementation(testFixtures(project(":")))
                 implementation("junit:junit:${libs.versions.junit4.get()}")
                 runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
             }
