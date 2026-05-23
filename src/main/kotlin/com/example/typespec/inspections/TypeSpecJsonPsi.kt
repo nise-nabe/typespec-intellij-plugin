@@ -1,5 +1,7 @@
 package com.example.typespec.inspections
 
+import com.intellij.json.psi.JsonElementGenerator
+import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.JsonStringLiteral
 
@@ -10,6 +12,21 @@ internal fun readStringProperty(property: JsonProperty?): String? {
 
 internal fun jsonString(value: String): String =
     "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
+
+internal fun upsertStringProperty(
+    container: JsonObject,
+    existing: JsonProperty?,
+    name: String,
+    value: String,
+    generator: JsonElementGenerator,
+) {
+    val newProperty = generator.createProperty(name, jsonString(value))
+    if (existing != null) {
+        existing.replace(newProperty)
+    } else {
+        container.add(newProperty)
+    }
+}
 
 internal fun recommendedExportsSnippet(): String =
     """{ ".": { "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} } }"""
