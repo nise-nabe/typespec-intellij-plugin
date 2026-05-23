@@ -3,6 +3,7 @@ package com.example.typespec.inspections
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
+import com.intellij.psi.PsiElement
 
 internal data class TypeSpecPackageMetadata(
     val input: TypeSpecPackageRulesInput,
@@ -82,4 +83,9 @@ internal data class TypeSpecPackageMetadata(
             return objectValue.findProperty(packageName)
         }
     }
+}
+
+internal fun metadataFromElement(element: PsiElement): TypeSpecPackageMetadata? {
+    val file = element.containingFile as? JsonFile ?: return null
+    return TypeSpecPackageMetadata.fromJsonFile(file)
 }

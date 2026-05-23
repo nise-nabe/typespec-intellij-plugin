@@ -1,6 +1,7 @@
 package com.example.typespec.inspections
 
 import com.example.typespec.TypeSpecBundle
+import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
@@ -17,7 +18,11 @@ internal enum class TypeSpecPackageJsonFixAction(
 
     fun apply(project: Project, metadata: TypeSpecPackageMetadata) {
         WriteCommandAction.runWriteCommandAction(project) {
-            TypeSpecPackageJsonEditor.applyFixAction(project, metadata, this)
+            applyViolatedRules(
+                metadata = metadata,
+                fixAction = this,
+                generator = JsonElementGenerator(project),
+            )
         }
     }
 }
