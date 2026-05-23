@@ -143,3 +143,8 @@ private fun resolveRecommendedLayoutStatus(
 }
 
 private const val TYPESPEC_SCOPE_PREFIX = "@typespec/"
+
+internal fun TypeSpecPackageRulesInput.needsRecommendedMetadataFix(): Boolean =
+    type != RECOMMENDED_TYPE_MODULE ||
+        main.isNullOrBlank() ||
+        typespecExport.isNullOrBlank()

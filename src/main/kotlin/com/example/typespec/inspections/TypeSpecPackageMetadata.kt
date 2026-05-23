@@ -53,21 +53,8 @@ data class TypeSpecInspectionFinding(
     val anchor: PsiElement,
 )
 
-data class TypeSpecPackageMetadata(
+internal data class TypeSpecPackageJsonPsiAnchors(
     val rootObject: JsonObject,
-    val type: String?,
-    val main: String?,
-    val tspMain: String?,
-    val typespecExport: String?,
-    val defaultExport: String?,
-    val exportsDotKind: TypeSpecExportsDotKind,
-    val dependencies: Map<String, String>,
-    val devDependencies: Map<String, String>,
-    val peerDependencies: Map<String, String>,
-    val supportingSignals: Set<TypeSpecSupportingSignal>,
-    val packageShapeSignals: Set<TypeSpecPackageShapeSignal>,
-    val isLikelyTypeSpecExtensionPackage: Boolean,
-    val recommendedLayoutStatus: TypeSpecRecommendedLayoutStatus,
     val typeProperty: JsonProperty?,
     val mainProperty: JsonProperty?,
     val tspMainProperty: JsonProperty?,
@@ -79,32 +66,10 @@ data class TypeSpecPackageMetadata(
     val peerDependenciesProperty: JsonProperty?,
     val compilerDependencyProperty: JsonProperty?,
     val devCompilerDependencyProperty: JsonProperty?,
+    val defaultExport: String?,
+    val exportsDotKind: TypeSpecExportsDotKind,
 ) {
-    fun evaluateFindings(): List<TypeSpecInspectionFinding> {
-        val rulesInput = TypeSpecPackageRulesInput(
-            type = type,
-            main = main,
-            tspMain = tspMain,
-            typespecExport = typespecExport,
-            dependencies = dependencies,
-            devDependencies = devDependencies,
-            peerDependencies = peerDependencies,
-            supportingSignals = supportingSignals,
-            packageShapeSignals = packageShapeSignals,
-            isLikelyTypeSpecExtensionPackage = isLikelyTypeSpecExtensionPackage,
-            recommendedLayoutStatus = recommendedLayoutStatus,
-        )
-
-        return evaluateRules(rulesInput).map { descriptor ->
-            TypeSpecInspectionFinding(
-                rule = descriptor.rule,
-                severity = descriptor.severity,
-                anchor = anchorForRule(descriptor.rule),
-            )
-        }
-    }
-
-    private fun anchorForRule(rule: TypeSpecPackageJsonRule): PsiElement = when (rule) {
+    fun anchorForRule(rule: TypeSpecPackageJsonRule): PsiElement = when (rule) {
         TypeSpecPackageJsonRule.TPKG001 -> typeProperty ?: rootObject
         TypeSpecPackageJsonRule.TPKG002 -> mainProperty ?: rootObject
         TypeSpecPackageJsonRule.TPKG003 -> exportsProperty ?: exportsDotProperty ?: typespecExportProperty ?: rootObject
@@ -115,6 +80,20 @@ data class TypeSpecPackageMetadata(
             ?: rootObject
         TypeSpecPackageJsonRule.TPKG005 -> exportsProperty ?: tspMainProperty ?: mainProperty ?: rootObject
     }
+}
+
+internal data class TypeSpecPackageMetadata(
+    val rules: TypeSpecPackageRulesInput,
+    val psi: TypeSpecPackageJsonPsiAnchors,
+) {
+    fun evaluateFindings(): List<TypeSpecInspectionFinding> =
+        evaluateRules(rules).map { descriptor ->
+            TypeSpecInspectionFinding(
+                rule = descriptor.rule,
+                severity = descriptor.severity,
+                anchor = psi.anchorForRule(descriptor.rule),
+            )
+        }
 
     companion object {
         fun fromJsonFile(file: JsonFile): TypeSpecPackageMetadata? {
@@ -139,42 +118,33 @@ data class TypeSpecPackageMetadata(
             val peerDependencies = readDependencyMap(peerDependenciesProperty)
 
             val exportsDot = readExportsDot(exportsProperty)
-            val rulesInput = buildRulesInput(
-                type = type,
-                main = main,
-                tspMain = tspMain,
-                typespecExport = exportsDot.typespecExport,
-                dependencies = dependencies,
-                devDependencies = devDependencies,
-                peerDependencies = peerDependencies,
-            )
 
             return TypeSpecPackageMetadata(
-                rootObject = rootObject,
-                type = type,
-                main = main,
-                tspMain = tspMain,
-                typespecExport = exportsDot.typespecExport,
-                defaultExport = exportsDot.defaultExport,
-                exportsDotKind = exportsDot.kind,
-                dependencies = dependencies,
-                devDependencies = devDependencies,
-                peerDependencies = peerDependencies,
-                supportingSignals = rulesInput.supportingSignals,
-                packageShapeSignals = rulesInput.packageShapeSignals,
-                isLikelyTypeSpecExtensionPackage = rulesInput.isLikelyTypeSpecExtensionPackage,
-                recommendedLayoutStatus = rulesInput.recommendedLayoutStatus,
-                typeProperty = typeProperty,
-                mainProperty = mainProperty,
-                tspMainProperty = tspMainProperty,
-                exportsProperty = exportsProperty,
-                exportsDotProperty = exportsDot.dotProperty,
-                typespecExportProperty = exportsDot.typespecExportProperty,
-                dependenciesProperty = dependenciesProperty,
-                devDependenciesProperty = devDependenciesProperty,
-                peerDependenciesProperty = peerDependenciesProperty,
-                compilerDependencyProperty = findDependencyProperty(dependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
-                devCompilerDependencyProperty = findDependencyProperty(devDependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
+                rules = buildRulesInput(
+                    type = type,
+                    main = main,
+                    tspMain = tspMain,
+                    typespecExport = exportsDot.typespecExport,
+                    dependencies = dependencies,
+                    devDependencies = devDependencies,
+                    peerDependencies = peerDependencies,
+                ),
+                psi = TypeSpecPackageJsonPsiAnchors(
+                    rootObject = rootObject,
+                    typeProperty = typeProperty,
+                    mainProperty = mainProperty,
+                    tspMainProperty = tspMainProperty,
+                    exportsProperty = exportsProperty,
+                    exportsDotProperty = exportsDot.dotProperty,
+                    typespecExportProperty = exportsDot.typespecExportProperty,
+                    dependenciesProperty = dependenciesProperty,
+                    devDependenciesProperty = devDependenciesProperty,
+                    peerDependenciesProperty = peerDependenciesProperty,
+                    compilerDependencyProperty = findDependencyProperty(dependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
+                    devCompilerDependencyProperty = findDependencyProperty(devDependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
+                    defaultExport = exportsDot.defaultExport,
+                    exportsDotKind = exportsDot.kind,
+                ),
             )
         }
 

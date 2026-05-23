@@ -10,91 +10,95 @@ import com.intellij.psi.PsiElement
 
 internal object TypeSpecPackageJsonEditor {
     fun applyRecommendedMetadata(project: Project, metadata: TypeSpecPackageMetadata) {
-        runWrite(project, metadata) {
+        runWrite(project) {
             applyRecommendedMetadataChanges(project, metadata)
         }
     }
 
     fun setTypeModule(project: Project, metadata: TypeSpecPackageMetadata) {
-        runWrite(project, metadata) {
+        runWrite(project) {
             setTypeModuleChanges(project, metadata)
         }
     }
 
     fun addMainEntrypoint(project: Project, metadata: TypeSpecPackageMetadata) {
-        if (!metadata.main.isNullOrBlank()) {
+        if (!metadata.rules.main.isNullOrBlank()) {
             return
         }
-        runWrite(project, metadata) {
+        runWrite(project) {
             addMainEntrypointChanges(project, metadata)
         }
     }
 
     fun addTypespecExport(project: Project, metadata: TypeSpecPackageMetadata) {
-        if (!metadata.typespecExport.isNullOrBlank()) {
+        if (!metadata.rules.typespecExport.isNullOrBlank()) {
             return
         }
-        runWrite(project, metadata) {
+        runWrite(project) {
             addTypespecExportChanges(project, metadata)
         }
     }
 
     fun moveCompilerToPeerDependencies(project: Project, metadata: TypeSpecPackageMetadata) {
-        val compilerVersion = metadata.dependencies[TYPESPEC_COMPILER_PACKAGE]
-            ?: metadata.devDependencies[TYPESPEC_COMPILER_PACKAGE]
+        val rules = metadata.rules
+        val compilerVersion = rules.dependencies[TYPESPEC_COMPILER_PACKAGE]
+            ?: rules.devDependencies[TYPESPEC_COMPILER_PACKAGE]
             ?: return
-        if (metadata.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)) {
+        if (rules.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)) {
             return
         }
-        runWrite(project, metadata) {
+        runWrite(project) {
             moveCompilerToPeerDependenciesChanges(project, metadata, compilerVersion)
         }
     }
 
     private fun applyRecommendedMetadataChanges(project: Project, metadata: TypeSpecPackageMetadata) {
-        if (metadata.type != RECOMMENDED_TYPE_MODULE) {
+        val rules = metadata.rules
+        if (rules.type != RECOMMENDED_TYPE_MODULE) {
             setTypeModuleChanges(project, metadata)
         }
-        if (metadata.main.isNullOrBlank()) {
+        if (rules.main.isNullOrBlank()) {
             addMainEntrypointChanges(project, metadata)
         }
-        if (metadata.typespecExport.isNullOrBlank()) {
+        if (rules.typespecExport.isNullOrBlank()) {
             addTypespecExportChanges(project, metadata)
         }
     }
 
     private fun setTypeModuleChanges(project: Project, metadata: TypeSpecPackageMetadata) {
+        val psi = metadata.psi
         val generator = JsonElementGenerator(project)
         val newProperty = generator.createProperty("type", jsonString(RECOMMENDED_TYPE_MODULE))
-        if (metadata.typeProperty != null) {
-            metadata.typeProperty.replace(newProperty)
+        if (psi.typeProperty != null) {
+            psi.typeProperty.replace(newProperty)
         } else {
-            metadata.rootObject.add(newProperty)
+            psi.rootObject.add(newProperty)
         }
     }
 
     private fun addMainEntrypointChanges(project: Project, metadata: TypeSpecPackageMetadata) {
         val generator = JsonElementGenerator(project)
-        metadata.rootObject.add(generator.createProperty("main", jsonString(RECOMMENDED_MAIN)))
+        metadata.psi.rootObject.add(generator.createProperty("main", jsonString(RECOMMENDED_MAIN)))
     }
 
     private fun addTypespecExportChanges(project: Project, metadata: TypeSpecPackageMetadata) {
+        val psi = metadata.psi
         val generator = JsonElementGenerator(project)
         when {
-            metadata.exportsProperty == null -> {
-                metadata.rootObject.add(
+            psi.exportsProperty == null -> {
+                psi.rootObject.add(
                     generator.createProperty(
                         "exports",
                         """{ ".": { "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} } }""",
                     ),
                 )
             }
-            metadata.exportsDotProperty == null -> {
+            psi.exportsDotProperty == null -> {
                 val recommendedExports =
                     """{ ".": { "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} } }"""
-                val exportsObject = metadata.exportsProperty.value as? JsonObject
+                val exportsObject = psi.exportsProperty.value as? JsonObject
                 if (exportsObject == null) {
-                    metadata.exportsProperty.replace(generator.createProperty("exports", recommendedExports))
+                    psi.exportsProperty.replace(generator.createProperty("exports", recommendedExports))
                 } else {
                     exportsObject.add(
                         generator.createProperty(
@@ -104,8 +108,8 @@ internal object TypeSpecPackageJsonEditor {
                     )
                 }
             }
-            metadata.exportsDotKind == TypeSpecExportsDotKind.STRING -> {
-                val existingJsEntry = metadata.defaultExport ?: readStringValue(metadata.exportsDotProperty.value)
+            psi.exportsDotKind == TypeSpecExportsDotKind.STRING -> {
+                val existingJsEntry = psi.defaultExport ?: readStringValue(psi.exportsDotProperty.value)
                 val exportObject = buildString {
                     append("{ ")
                     if (!existingJsEntry.isNullOrBlank()) {
@@ -113,21 +117,21 @@ internal object TypeSpecPackageJsonEditor {
                     }
                     append(""""typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""")
                 }
-                metadata.exportsDotProperty.replace(generator.createProperty(".", exportObject))
+                psi.exportsDotProperty.replace(generator.createProperty(".", exportObject))
             }
             else -> {
                 val typespecProperty = generator.createProperty(
                     "typespec",
                     jsonString(RECOMMENDED_TYPESPEC_EXPORT),
                 )
-                val dotObject = metadata.exportsDotProperty.value as? JsonObject
+                val dotObject = psi.exportsDotProperty.value as? JsonObject
                 when {
-                    dotObject != null && metadata.typespecExportProperty == null ->
+                    dotObject != null && psi.typespecExportProperty == null ->
                         dotObject.add(typespecProperty)
-                    metadata.typespecExportProperty != null ->
-                        metadata.typespecExportProperty.replace(typespecProperty)
+                    psi.typespecExportProperty != null ->
+                        psi.typespecExportProperty.replace(typespecProperty)
                     else ->
-                        metadata.exportsDotProperty.replace(
+                        psi.exportsDotProperty.replace(
                             generator.createProperty(
                                 ".",
                                 """{ "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""",
@@ -143,26 +147,27 @@ internal object TypeSpecPackageJsonEditor {
         metadata: TypeSpecPackageMetadata,
         compilerVersion: String,
     ) {
+        val psi = metadata.psi
         val generator = JsonElementGenerator(project)
-        if (metadata.peerDependenciesProperty == null) {
-            metadata.rootObject.add(
+        if (psi.peerDependenciesProperty == null) {
+            psi.rootObject.add(
                 generator.createProperty(
                     "peerDependencies",
                     """{ ${jsonString(TYPESPEC_COMPILER_PACKAGE)}: ${jsonString(compilerVersion)} }""",
                 ),
             )
         } else {
-            val peerDependenciesObject = metadata.peerDependenciesProperty.value as JsonObject
+            val peerDependenciesObject = psi.peerDependenciesProperty.value as JsonObject
             peerDependenciesObject.add(
                 generator.createProperty(TYPESPEC_COMPILER_PACKAGE, jsonString(compilerVersion)),
             )
         }
 
-        metadata.compilerDependencyProperty?.delete()
-        metadata.devCompilerDependencyProperty?.delete()
+        psi.compilerDependencyProperty?.delete()
+        psi.devCompilerDependencyProperty?.delete()
     }
 
-    private fun runWrite(project: Project, metadata: TypeSpecPackageMetadata, action: () -> Unit) {
+    private fun runWrite(project: Project, action: () -> Unit) {
         WriteCommandAction.runWriteCommandAction(project, Runnable { action() })
     }
 
