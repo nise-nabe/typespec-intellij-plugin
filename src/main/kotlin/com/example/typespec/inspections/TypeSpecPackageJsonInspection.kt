@@ -22,7 +22,7 @@ class TypeSpecPackageJsonInspection : LocalInspectionTool() {
                         finding.anchor,
                         messageForRule(finding.rule),
                         highlightTypeForSeverity(finding.severity),
-                        *quickFixesForRule(finding.rule, metadata),
+                        *quickFixFor(finding.fixAction),
                     )
                 }
             }

@@ -30,9 +30,15 @@ enum class TypeSpecFindingSeverity {
     INFORMATION,
 }
 
+enum class TypeSpecPackageJsonFixAction {
+    APPLY_RECOMMENDED_METADATA,
+    MOVE_COMPILER_TO_PEER_DEPENDENCIES,
+}
+
 data class TypeSpecInspectionFinding(
     val rule: TypeSpecPackageJsonRule,
     val severity: TypeSpecFindingSeverity,
+    val fixAction: TypeSpecPackageJsonFixAction,
     val anchor: PsiElement,
 )
 
@@ -74,6 +80,7 @@ internal data class TypeSpecPackageMetadata(
             TypeSpecInspectionFinding(
                 rule = descriptor.rule,
                 severity = descriptor.severity,
+                fixAction = descriptor.fixAction,
                 anchor = psi.anchorForRule(descriptor.rule),
             )
         }
