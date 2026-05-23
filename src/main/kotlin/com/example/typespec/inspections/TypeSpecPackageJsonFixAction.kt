@@ -17,12 +17,19 @@ internal enum class TypeSpecPackageJsonFixAction(
     fun localizedFamilyName(): String = TypeSpecBundle.message(messageKey)
 
     fun apply(project: Project, metadata: TypeSpecPackageMetadata) {
-        WriteCommandAction.runWriteCommandAction(project) {
-            applyViolatedRules(
-                metadata = metadata,
-                fixAction = this,
-                generator = JsonElementGenerator(project),
-            )
-        }
+        val file = metadata.psi.rootObject.containingFile
+        WriteCommandAction.runWriteCommandAction(
+            project,
+            localizedFamilyName(),
+            null,
+            Runnable {
+                applyViolatedRules(
+                    metadata = metadata,
+                    fixAction = this,
+                    generator = JsonElementGenerator(project),
+                )
+            },
+            file,
+        )
     }
 }

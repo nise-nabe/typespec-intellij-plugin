@@ -2,6 +2,7 @@ import org.gradle.api.plugins.jvm.JvmTestSuite
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.jetbrains.changelog.Changelog
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     java
@@ -19,7 +20,11 @@ dependencies {
         bundledPlugin("JavaScript")
         bundledPlugin("NodeJS")
         bundledPlugin("com.intellij.modules.json")
+        testFramework(TestFrameworkType.Platform)
     }
+
+    testImplementation("junit:junit:${libs.versions.junit4.get()}")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
 }
 
 intellijPlatform {
