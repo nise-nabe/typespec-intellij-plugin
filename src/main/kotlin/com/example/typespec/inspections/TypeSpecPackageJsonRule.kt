@@ -149,8 +149,10 @@ internal fun applyViolatedRules(
     generator: JsonElementGenerator,
 ) {
     var currentMetadata = metadata
-    val rules = evaluateRules(currentMetadata.input).filter { it.fixAction == fixAction }
-    for (rule in rules) {
+    while (true) {
+        val rule = evaluateRules(currentMetadata.input)
+            .firstOrNull { it.fixAction == fixAction }
+            ?: break
         rule.applyFix(currentMetadata, generator)
         currentMetadata = currentMetadata.refresh() ?: return
     }
