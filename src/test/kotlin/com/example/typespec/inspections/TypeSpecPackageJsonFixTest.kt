@@ -19,13 +19,7 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
 
     @Test
     fun testApplyRecommendedMetadataFromTspMainFallback() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "tspMain": "./lib/main.tsp"
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.tspMainOnly())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA)
 
@@ -38,15 +32,7 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
 
     @Test
     fun testApplyRecommendedMetadataAddsExportsWhenMissing() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "peerDependencies": {
-                "@typespec/http": "~1.0.0"
-              }
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.peerDependenciesOnly())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA)
 
@@ -57,22 +43,13 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
 
     @Test
     fun testApplyRecommendedMetadataUpgradesDotStringExport() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "exports": {
-                ".": "./dist/custom.js"
-              },
-              "tspMain": "./lib/main.tsp"
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.dotStringExportWithTspMain())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA)
 
         val updated = metadata()
         assertEquals(RECOMMENDED_TYPESPEC_EXPORT, updated.input.typespecExport)
-        assertEquals("./dist/custom.js", updated.psi.exportsLayout.let { layout ->
+        assertEquals(TypeSpecPackageJsonFixtures.CUSTOM_JS_EXPORT, updated.psi.exportsLayout.let { layout ->
             (layout as ExportsLayout.DotObjectExport).defaultExport
         })
         assertTrue(evaluateRules(updated.input).isEmpty())
@@ -80,38 +57,21 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
 
     @Test
     fun testApplyRecommendedMetadataAddsTypespecToDotObjectExport() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "exports": {
-                ".": {
-                  "default": "./dist/custom.js"
-                }
-              },
-              "tspMain": "./lib/main.tsp"
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.dotObjectExportWithTspMain())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA)
 
         val updated = metadata()
         assertEquals(RECOMMENDED_TYPESPEC_EXPORT, updated.input.typespecExport)
-        assertEquals("./dist/custom.js", (updated.psi.exportsLayout as ExportsLayout.DotObjectExport).defaultExport)
+        assertEquals(
+            TypeSpecPackageJsonFixtures.CUSTOM_JS_EXPORT,
+            (updated.psi.exportsLayout as ExportsLayout.DotObjectExport).defaultExport,
+        )
     }
 
     @Test
     fun testApplyRecommendedMetadataAddsMissingDotEntry() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "exports": {
-                "./other": "./other.js"
-              },
-              "tspMain": "./lib/main.tsp"
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.missingDotEntryWithTspMain())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA)
 
@@ -121,14 +81,7 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
 
     @Test
     fun testApplyRecommendedMetadataReplacesInvalidExports() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "exports": "./invalid",
-              "tspMain": "./lib/main.tsp"
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.invalidExportsWithTspMain())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA)
 
@@ -139,67 +92,36 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
 
     @Test
     fun testMoveCompilerToPeerDependenciesFromDependencies() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "tspMain": "./lib/main.tsp",
-              "dependencies": {
-                "@typespec/compiler": "~1.0.0"
-              }
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.compilerInDependenciesWithTspMain())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES)
 
         val updated = metadata()
-        assertEquals("~1.0.0", updated.input.peerDependencies[TYPESPEC_COMPILER_PACKAGE])
+        assertEquals(TypeSpecPackageJsonFixtures.COMPILER_VERSION, updated.input.peerDependencies[TYPESPEC_COMPILER_PACKAGE])
         assertFalse(updated.input.dependencies.containsKey(TYPESPEC_COMPILER_PACKAGE))
         assertFalse(evaluateRules(updated.input).any { it == TypeSpecPackageJsonRule.TPKG004 })
     }
 
     @Test
     fun testMoveCompilerToPeerDependenciesFromDevDependenciesIntoExistingPeerBlock() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "tspMain": "./lib/main.tsp",
-              "devDependencies": {
-                "@typespec/compiler": "^2.0.0"
-              },
-              "peerDependencies": {
-                "@typespec/http": "~1.0.0"
-              }
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.compilerInDevDependenciesWithPeerBlock())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES)
 
         val updated = metadata()
-        assertEquals("^2.0.0", updated.input.peerDependencies[TYPESPEC_COMPILER_PACKAGE])
-        assertEquals("~1.0.0", updated.input.peerDependencies["@typespec/http"])
+        assertEquals(TypeSpecPackageJsonFixtures.COMPILER_VERSION_CARET, updated.input.peerDependencies[TYPESPEC_COMPILER_PACKAGE])
+        assertEquals(TypeSpecPackageJsonFixtures.HTTP_PEER_VERSION, updated.input.peerDependencies["@typespec/http"])
         assertFalse(updated.input.devDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE))
     }
 
     @Test
     fun testMoveCompilerToPeerDependenciesReplacesInvalidPeerDependencies() {
-        val metadata = configurePackageJson(
-            """
-            {
-              "tspMain": "./lib/main.tsp",
-              "devDependencies": {
-                "@typespec/compiler": "~1.0.0"
-              },
-              "peerDependencies": "invalid"
-            }
-            """.trimIndent(),
-        )
+        val metadata = configurePackageJson(TypeSpecPackageJsonFixtures.compilerInDevDependenciesWithInvalidPeerBlock())
 
         applyFix(metadata, TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES)
 
         val updated = metadata()
-        assertEquals("~1.0.0", updated.input.peerDependencies[TYPESPEC_COMPILER_PACKAGE])
+        assertEquals(TypeSpecPackageJsonFixtures.COMPILER_VERSION, updated.input.peerDependencies[TYPESPEC_COMPILER_PACKAGE])
         assertFalse(updated.input.devDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE))
     }
 

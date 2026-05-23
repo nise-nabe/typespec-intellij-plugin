@@ -8,12 +8,7 @@ import org.junit.jupiter.api.Test
 class TypeSpecPackageRulesTest {
     @Test
     fun typespecDependenciesAloneDoNotClassifyPackage() {
-        val input = buildRulesInput(
-            typespecExport = null,
-            main = null,
-            tspMain = null,
-            dependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~1.0.0"),
-        )
+        val input = TypeSpecPackageRulesFixtures.typespecDependenciesOnly()
 
         assertFalse(input.isLikelyTypeSpecExtensionPackage)
         assertTrue(evaluateRules(input).isEmpty())
@@ -21,11 +16,7 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun exportsTypespecClassifiesAndReportsMissingMetadata() {
-        val input = buildRulesInput(
-            typespecExport = "./lib/main.tsp",
-            main = null,
-            tspMain = null,
-        )
+        val input = TypeSpecPackageRulesFixtures.exportsTypeSpecMissingMetadata()
 
         assertTrue(input.isLikelyTypeSpecExtensionPackage)
         assertEquals(
@@ -39,12 +30,7 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun peerDependenciesClassifyPackageAndReportMissingTypespecExport() {
-        val input = buildRulesInput(
-            typespecExport = null,
-            main = null,
-            tspMain = null,
-            peerDependencies = mapOf("@typespec/http" to "~1.0.0"),
-        )
+        val input = TypeSpecPackageRulesFixtures.peerDependenciesMissingExport()
 
         assertTrue(input.isLikelyTypeSpecExtensionPackage)
         assertEquals(
@@ -67,11 +53,7 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun tspMainFallbackReportsInformationalRecommendation() {
-        val input = buildRulesInput(
-            typespecExport = null,
-            main = null,
-            tspMain = "./lib/main.tsp",
-        )
+        val input = TypeSpecPackageRulesFixtures.tspMainFallback()
 
         assertEquals(
             setOf(
@@ -93,12 +75,7 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun mainWithTypespecDependencyUsesFallbackInsteadOfMissingExportWarning() {
-        val input = buildRulesInput(
-            typespecExport = null,
-            main = "dist/custom.js",
-            tspMain = null,
-            peerDependencies = mapOf("@typespec/http" to "~1.0.0"),
-        )
+        val input = TypeSpecPackageRulesFixtures.mainWithTypespecDependency()
 
         assertEquals(
             setOf(
@@ -115,12 +92,7 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun devDependencyCompilerReportsCompilerWarning() {
-        val input = buildRulesInput(
-            typespecExport = "./lib/main.tsp",
-            main = null,
-            tspMain = null,
-            devDependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~1.0.0"),
-        )
+        val input = TypeSpecPackageRulesFixtures.devDependencyCompiler()
 
         assertEquals(
             setOf(
@@ -134,13 +106,7 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun existingPeerDependencySuppressesCompilerWarning() {
-        val input = buildRulesInput(
-            typespecExport = "./lib/main.tsp",
-            main = null,
-            tspMain = null,
-            dependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~1.0.0"),
-            peerDependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~2.0.0"),
-        )
+        val input = TypeSpecPackageRulesFixtures.existingPeerDependencySuppressesCompilerWarning()
 
         assertEquals(
             setOf(
@@ -153,23 +119,14 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun preferredLayoutDoesNotReportFallbackOrMissingExportWarnings() {
-        val input = buildRulesInput(
-            type = RECOMMENDED_TYPE_MODULE,
-            main = RECOMMENDED_MAIN,
-            tspMain = null,
-            typespecExport = RECOMMENDED_TYPESPEC_EXPORT,
-        )
+        val input = TypeSpecPackageRulesFixtures.preferredLayout()
 
         assertTrue(evaluateRules(input).isEmpty())
     }
 
     @Test
     fun metadataRulesOfferCombinedRecommendedFix() {
-        val input = buildRulesInput(
-            typespecExport = "./lib/main.tsp",
-            main = null,
-            tspMain = null,
-        )
+        val input = TypeSpecPackageRulesFixtures.exportsTypeSpecMissingMetadata()
 
         assertEquals(
             setOf(TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA),
@@ -179,12 +136,7 @@ class TypeSpecPackageRulesTest {
 
     @Test
     fun compilerRuleOffersMoveToPeerDependenciesFix() {
-        val input = buildRulesInput(
-            typespecExport = "./lib/main.tsp",
-            main = null,
-            tspMain = null,
-            devDependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~1.0.0"),
-        )
+        val input = TypeSpecPackageRulesFixtures.devDependencyCompiler()
 
         assertEquals(
             TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES,
