@@ -90,13 +90,19 @@ internal object TypeSpecPackageJsonEditor {
                 )
             }
             metadata.exportsDotProperty == null -> {
-                val exportsObject = metadata.exportsProperty.value as JsonObject
-                exportsObject.add(
-                    generator.createProperty(
-                        ".",
-                        """{ "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""",
-                    ),
-                )
+                val recommendedExports =
+                    """{ ".": { "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} } }"""
+                val exportsObject = metadata.exportsProperty.value as? JsonObject
+                if (exportsObject == null) {
+                    metadata.exportsProperty.replace(generator.createProperty("exports", recommendedExports))
+                } else {
+                    exportsObject.add(
+                        generator.createProperty(
+                            ".",
+                            """{ "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""",
+                        ),
+                    )
+                }
             }
             metadata.exportsDotKind == TypeSpecExportsDotKind.STRING -> {
                 val existingJsEntry = metadata.defaultExport ?: readStringValue(metadata.exportsDotProperty.value)
