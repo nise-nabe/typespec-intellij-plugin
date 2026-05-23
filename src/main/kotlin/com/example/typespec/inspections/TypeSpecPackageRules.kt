@@ -41,17 +41,17 @@ internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecInspe
             )
             TypeSpecRecommendedLayoutStatus.PREFERRED -> Unit
         }
-    }
 
-    val hasCompilerOutsidePeerDependencies = input.dependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) ||
-        input.devDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
-    if (hasCompilerOutsidePeerDependencies &&
-        !input.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
-    ) {
-        findings += TypeSpecInspectionFindingDescriptor(
-            rule = TypeSpecPackageJsonRule.TPKG004,
-            severity = TypeSpecFindingSeverity.WARNING,
-        )
+        val hasCompilerOutsidePeerDependencies = input.dependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) ||
+            input.devDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
+        if (hasCompilerOutsidePeerDependencies &&
+            !input.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
+        ) {
+            findings += TypeSpecInspectionFindingDescriptor(
+                rule = TypeSpecPackageJsonRule.TPKG004,
+                severity = TypeSpecFindingSeverity.WARNING,
+            )
+        }
     }
 
     return findings

@@ -16,10 +16,7 @@ class TypeSpecPackageRulesTest {
         )
 
         assertFalse(input.isLikelyTypeSpecExtensionPackage)
-        assertEquals(
-            listOf(TypeSpecPackageJsonRule.TPKG004),
-            evaluateRules(input).map { it.rule },
-        )
+        assertTrue(evaluateRules(input).isEmpty())
     }
 
     @Test
@@ -82,15 +79,19 @@ class TypeSpecPackageRulesTest {
     @Test
     fun devDependencyCompilerReportsCompilerWarning() {
         val input = buildRulesInput(
-            typespecExport = null,
+            typespecExport = "./lib/main.tsp",
             main = null,
             tspMain = null,
             devDependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~1.0.0"),
         )
 
         assertEquals(
-            listOf(TypeSpecPackageJsonRule.TPKG004),
-            evaluateRules(input).map { it.rule },
+            setOf(
+                TypeSpecPackageJsonRule.TPKG001,
+                TypeSpecPackageJsonRule.TPKG002,
+                TypeSpecPackageJsonRule.TPKG004,
+            ),
+            evaluateRules(input).map { it.rule }.toSet(),
         )
     }
 
