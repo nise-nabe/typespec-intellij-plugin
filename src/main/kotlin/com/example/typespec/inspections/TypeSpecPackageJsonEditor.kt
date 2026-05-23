@@ -47,18 +47,32 @@ internal object TypeSpecPackageJsonEditor {
 
         val psi = metadata.psi
         val generator = JsonElementGenerator(project)
-        if (psi.peerDependenciesProperty == null) {
-            psi.rootObject.add(
-                generator.createProperty(
-                    "peerDependencies",
-                    """{ ${jsonString(TYPESPEC_COMPILER_PACKAGE)}: ${jsonString(compilerVersion)} }""",
-                ),
+        val compilerPeerProperty = generator.createProperty(
+            TYPESPEC_COMPILER_PACKAGE,
+            jsonString(compilerVersion),
+        )
+        val peerDependenciesSnippet =
+            """{ ${jsonString(TYPESPEC_COMPILER_PACKAGE)}: ${jsonString(compilerVersion)} }"""
+
+        when (val peerDependenciesProperty = psi.peerDependenciesProperty) {
+            null -> psi.rootObject.add(
+                generator.createProperty("peerDependencies", peerDependenciesSnippet),
             )
-        } else {
-            val peerDependenciesObject = psi.peerDependenciesProperty.value as JsonObject
-            peerDependenciesObject.add(
-                generator.createProperty(TYPESPEC_COMPILER_PACKAGE, jsonString(compilerVersion)),
-            )
+            else -> {
+                val peerDependenciesObject = peerDependenciesProperty.value as? JsonObject
+                if (peerDependenciesObject == null) {
+                    peerDependenciesProperty.replace(
+                        generator.createProperty("peerDependencies", peerDependenciesSnippet),
+                    )
+                } else {
+                    val existingCompilerProperty = peerDependenciesObject.findProperty(TYPESPEC_COMPILER_PACKAGE)
+                    if (existingCompilerProperty != null) {
+                        existingCompilerProperty.replace(compilerPeerProperty)
+                    } else {
+                        peerDependenciesObject.add(compilerPeerProperty)
+                    }
+                }
+            }
         }
 
         psi.compilerDependencyProperty?.delete()
