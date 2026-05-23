@@ -43,7 +43,9 @@ internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecInspe
         }
     }
 
-    if (input.dependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) &&
+    val hasCompilerOutsidePeerDependencies = input.dependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) ||
+        input.devDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
+    if (hasCompilerOutsidePeerDependencies &&
         !input.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
     ) {
         findings += TypeSpecInspectionFindingDescriptor(
