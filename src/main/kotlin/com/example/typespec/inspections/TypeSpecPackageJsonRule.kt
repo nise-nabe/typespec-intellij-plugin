@@ -173,7 +173,10 @@ internal fun applyViolatedRules(
     fixAction: TypeSpecPackageJsonFixAction,
     generator: JsonElementGenerator,
 ) {
-    evaluateRules(metadata.input)
-        .filter { it.fixAction == fixAction }
-        .forEach { it.applyFix(metadata, generator) }
+    var currentMetadata = metadata
+    val rules = evaluateRules(currentMetadata.input).filter { it.fixAction == fixAction }
+    for (rule in rules) {
+        rule.applyFix(currentMetadata, generator)
+        currentMetadata = currentMetadata.refresh() ?: return
+    }
 }

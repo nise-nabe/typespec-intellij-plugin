@@ -17,6 +17,11 @@ internal data class TypeSpecPackageMetadata(
             )
         }
 
+    fun refresh(): TypeSpecPackageMetadata? {
+        val file = psi.rootObject.containingFile as? JsonFile ?: return null
+        return fromJsonFile(file)
+    }
+
     companion object {
         fun fromJsonFile(file: JsonFile): TypeSpecPackageMetadata? {
             if (file.name != "package.json") {
