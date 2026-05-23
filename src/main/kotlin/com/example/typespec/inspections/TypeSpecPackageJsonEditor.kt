@@ -3,7 +3,6 @@ package com.example.typespec.inspections
 import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
-import com.intellij.json.psi.JsonStringLiteral
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -84,62 +83,7 @@ internal object TypeSpecPackageJsonEditor {
     private fun addTypespecExportChanges(project: Project, metadata: TypeSpecPackageMetadata) {
         val psi = metadata.psi
         val generator = JsonElementGenerator(project)
-        when {
-            psi.exportsProperty == null -> {
-                psi.rootObject.add(
-                    generator.createProperty(
-                        "exports",
-                        """{ ".": { "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} } }""",
-                    ),
-                )
-            }
-            psi.exportsDotProperty == null -> {
-                val recommendedExports =
-                    """{ ".": { "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} } }"""
-                val exportsObject = psi.exportsProperty.value as? JsonObject
-                if (exportsObject == null) {
-                    psi.exportsProperty.replace(generator.createProperty("exports", recommendedExports))
-                } else {
-                    exportsObject.add(
-                        generator.createProperty(
-                            ".",
-                            """{ "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""",
-                        ),
-                    )
-                }
-            }
-            psi.exportsDotKind == TypeSpecExportsDotKind.STRING -> {
-                val existingJsEntry = psi.defaultExport ?: readStringValue(psi.exportsDotProperty.value)
-                val exportObject = buildString {
-                    append("{ ")
-                    if (!existingJsEntry.isNullOrBlank()) {
-                        append(""""default": ${jsonString(existingJsEntry)}, """)
-                    }
-                    append(""""typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""")
-                }
-                psi.exportsDotProperty.replace(generator.createProperty(".", exportObject))
-            }
-            else -> {
-                val typespecProperty = generator.createProperty(
-                    "typespec",
-                    jsonString(RECOMMENDED_TYPESPEC_EXPORT),
-                )
-                val dotObject = psi.exportsDotProperty.value as? JsonObject
-                when {
-                    dotObject != null && psi.typespecExportProperty == null ->
-                        dotObject.add(typespecProperty)
-                    psi.typespecExportProperty != null ->
-                        psi.typespecExportProperty.replace(typespecProperty)
-                    else ->
-                        psi.exportsDotProperty.replace(
-                            generator.createProperty(
-                                ".",
-                                """{ "typespec": ${jsonString(RECOMMENDED_TYPESPEC_EXPORT)} }""",
-                            ),
-                        )
-                }
-            }
-        }
+        psi.exportsDot.applyRecommendedTypespecExport(psi.rootObject, generator)
     }
 
     private fun moveCompilerToPeerDependenciesChanges(
@@ -172,9 +116,6 @@ internal object TypeSpecPackageJsonEditor {
     }
 
     private fun jsonString(value: String): String = "\"${value.replace("\\", "\\\\").replace("\"", "\\\"")}\""
-
-    private fun readStringValue(value: com.intellij.json.psi.JsonValue?): String? =
-        (value as? JsonStringLiteral)?.value
 }
 
 internal fun metadataFromElement(element: PsiElement): TypeSpecPackageMetadata? {

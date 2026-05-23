@@ -17,12 +17,6 @@ enum class TypeSpecRecommendedLayoutStatus {
     MISSING,
 }
 
-enum class TypeSpecExportsDotKind {
-    MISSING,
-    STRING,
-    OBJECT,
-}
-
 enum class TypeSpecPackageJsonRule {
     TPKG001,
     TPKG002,
@@ -48,20 +42,20 @@ internal data class TypeSpecPackageJsonPsiAnchors(
     val mainProperty: JsonProperty?,
     val tspMainProperty: JsonProperty?,
     val exportsProperty: JsonProperty?,
-    val exportsDotProperty: JsonProperty?,
-    val typespecExportProperty: JsonProperty?,
+    val exportsDot: ExportsDotState,
     val dependenciesProperty: JsonProperty?,
     val devDependenciesProperty: JsonProperty?,
     val peerDependenciesProperty: JsonProperty?,
     val compilerDependencyProperty: JsonProperty?,
     val devCompilerDependencyProperty: JsonProperty?,
-    val defaultExport: String?,
-    val exportsDotKind: TypeSpecExportsDotKind,
 ) {
     fun anchorForRule(rule: TypeSpecPackageJsonRule): PsiElement = when (rule) {
         TypeSpecPackageJsonRule.TPKG001 -> typeProperty ?: rootObject
         TypeSpecPackageJsonRule.TPKG002 -> mainProperty ?: rootObject
-        TypeSpecPackageJsonRule.TPKG003 -> exportsProperty ?: exportsDotProperty ?: typespecExportProperty ?: rootObject
+        TypeSpecPackageJsonRule.TPKG003 -> exportsProperty
+            ?: exportsDot.dotProperty
+            ?: exportsDot.typespecExportProperty
+            ?: rootObject
         TypeSpecPackageJsonRule.TPKG004 -> compilerDependencyProperty
             ?: devCompilerDependencyProperty
             ?: dependenciesProperty
@@ -106,7 +100,7 @@ internal data class TypeSpecPackageMetadata(
             val devDependencies = readDependencyMap(devDependenciesProperty)
             val peerDependencies = readDependencyMap(peerDependenciesProperty)
 
-            val exportsDot = readExportsDot(exportsProperty)
+            val exportsDot = ExportsDotState.fromExportsProperty(exportsProperty)
 
             return TypeSpecPackageMetadata(
                 rules = buildRulesInput(
@@ -124,70 +118,14 @@ internal data class TypeSpecPackageMetadata(
                     mainProperty = mainProperty,
                     tspMainProperty = tspMainProperty,
                     exportsProperty = exportsProperty,
-                    exportsDotProperty = exportsDot.dotProperty,
-                    typespecExportProperty = exportsDot.typespecExportProperty,
+                    exportsDot = exportsDot,
                     dependenciesProperty = dependenciesProperty,
                     devDependenciesProperty = devDependenciesProperty,
                     peerDependenciesProperty = peerDependenciesProperty,
                     compilerDependencyProperty = findDependencyProperty(dependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
                     devCompilerDependencyProperty = findDependencyProperty(devDependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
-                    defaultExport = exportsDot.defaultExport,
-                    exportsDotKind = exportsDot.kind,
                 ),
             )
-        }
-
-        private data class ExportsDotSnapshot(
-            val kind: TypeSpecExportsDotKind,
-            val typespecExport: String?,
-            val defaultExport: String?,
-            val dotProperty: JsonProperty?,
-            val typespecExportProperty: JsonProperty?,
-        )
-
-        private fun readExportsDot(exportsProperty: JsonProperty?): ExportsDotSnapshot {
-            val exportsObject = exportsProperty?.value as? JsonObject ?: return ExportsDotSnapshot(
-                kind = TypeSpecExportsDotKind.MISSING,
-                typespecExport = null,
-                defaultExport = null,
-                dotProperty = null,
-                typespecExportProperty = null,
-            )
-
-            val dotProperty = exportsObject.findProperty(".")
-            return when (val dotValue = dotProperty?.value) {
-                is JsonStringLiteral -> ExportsDotSnapshot(
-                    kind = TypeSpecExportsDotKind.STRING,
-                    typespecExport = null,
-                    defaultExport = dotValue.value,
-                    dotProperty = dotProperty,
-                    typespecExportProperty = null,
-                )
-                is JsonObject -> {
-                    val typespecExportProperty = dotValue.findProperty("typespec")
-                    ExportsDotSnapshot(
-                        kind = TypeSpecExportsDotKind.OBJECT,
-                        typespecExport = readStringProperty(typespecExportProperty),
-                        defaultExport = readStringProperty(dotValue.findProperty("default")),
-                        dotProperty = dotProperty,
-                        typespecExportProperty = typespecExportProperty,
-                    )
-                }
-                null -> ExportsDotSnapshot(
-                    kind = TypeSpecExportsDotKind.MISSING,
-                    typespecExport = null,
-                    defaultExport = null,
-                    dotProperty = null,
-                    typespecExportProperty = null,
-                )
-                else -> ExportsDotSnapshot(
-                    kind = TypeSpecExportsDotKind.OBJECT,
-                    typespecExport = null,
-                    defaultExport = null,
-                    dotProperty = dotProperty,
-                    typespecExportProperty = null,
-                )
-            }
         }
 
         private fun readStringProperty(property: JsonProperty?): String? {
