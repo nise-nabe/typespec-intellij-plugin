@@ -1,9 +1,11 @@
 package com.example.typespec.inspections
 
+import com.example.typespec.TypeSpecBundle
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 
 internal const val TYPESPEC_COMPILER_PACKAGE = "@typespec/compiler"
 internal const val RECOMMENDED_MAIN = "dist/index.js"
@@ -16,14 +18,6 @@ enum class TypeSpecRecommendedLayoutStatus {
     MISSING,
 }
 
-enum class TypeSpecPackageJsonRule {
-    TPKG001,
-    TPKG002,
-    TPKG003,
-    TPKG004,
-    TPKG005,
-}
-
 enum class TypeSpecFindingSeverity {
     WARNING,
     INFORMATION,
@@ -34,10 +28,44 @@ enum class TypeSpecPackageJsonFixAction {
     MOVE_COMPILER_TO_PEER_DEPENDENCIES,
 }
 
-data class TypeSpecInspectionFinding(
-    val rule: TypeSpecPackageJsonRule,
+enum class TypeSpecPackageJsonRule(
+    val messageKey: String,
     val severity: TypeSpecFindingSeverity,
     val fixAction: TypeSpecPackageJsonFixAction,
+) {
+    TPKG001(
+        "inspection.tpkg001",
+        TypeSpecFindingSeverity.WARNING,
+        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
+    ),
+    TPKG002(
+        "inspection.tpkg002",
+        TypeSpecFindingSeverity.WARNING,
+        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
+    ),
+    TPKG003(
+        "inspection.tpkg003",
+        TypeSpecFindingSeverity.WARNING,
+        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
+    ),
+    TPKG004(
+        "inspection.tpkg004",
+        TypeSpecFindingSeverity.WARNING,
+        TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES,
+    ),
+    TPKG005(
+        "inspection.tpkg005",
+        TypeSpecFindingSeverity.INFORMATION,
+        TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA,
+    ),
+    ;
+
+    @Nls
+    fun localizedMessage(): String = TypeSpecBundle.message(messageKey)
+}
+
+data class TypeSpecInspectionFinding(
+    val rule: TypeSpecPackageJsonRule,
     val anchor: PsiElement,
 )
 
@@ -75,12 +103,10 @@ internal data class TypeSpecPackageMetadata(
     val psi: TypeSpecPackageJsonPsiAnchors,
 ) {
     fun evaluateFindings(): List<TypeSpecInspectionFinding> =
-        evaluateRules(rules).map { descriptor ->
+        evaluateRules(rules).map { rule ->
             TypeSpecInspectionFinding(
-                rule = descriptor.rule,
-                severity = descriptor.severity,
-                fixAction = descriptor.fixAction,
-                anchor = psi.anchorForRule(descriptor.rule),
+                rule = rule,
+                anchor = psi.anchorForRule(rule),
             )
         }
 

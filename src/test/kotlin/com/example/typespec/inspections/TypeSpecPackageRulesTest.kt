@@ -33,7 +33,7 @@ class TypeSpecPackageRulesTest {
                 TypeSpecPackageJsonRule.TPKG001,
                 TypeSpecPackageJsonRule.TPKG002,
             ),
-            evaluateRules(input).map { it.rule }.toSet(),
+            evaluateRules(input).toSet(),
         )
     }
 
@@ -51,10 +51,10 @@ class TypeSpecPackageRulesTest {
                 TypeSpecPackageJsonRule.TPKG002,
                 TypeSpecPackageJsonRule.TPKG005,
             ),
-            evaluateRules(input).map { it.rule }.toSet(),
+            evaluateRules(input).toSet(),
         )
         assertFalse(
-            evaluateRules(input).any { it.rule == TypeSpecPackageJsonRule.TPKG003 },
+            evaluateRules(input).any { it == TypeSpecPackageJsonRule.TPKG003 },
         )
     }
 
@@ -72,7 +72,7 @@ class TypeSpecPackageRulesTest {
                 TypeSpecPackageJsonRule.TPKG001,
                 TypeSpecPackageJsonRule.TPKG005,
             ),
-            evaluateRules(input).map { it.rule }.toSet(),
+            evaluateRules(input).toSet(),
         )
     }
 
@@ -91,7 +91,7 @@ class TypeSpecPackageRulesTest {
                 TypeSpecPackageJsonRule.TPKG002,
                 TypeSpecPackageJsonRule.TPKG004,
             ),
-            evaluateRules(input).map { it.rule }.toSet(),
+            evaluateRules(input).toSet(),
         )
     }
 
@@ -110,7 +110,7 @@ class TypeSpecPackageRulesTest {
                 TypeSpecPackageJsonRule.TPKG001,
                 TypeSpecPackageJsonRule.TPKG002,
             ),
-            evaluateRules(input).map { it.rule }.toSet(),
+            evaluateRules(input).toSet(),
         )
     }
 
@@ -151,7 +151,7 @@ class TypeSpecPackageRulesTest {
 
         assertEquals(
             TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES,
-            evaluateRules(input).single { it.rule == TypeSpecPackageJsonRule.TPKG004 }.fixAction,
+            evaluateRules(input).single { it == TypeSpecPackageJsonRule.TPKG004 }.fixAction,
         )
     }
 }

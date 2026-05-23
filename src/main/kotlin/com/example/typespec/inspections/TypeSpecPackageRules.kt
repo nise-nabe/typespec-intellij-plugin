@@ -12,25 +12,19 @@ internal data class TypeSpecPackageRulesInput(
     val recommendedLayoutStatus: TypeSpecRecommendedLayoutStatus,
 )
 
-internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecInspectionFindingDescriptor> {
-    val findings = mutableListOf<TypeSpecInspectionFindingDescriptor>()
+internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecPackageJsonRule> {
+    val findings = mutableListOf<TypeSpecPackageJsonRule>()
 
     if (input.isLikelyTypeSpecExtensionPackage) {
         if (input.type != RECOMMENDED_TYPE_MODULE) {
-            findings += descriptorFor(TypeSpecPackageJsonRule.TPKG001, TypeSpecFindingSeverity.WARNING)
+            findings += TypeSpecPackageJsonRule.TPKG001
         }
         if (input.main.isNullOrBlank()) {
-            findings += descriptorFor(TypeSpecPackageJsonRule.TPKG002, TypeSpecFindingSeverity.WARNING)
+            findings += TypeSpecPackageJsonRule.TPKG002
         }
         when (input.recommendedLayoutStatus) {
-            TypeSpecRecommendedLayoutStatus.MISSING -> findings += descriptorFor(
-                TypeSpecPackageJsonRule.TPKG003,
-                TypeSpecFindingSeverity.WARNING,
-            )
-            TypeSpecRecommendedLayoutStatus.VALID_FALLBACK -> findings += descriptorFor(
-                TypeSpecPackageJsonRule.TPKG005,
-                TypeSpecFindingSeverity.INFORMATION,
-            )
+            TypeSpecRecommendedLayoutStatus.MISSING -> findings += TypeSpecPackageJsonRule.TPKG003
+            TypeSpecRecommendedLayoutStatus.VALID_FALLBACK -> findings += TypeSpecPackageJsonRule.TPKG005
             TypeSpecRecommendedLayoutStatus.PREFERRED -> Unit
         }
 
@@ -39,36 +33,11 @@ internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecInspe
         if (hasCompilerOutsidePeerDependencies &&
             !input.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
         ) {
-            findings += descriptorFor(TypeSpecPackageJsonRule.TPKG004, TypeSpecFindingSeverity.WARNING)
+            findings += TypeSpecPackageJsonRule.TPKG004
         }
     }
 
     return findings
-}
-
-internal data class TypeSpecInspectionFindingDescriptor(
-    val rule: TypeSpecPackageJsonRule,
-    val severity: TypeSpecFindingSeverity,
-    val fixAction: TypeSpecPackageJsonFixAction,
-)
-
-private fun descriptorFor(
-    rule: TypeSpecPackageJsonRule,
-    severity: TypeSpecFindingSeverity,
-): TypeSpecInspectionFindingDescriptor =
-    TypeSpecInspectionFindingDescriptor(
-        rule = rule,
-        severity = severity,
-        fixAction = fixActionForRule(rule),
-    )
-
-private fun fixActionForRule(rule: TypeSpecPackageJsonRule): TypeSpecPackageJsonFixAction = when (rule) {
-    TypeSpecPackageJsonRule.TPKG004 -> TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES
-    TypeSpecPackageJsonRule.TPKG001,
-    TypeSpecPackageJsonRule.TPKG002,
-    TypeSpecPackageJsonRule.TPKG003,
-    TypeSpecPackageJsonRule.TPKG005,
-    -> TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA
 }
 
 internal fun buildRulesInput(
