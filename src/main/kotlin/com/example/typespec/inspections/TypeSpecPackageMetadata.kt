@@ -75,8 +75,10 @@ data class TypeSpecPackageMetadata(
     val exportsDotProperty: JsonProperty?,
     val typespecExportProperty: JsonProperty?,
     val dependenciesProperty: JsonProperty?,
+    val devDependenciesProperty: JsonProperty?,
     val peerDependenciesProperty: JsonProperty?,
     val compilerDependencyProperty: JsonProperty?,
+    val devCompilerDependencyProperty: JsonProperty?,
 ) {
     fun evaluateFindings(): List<TypeSpecInspectionFinding> {
         val rulesInput = TypeSpecPackageRulesInput(
@@ -106,7 +108,11 @@ data class TypeSpecPackageMetadata(
         TypeSpecPackageJsonRule.TPKG001 -> typeProperty ?: rootObject
         TypeSpecPackageJsonRule.TPKG002 -> mainProperty ?: rootObject
         TypeSpecPackageJsonRule.TPKG003 -> exportsProperty ?: exportsDotProperty ?: typespecExportProperty ?: rootObject
-        TypeSpecPackageJsonRule.TPKG004 -> compilerDependencyProperty ?: dependenciesProperty ?: rootObject
+        TypeSpecPackageJsonRule.TPKG004 -> compilerDependencyProperty
+            ?: devCompilerDependencyProperty
+            ?: dependenciesProperty
+            ?: devDependenciesProperty
+            ?: rootObject
         TypeSpecPackageJsonRule.TPKG005 -> exportsProperty ?: tspMainProperty ?: mainProperty ?: rootObject
     }
 
@@ -165,8 +171,10 @@ data class TypeSpecPackageMetadata(
                 exportsDotProperty = exportsDot.dotProperty,
                 typespecExportProperty = exportsDot.typespecExportProperty,
                 dependenciesProperty = dependenciesProperty,
+                devDependenciesProperty = devDependenciesProperty,
                 peerDependenciesProperty = peerDependenciesProperty,
                 compilerDependencyProperty = findDependencyProperty(dependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
+                devCompilerDependencyProperty = findDependencyProperty(devDependenciesProperty, TYPESPEC_COMPILER_PACKAGE),
             )
         }
 

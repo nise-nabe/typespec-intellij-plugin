@@ -80,6 +80,21 @@ class TypeSpecPackageRulesTest {
     }
 
     @Test
+    fun devDependencyCompilerReportsCompilerWarning() {
+        val input = buildRulesInput(
+            typespecExport = null,
+            main = null,
+            tspMain = null,
+            devDependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~1.0.0"),
+        )
+
+        assertEquals(
+            listOf(TypeSpecPackageJsonRule.TPKG004),
+            evaluateRules(input).map { it.rule },
+        )
+    }
+
+    @Test
     fun existingPeerDependencySuppressesCompilerWarning() {
         val input = buildRulesInput(
             typespecExport = "./lib/main.tsp",

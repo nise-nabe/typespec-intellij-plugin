@@ -40,7 +40,9 @@ internal object TypeSpecPackageJsonEditor {
     }
 
     fun moveCompilerToPeerDependencies(project: Project, metadata: TypeSpecPackageMetadata) {
-        val compilerVersion = metadata.dependencies[TYPESPEC_COMPILER_PACKAGE] ?: return
+        val compilerVersion = metadata.dependencies[TYPESPEC_COMPILER_PACKAGE]
+            ?: metadata.devDependencies[TYPESPEC_COMPILER_PACKAGE]
+            ?: return
         if (metadata.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)) {
             return
         }
@@ -135,6 +137,7 @@ internal object TypeSpecPackageJsonEditor {
         }
 
         metadata.compilerDependencyProperty?.delete()
+        metadata.devCompilerDependencyProperty?.delete()
     }
 
     private fun runWrite(project: Project, metadata: TypeSpecPackageMetadata, action: () -> Unit) {
