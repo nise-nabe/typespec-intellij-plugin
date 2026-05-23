@@ -10,11 +10,6 @@ private val FIX_ACTION_MESSAGE_KEYS = mapOf(
     TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES to "fix.moveCompilerToPeerDependencies",
 )
 
-private val FIX_ACTION_APPLIERS = mapOf<TypeSpecPackageJsonFixAction, (Project, TypeSpecPackageMetadata) -> Unit>(
-    TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA to TypeSpecPackageJsonEditor::applyRecommendedMetadata,
-    TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES to TypeSpecPackageJsonEditor::moveCompilerToPeerDependencies,
-)
-
 private class TypeSpecPackageJsonQuickFix(
     private val action: TypeSpecPackageJsonFixAction,
 ) : LocalQuickFix {
@@ -23,7 +18,7 @@ private class TypeSpecPackageJsonQuickFix(
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val metadata = metadataFromElement(descriptor.psiElement) ?: return
-        FIX_ACTION_APPLIERS.getValue(action)(project, metadata)
+        TypeSpecPackageJsonEditor.applyFix(action, project, metadata)
     }
 }
 
