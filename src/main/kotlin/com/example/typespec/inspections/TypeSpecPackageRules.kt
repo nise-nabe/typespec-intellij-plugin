@@ -13,31 +13,10 @@ internal data class TypeSpecPackageRulesInput(
 )
 
 internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecPackageJsonRule> {
-    val findings = mutableListOf<TypeSpecPackageJsonRule>()
-
-    if (input.isLikelyTypeSpecExtensionPackage) {
-        if (input.type != RECOMMENDED_TYPE_MODULE) {
-            findings += TypeSpecPackageJsonRule.TPKG001
-        }
-        if (input.main.isNullOrBlank()) {
-            findings += TypeSpecPackageJsonRule.TPKG002
-        }
-        when (input.recommendedLayoutStatus) {
-            TypeSpecRecommendedLayoutStatus.MISSING -> findings += TypeSpecPackageJsonRule.TPKG003
-            TypeSpecRecommendedLayoutStatus.VALID_FALLBACK -> findings += TypeSpecPackageJsonRule.TPKG005
-            TypeSpecRecommendedLayoutStatus.PREFERRED -> Unit
-        }
-
-        val hasCompilerOutsidePeerDependencies = input.dependencies.containsKey(TYPESPEC_COMPILER_PACKAGE) ||
-            input.devDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
-        if (hasCompilerOutsidePeerDependencies &&
-            !input.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
-        ) {
-            findings += TypeSpecPackageJsonRule.TPKG004
-        }
+    if (!input.isLikelyTypeSpecExtensionPackage) {
+        return emptyList()
     }
-
-    return findings
+    return TypeSpecPackageJsonRule.entries.filter { it.isViolated(input) }
 }
 
 internal fun buildRulesInput(
