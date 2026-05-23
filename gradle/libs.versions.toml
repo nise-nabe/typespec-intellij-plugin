@@ -2,6 +2,7 @@
 jdk = "21"
 kotlin = "2.3.21"
 junit = "5.11.4"
+junit4 = "4.13.2"
 intellij-platform = "2.16.0"
 intellij-idea = "262.6228.19"
 changelog = "2.5.0"
