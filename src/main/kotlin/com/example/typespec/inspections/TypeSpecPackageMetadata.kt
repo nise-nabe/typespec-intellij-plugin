@@ -5,11 +5,11 @@ import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
 
 internal data class TypeSpecPackageMetadata(
-    val rules: TypeSpecPackageRulesInput,
+    val input: TypeSpecPackageRulesInput,
     val psi: TypeSpecPackageJsonPsiAnchors,
 ) {
     fun evaluateFindings(): List<TypeSpecInspectionFinding> =
-        evaluateRules(rules).map { rule ->
+        evaluateRules(input).map { rule ->
             TypeSpecInspectionFinding(
                 rule = rule,
                 anchor = rule.anchor(psi),
@@ -41,7 +41,7 @@ internal data class TypeSpecPackageMetadata(
             val exportsDot = ExportsDotState.fromExportsProperty(exportsProperty)
 
             return TypeSpecPackageMetadata(
-                rules = buildRulesInput(
+                input = buildRulesInput(
                     type = type,
                     main = main,
                     tspMain = tspMain,

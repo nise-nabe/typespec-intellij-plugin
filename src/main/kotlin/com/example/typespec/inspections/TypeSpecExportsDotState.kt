@@ -4,6 +4,7 @@ import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.json.psi.JsonObject
 import com.intellij.json.psi.JsonProperty
 import com.intellij.json.psi.JsonStringLiteral
+import com.intellij.psi.PsiElement
 
 internal sealed class DotKind {
     data object Missing : DotKind()
@@ -27,18 +28,30 @@ internal sealed class DotKind {
 internal sealed class ExportsDotState {
     abstract val typespecExport: String?
 
-    val dotProperty: JsonProperty?
-        get() = (this as? Ready)?.dotPropertyElement
-
-    val typespecExportProperty: JsonProperty?
-        get() = when (val kind = (this as? Ready)?.dotKind) {
-            is DotKind.ObjectDot -> kind.typespecExportProperty
-            else -> null
+    fun missingLayoutInspectionAnchor(fallback: PsiElement): PsiElement = when (this) {
+        is Missing -> fallback
+        is InvalidExports -> exportsProperty
+        is Ready -> when (dotKind) {
+            DotKind.Missing -> exportsProperty
+            is DotKind.StringDefault -> dotPropertyElement ?: exportsProperty
+            is DotKind.ObjectDot -> dotKind.typespecExportProperty
+                ?: dotPropertyElement
+                ?: exportsProperty
+            is DotKind.Invalid -> dotPropertyElement ?: exportsProperty
         }
+    }
 
-    data class Missing(
-        val exportsProperty: JsonProperty? = null,
-    ) : ExportsDotState() {
+    fun fallbackLayoutInspectionAnchor(
+        tspMainProperty: JsonProperty?,
+        mainProperty: JsonProperty?,
+        fallback: PsiElement,
+    ): PsiElement = when (this) {
+        is Missing -> tspMainProperty ?: mainProperty ?: fallback
+        is InvalidExports -> exportsProperty
+        is Ready -> exportsProperty
+    }
+
+    data object Missing : ExportsDotState() {
         override val typespecExport: String? = null
     }
 
@@ -104,7 +117,7 @@ internal sealed class ExportsDotState {
     companion object {
         fun fromExportsProperty(exportsProperty: JsonProperty?): ExportsDotState {
             if (exportsProperty == null) {
-                return Missing()
+                return Missing
             }
 
             val exportsObject = exportsProperty.value as? JsonObject
