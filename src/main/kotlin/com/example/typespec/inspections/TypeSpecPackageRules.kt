@@ -17,25 +17,19 @@ internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecInspe
 
     if (input.isLikelyTypeSpecExtensionPackage) {
         if (input.type != RECOMMENDED_TYPE_MODULE) {
-            findings += TypeSpecInspectionFindingDescriptor(
-                rule = TypeSpecPackageJsonRule.TPKG001,
-                severity = TypeSpecFindingSeverity.WARNING,
-            )
+            findings += descriptorFor(TypeSpecPackageJsonRule.TPKG001, TypeSpecFindingSeverity.WARNING)
         }
         if (input.main.isNullOrBlank()) {
-            findings += TypeSpecInspectionFindingDescriptor(
-                rule = TypeSpecPackageJsonRule.TPKG002,
-                severity = TypeSpecFindingSeverity.WARNING,
-            )
+            findings += descriptorFor(TypeSpecPackageJsonRule.TPKG002, TypeSpecFindingSeverity.WARNING)
         }
         when (input.recommendedLayoutStatus) {
-            TypeSpecRecommendedLayoutStatus.MISSING -> findings += TypeSpecInspectionFindingDescriptor(
-                rule = TypeSpecPackageJsonRule.TPKG003,
-                severity = TypeSpecFindingSeverity.WARNING,
+            TypeSpecRecommendedLayoutStatus.MISSING -> findings += descriptorFor(
+                TypeSpecPackageJsonRule.TPKG003,
+                TypeSpecFindingSeverity.WARNING,
             )
-            TypeSpecRecommendedLayoutStatus.VALID_FALLBACK -> findings += TypeSpecInspectionFindingDescriptor(
-                rule = TypeSpecPackageJsonRule.TPKG005,
-                severity = TypeSpecFindingSeverity.INFORMATION,
+            TypeSpecRecommendedLayoutStatus.VALID_FALLBACK -> findings += descriptorFor(
+                TypeSpecPackageJsonRule.TPKG005,
+                TypeSpecFindingSeverity.INFORMATION,
             )
             TypeSpecRecommendedLayoutStatus.PREFERRED -> Unit
         }
@@ -45,10 +39,7 @@ internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecInspe
         if (hasCompilerOutsidePeerDependencies &&
             !input.peerDependencies.containsKey(TYPESPEC_COMPILER_PACKAGE)
         ) {
-            findings += TypeSpecInspectionFindingDescriptor(
-                rule = TypeSpecPackageJsonRule.TPKG004,
-                severity = TypeSpecFindingSeverity.WARNING,
-            )
+            findings += descriptorFor(TypeSpecPackageJsonRule.TPKG004, TypeSpecFindingSeverity.WARNING)
         }
     }
 
@@ -58,7 +49,27 @@ internal fun evaluateRules(input: TypeSpecPackageRulesInput): List<TypeSpecInspe
 internal data class TypeSpecInspectionFindingDescriptor(
     val rule: TypeSpecPackageJsonRule,
     val severity: TypeSpecFindingSeverity,
+    val fixAction: TypeSpecPackageJsonFixAction,
 )
+
+private fun descriptorFor(
+    rule: TypeSpecPackageJsonRule,
+    severity: TypeSpecFindingSeverity,
+): TypeSpecInspectionFindingDescriptor =
+    TypeSpecInspectionFindingDescriptor(
+        rule = rule,
+        severity = severity,
+        fixAction = fixActionForRule(rule),
+    )
+
+private fun fixActionForRule(rule: TypeSpecPackageJsonRule): TypeSpecPackageJsonFixAction = when (rule) {
+    TypeSpecPackageJsonRule.TPKG004 -> TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES
+    TypeSpecPackageJsonRule.TPKG001,
+    TypeSpecPackageJsonRule.TPKG002,
+    TypeSpecPackageJsonRule.TPKG003,
+    TypeSpecPackageJsonRule.TPKG005,
+    -> TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA
+}
 
 internal fun buildRulesInput(
     type: String? = null,
@@ -130,8 +141,3 @@ private fun resolveRecommendedLayoutStatus(
 }
 
 private const val TYPESPEC_SCOPE_PREFIX = "@typespec/"
-
-internal fun TypeSpecPackageRulesInput.needsRecommendedMetadataFix(): Boolean =
-    type != RECOMMENDED_TYPE_MODULE ||
-        main.isNullOrBlank() ||
-        typespecExport.isNullOrBlank()

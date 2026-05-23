@@ -127,21 +127,31 @@ class TypeSpecPackageRulesTest {
     }
 
     @Test
-    fun combinedRecommendedFixEligibilityRequiresAtLeastOneMissingRecommendedField() {
-        val metadata = buildRulesInput(
-            type = RECOMMENDED_TYPE_MODULE,
-            main = RECOMMENDED_MAIN,
-            typespecExport = RECOMMENDED_TYPESPEC_EXPORT,
-            tspMain = null,
-        )
-
-        assertFalse(metadata.needsRecommendedMetadataFix())
-
-        val missingMetadata = buildRulesInput(
+    fun metadataRulesOfferCombinedRecommendedFix() {
+        val input = buildRulesInput(
             typespecExport = "./lib/main.tsp",
             main = null,
             tspMain = null,
         )
-        assertTrue(missingMetadata.needsRecommendedMetadataFix())
+
+        assertEquals(
+            setOf(TypeSpecPackageJsonFixAction.APPLY_RECOMMENDED_METADATA),
+            evaluateRules(input).map { it.fixAction }.toSet(),
+        )
+    }
+
+    @Test
+    fun compilerRuleOffersMoveToPeerDependenciesFix() {
+        val input = buildRulesInput(
+            typespecExport = "./lib/main.tsp",
+            main = null,
+            tspMain = null,
+            devDependencies = mapOf(TYPESPEC_COMPILER_PACKAGE to "~1.0.0"),
+        )
+
+        assertEquals(
+            TypeSpecPackageJsonFixAction.MOVE_COMPILER_TO_PEER_DEPENDENCIES,
+            evaluateRules(input).single { it.rule == TypeSpecPackageJsonRule.TPKG004 }.fixAction,
+        )
     }
 }
