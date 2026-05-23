@@ -13,7 +13,7 @@ internal data class TypeSpecPackageMetadata(
         evaluateRules(input).map { rule ->
             TypeSpecInspectionFinding(
                 rule = rule,
-                anchor = rule.anchor(psi),
+                anchor = rule.anchor(psi, input),
             )
         }
 

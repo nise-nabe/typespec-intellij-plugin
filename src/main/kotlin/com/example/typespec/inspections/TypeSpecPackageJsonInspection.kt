@@ -17,8 +17,8 @@ class TypeSpecPackageJsonInspection : LocalInspectionTool() {
                 val metadata = TypeSpecPackageMetadata.fromJsonFile(file) ?: return
                 val registeredFixActions = mutableSetOf<TypeSpecPackageJsonFixAction>()
                 for (finding in metadata.evaluateFindings()) {
-                    val highlightType = highlightTypeForSeverity(finding.rule.severity)
-                    val message = finding.rule.localizedMessage()
+                    val highlightType = highlightTypeForSeverity(finding.rule.severity(metadata.input))
+                    val message = finding.rule.localizedMessage(metadata.input)
                     if (registeredFixActions.add(finding.rule.fixAction)) {
                         holder.registerProblem(
                             finding.anchor,
