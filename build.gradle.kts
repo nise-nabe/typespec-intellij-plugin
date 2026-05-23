@@ -22,9 +22,6 @@ dependencies {
         bundledPlugin("com.intellij.modules.json")
         testFramework(TestFrameworkType.Platform)
     }
-
-    testImplementation("junit:junit:${libs.versions.junit4.get()}")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
 }
 
 intellijPlatform {
@@ -64,6 +61,11 @@ testing {
         @Suppress("UnstableApiUsage")
         named<JvmTestSuite>("test") {
             useJUnitJupiter(libs.versions.junit.get())
+
+            dependencies {
+                implementation("junit:junit:${libs.versions.junit4.get()}")
+                runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
+            }
         }
     }
 }
