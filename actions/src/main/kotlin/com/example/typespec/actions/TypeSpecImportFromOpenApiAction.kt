@@ -28,7 +28,7 @@ class TypeSpecImportFromOpenApiAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.updateForProject(event)
+        TypeSpecActionSupport.updateForProjectWithOpenApi3Cli(event)
     }
 
     override fun actionPerformed(event: AnActionEvent) {

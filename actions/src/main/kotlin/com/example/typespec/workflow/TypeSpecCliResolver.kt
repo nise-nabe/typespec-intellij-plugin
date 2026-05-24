@@ -20,6 +20,13 @@ internal object TypeSpecCliResolver {
         )
     }
 
+    fun isOpenApi3CliResolvable(project: Project): Boolean {
+        val probeDirectory = project.basePath?.let { Paths.get(it) }
+            ?: Paths.get(TypeSpecCompilerPackageResolver.getSelectedPackage(project).systemDependentPath).parent
+            ?: return false
+        return resolveOpenApi3Cli(project, probeDirectory) != null
+    }
+
     fun resolveOpenApi3Cli(project: Project, workingDirectory: Path): TypeSpecCliCommand? {
         val packageDirectories = linkedSetOf(
             workingDirectory.resolve("node_modules").resolve(TYPESPEC_OPENAPI3_PACKAGE_NAME),

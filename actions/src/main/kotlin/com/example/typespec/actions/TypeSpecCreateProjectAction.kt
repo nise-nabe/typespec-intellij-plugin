@@ -22,7 +22,7 @@ class TypeSpecCreateProjectAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.updateForProject(event)
+        TypeSpecActionSupport.updateForProjectWithCompilerCli(event)
     }
 
     override fun actionPerformed(event: AnActionEvent) {

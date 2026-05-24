@@ -4,6 +4,7 @@ import com.example.typespec.TypeSpecFileType
 import com.example.typespec.TypeSpecCompilerPackageResolver
 import com.example.typespec.TypeSpecServiceMode
 import com.example.typespec.TypeSpecServiceSettings
+import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,6 +27,20 @@ internal object TypeSpecActionSupport {
     fun updateForProject(event: AnActionEvent) {
         val project = event.project
         event.presentation.isEnabledAndVisible = project != null
+    }
+
+    fun updateForProjectWithCompilerCli(event: AnActionEvent) {
+        val project = event.project
+        event.presentation.isEnabledAndVisible = project != null &&
+            isServiceEnabled(project) &&
+            TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project)
+    }
+
+    fun updateForProjectWithOpenApi3Cli(event: AnActionEvent) {
+        val project = event.project
+        event.presentation.isEnabledAndVisible = project != null &&
+            isServiceEnabled(project) &&
+            TypeSpecCliResolver.isOpenApi3CliResolvable(project)
     }
 
     fun updateWhenServiceEnabled(
