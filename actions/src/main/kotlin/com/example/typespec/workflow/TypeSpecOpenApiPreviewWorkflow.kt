@@ -29,7 +29,7 @@ internal object TypeSpecOpenApiPreviewWorkflow {
                     e.message ?: e.toString(),
                     "action.previewOpenApi.title",
                 )
-                TypeSpecCliJobResult.Finished(-1)
+                TypeSpecCliJobResult.FailureNotified
             } finally {
                 TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
             }
@@ -48,7 +48,7 @@ internal object TypeSpecOpenApiPreviewWorkflow {
             PreviewRunOutcome.MissingCompiler -> TypeSpecCliJobResult.CliUnavailable
             PreviewRunOutcome.Cancelled -> TypeSpecCliJobResult.Cancelled
             is PreviewRunOutcome.CompileFailed -> TypeSpecCliJobResult.Finished(outcome.exitCode)
-            PreviewRunOutcome.PreviewFailed -> TypeSpecCliJobResult.Finished(1)
+            PreviewRunOutcome.PreviewFailed -> TypeSpecCliJobResult.FailureNotified
             PreviewRunOutcome.Ok -> TypeSpecCliJobResult.Finished(0)
         }
     }
@@ -73,6 +73,7 @@ internal object TypeSpecOpenApiPreviewWorkflow {
             TypeSpecCliJobResult.CliUnavailable -> PreviewRunOutcome.MissingCompiler
             TypeSpecCliJobResult.Cancelled -> PreviewRunOutcome.Cancelled
             TypeSpecCliJobResult.AbortedByUser -> PreviewRunOutcome.Cancelled
+            TypeSpecCliJobResult.FailureNotified -> PreviewRunOutcome.PreviewFailed
             is TypeSpecCliJobResult.Finished -> {
                 if (compileResult.exitCode != 0) {
                     PreviewRunOutcome.CompileFailed(compileResult.exitCode)

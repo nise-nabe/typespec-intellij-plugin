@@ -7,6 +7,9 @@ internal sealed interface TypeSpecCliJobResult {
 
     data object CliUnavailable : TypeSpecCliJobResult
 
+    /** Failure UI was already shown by the job; skip generic workflow notifications. */
+    data object FailureNotified : TypeSpecCliJobResult
+
     data class Finished(val exitCode: Int) : TypeSpecCliJobResult
 }
 

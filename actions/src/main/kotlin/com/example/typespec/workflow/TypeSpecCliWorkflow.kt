@@ -44,7 +44,10 @@ internal object TypeSpecCliWorkflow {
                     spec.titleKey,
                     spec.cliUnavailableMessageKey,
                 )
-                TypeSpecCliJobResult.AbortedByUser, TypeSpecCliJobResult.Cancelled -> Unit
+                TypeSpecCliJobResult.AbortedByUser,
+                TypeSpecCliJobResult.Cancelled,
+                TypeSpecCliJobResult.FailureNotified,
+                -> Unit
                 is TypeSpecCliJobResult.Finished -> {
                     if (result.exitCode == 0) {
                         onSuccess?.invoke()
