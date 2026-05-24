@@ -1,0 +1,40 @@
+package com.example.typespec.workflow
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Files
+import java.nio.file.Path
+
+class TypeSpecOpenApiPreviewTest {
+    @TempDir
+    lateinit var tempDir: Path
+
+    @Test
+    fun resolvePreviewEmitterRequiresOpenApi3() {
+        assertEquals(
+            TYPESPEC_OPENAPI3_EMITTER,
+            TypeSpecOpenApiPreview.resolvePreviewEmitter(listOf("@typespec/http", TYPESPEC_OPENAPI3_EMITTER)),
+        )
+        assertNull(TypeSpecOpenApiPreview.resolvePreviewEmitter(listOf("@typespec/http")))
+    }
+
+    @Test
+    fun findOpenApiOutputFileIsDeterministic() {
+        Files.writeString(tempDir.resolve("z-spec.yaml"), "openapi: 3.0.0")
+        Files.writeString(tempDir.resolve("a-spec.json"), "{\"openapi\":\"3.0.0\"}")
+
+        val selected = TypeSpecOpenApiPreview.findOpenApiOutputFile(tempDir)
+
+        assertEquals("a-spec.json", selected?.fileName?.toString())
+    }
+
+    @Test
+    fun buildSwaggerPreviewHtmlInlinesSpec() {
+        val html = TypeSpecOpenApiPreview.buildSwaggerPreviewHtml("""{"openapi":"3.0.0"}""")
+
+        assertTrue(html.contains("""spec: {"openapi":"3.0.0"}"""))
+    }
+}

@@ -1,9 +1,12 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
+import com.example.typespec.workflow.TYPESPEC_OPENAPI3_EMITTER
 import com.example.typespec.workflow.TypeSpecCliRunner
+import com.example.typespec.workflow.TypeSpecOpenApiPreview
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.example.typespec.workflow.TypeSpecProjectContext
+import com.example.typespec.workflow.TypeSpecTspConfigReader
 import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -16,8 +19,6 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import java.nio.file.Files
-import java.nio.file.Path
-import java.util.stream.Stream
 
 class TypeSpecPreviewOpenApiAction : AnAction(
     TypeSpecBundle.message("action.previewOpenApi.text"),
@@ -44,6 +45,16 @@ class TypeSpecPreviewOpenApiAction : AnAction(
             return
         }
 
+        val configuredEmitters = TypeSpecTspConfigReader.readEmitters(resolution.projectRoot)
+        if (TypeSpecOpenApiPreview.resolvePreviewEmitter(configuredEmitters) == null) {
+            Messages.showErrorDialog(
+                project,
+                TypeSpecBundle.message("action.previewOpenApi.noOpenApiEmitter", TYPESPEC_OPENAPI3_EMITTER),
+                TypeSpecBundle.message("action.previewOpenApi.title"),
+            )
+            return
+        }
+
         val output = TypeSpecOutputService.getInstance(project)
         output.show(project)
         output.clear()
@@ -51,19 +62,15 @@ class TypeSpecPreviewOpenApiAction : AnAction(
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.previewOpenApi.progress"), true) {
             override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
                 val tempDir = Files.createTempDirectory("typespec-openapi-preview-")
+                var previewHtml: java.nio.file.Path? = null
                 try {
                     val runner = TypeSpecCliRunner(project)
                     val exitCode = runner.compile(
                         project = project,
                         projectRoot = resolution.projectRoot,
                         entrypoint = entrypoint,
-                        emitters = listOf("@typespec/openapi3"),
-                        extraArgs = listOf(
-                            "--option",
-                            "@typespec/openapi3.file-type=json",
-                            "--option",
-                            "@typespec/openapi3.emitter-output-dir=${tempDir.toAbsolutePath()}",
-                        ),
+                        emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
+                        extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(tempDir),
                     ) ?: run {
                         TypeSpecActionSupport.showCompilerMissing(project, "action.previewOpenApi.title")
                         return
@@ -77,7 +84,7 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                         )
                         return
                     }
-                    val openApiFile = findOpenApiFile(tempDir)
+                    val openApiFile = TypeSpecOpenApiPreview.findOpenApiOutputFile(tempDir)
                     if (openApiFile == null) {
                         TypeSpecWorkflowOutcomes.presentErrorOnEdt(
                             project,
@@ -86,10 +93,12 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                         )
                         return
                     }
-                    val previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
-                    Files.writeString(previewHtml, buildSwaggerHtml(openApiFile))
+                    val openApiJson = Files.readString(openApiFile)
+                    previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
+                    Files.writeString(previewHtml, TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(openApiJson))
+                    val htmlToOpen = previewHtml
                     ApplicationManager.getApplication().invokeLater {
-                        BrowserUtil.browse(previewHtml.toUri())
+                        BrowserUtil.browse(htmlToOpen.toUri())
                     }
                 } catch (e: Exception) {
                     ApplicationManager.getApplication().invokeLater {
@@ -99,41 +108,10 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                             TypeSpecBundle.message("action.previewOpenApi.title"),
                         )
                     }
+                } finally {
+                    TypeSpecOpenApiPreview.deleteRecursivelyQuietly(tempDir)
                 }
             }
         })
-    }
-
-    private fun findOpenApiFile(directory: Path): Path? {
-        Files.walk(directory).use { paths: Stream<Path> ->
-            return paths
-                .filter { Files.isRegularFile(it) }
-                .filter {
-                    val name = it.fileName.toString().lowercase()
-                    name.endsWith(".json") || name.endsWith(".yaml") || name.endsWith(".yml")
-                }
-                .findFirst()
-                .orElse(null)
-        }
-    }
-
-    private fun buildSwaggerHtml(openApiFile: Path): String {
-        val specUrl = openApiFile.toUri().toString()
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8"/>
-              <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
-            </head>
-            <body>
-              <div id="swagger-ui"></div>
-              <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
-              <script>
-                window.ui = SwaggerUIBundle({ url: '$specUrl', dom_id: '#swagger-ui' });
-              </script>
-            </body>
-            </html>
-        """.trimIndent()
     }
 }
