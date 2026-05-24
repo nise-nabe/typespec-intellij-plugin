@@ -14,6 +14,7 @@
             <li>LSP-based editing support for TypeSpec projects</li>
             <li>Project settings to configure the TypeSpec Language Server package path and enable or disable the service</li>
             <li>Inspections and quick fixes for TypeSpec extension package <code>package.json</code> metadata</li>
+            <li>VS Code parity commands: restart server, show output, emit, create project, OpenAPI import, API documentation preview</li>
         </ul>
     ]]></description>
 
@@ -55,5 +56,55 @@
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="com.example.typespec.inspections.TypeSpecPackageJsonInspection"/>
+
+        <toolWindow id="TypeSpec Output"
+                    anchor="bottom"
+                    factoryClass="com.example.typespec.workflow.TypeSpecToolWindowFactory"
+                    icon="AllIcons.FileTypes.Any_type"
+                    bundle="messages.TypeSpecBundle"
+                    key="toolWindow.typespecOutput.title"/>
+
+        <projectService serviceImplementation="com.example.typespec.workflow.TypeSpecOutputService"/>
+
+        <projectService serviceInterface="com.example.typespec.TypeSpecLanguageServerCommandExecutor"
+                          serviceImplementation="com.example.typespec.TypeSpecLanguageServerCommandExecutorImpl"/>
+
+        <projectListeners>
+            <listener class="com.example.typespec.TypeSpecLspServiceSettingsListener"
+                      topic="com.example.typespec.TypeSpecServiceSettingsListener"/>
+        </projectListeners>
+
+        <configurationType implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationType"/>
+        <runConfigurationProducer implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationProducer"/>
     </extensions>
+
+    <actions resource-bundle="messages.TypeSpecBundle">
+        <group id="TypeSpec.Tools" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <action id="TypeSpec.RestartServer" class="com.example.typespec.actions.TypeSpecRestartServerAction"/>
+            <action id="TypeSpec.ShowOutput" class="com.example.typespec.actions.TypeSpecShowOutputAction"/>
+            <action id="TypeSpec.EmitFromTypeSpec" class="com.example.typespec.actions.TypeSpecEmitFromTypeSpecAction"/>
+            <action id="TypeSpec.CreateProject" class="com.example.typespec.actions.TypeSpecCreateProjectAction"/>
+            <action id="TypeSpec.ImportFromOpenApi" class="com.example.typespec.actions.TypeSpecImportFromOpenApiAction"/>
+            <separator/>
+            <action id="TypeSpec.PreviewOpenApi" class="com.example.typespec.actions.TypeSpecPreviewOpenApiAction"/>
+        </group>
+
+        <group id="TypeSpec.EditorPopup">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <separator/>
+            <reference ref="TypeSpec.EmitFromTypeSpec"/>
+            <reference ref="TypeSpec.PreviewOpenApi"/>
+            <reference ref="TypeSpec.RestartServer"/>
+            <reference ref="TypeSpec.ShowOutput"/>
+        </group>
+
+        <group id="TypeSpec.ProjectViewPopup">
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <separator/>
+            <reference ref="TypeSpec.EmitFromTypeSpec"/>
+            <reference ref="TypeSpec.ImportFromOpenApi"/>
+            <reference ref="TypeSpec.CreateProject"/>
+        </group>
+    </actions>
 </idea-plugin>

@@ -29,7 +29,7 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
 
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
 
         assertTrue(TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
     }
@@ -40,7 +40,7 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
         settings.lspServerPackage = NodePackage(packageDirectory.toString())
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
 
         val packageKey = packageDirectory.toString()
         assertTrue(TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
