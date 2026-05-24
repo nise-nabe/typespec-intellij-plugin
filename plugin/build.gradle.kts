@@ -1,13 +1,8 @@
-import org.gradle.api.plugins.jvm.JvmTestSuite
-import org.gradle.jvm.toolchain.JavaLanguageVersion
-import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
-    java
-    `java-test-fixtures`
-    alias(libs.plugins.kotlin.jvm)
+    id("typespec.kotlin-conventions")
     id("org.jetbrains.intellij.platform")
     alias(libs.plugins.changelog)
 }
@@ -22,6 +17,9 @@ dependencies {
         bundledPlugin("NodeJS")
         bundledPlugin("com.intellij.modules.json")
         testFramework(TestFrameworkType.Platform)
+        pluginComposedModule(project(":core"))
+        pluginComposedModule(project(":lsp"))
+        pluginComposedModule(project(":inspections"))
     }
 }
 
@@ -48,26 +46,6 @@ intellijPlatform {
     }
 }
 
-java {
-    toolchain {
-        // https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html#platformVersions
-        languageVersion = JavaLanguageVersion.of(libs.versions.jdk.get().toInt())
-        @Suppress("UnstableApiUsage")
-        vendor = JvmVendorSpec.JETBRAINS
-    }
-}
-
-testing {
-    suites {
-        @Suppress("UnstableApiUsage")
-        named<JvmTestSuite>("test") {
-            useJUnitJupiter(libs.versions.junit.get())
-
-            dependencies {
-                implementation(testFixtures(project(":")))
-                implementation("junit:junit:${libs.versions.junit4.get()}")
-                runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
-            }
-        }
-    }
+changelog {
+    path.set(rootProject.layout.projectDirectory.file("CHANGELOG.md").asFile.absolutePath)
 }
