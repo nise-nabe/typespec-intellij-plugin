@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
@@ -35,10 +36,23 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         }
     }
 
-    fun onTypeSpecFileOpened(project: Project, file: VirtualFile) {
-        if (!TypeSpecLspServerActivationRule.isEligibleExceptPackageResolution(project, file)) {
+    fun onTypeSpecFileOpened(
+        project: Project,
+        file: VirtualFile,
+        serverStarter: LspServerSupportProvider.LspServerStarter,
+    ) {
+        if (!TypeSpecLspServerActivationRule.isEnabled(project, file)) {
             return
         }
+
+        if (TypeSpecLspServerActivationRule.isEnabledAndAvailable(project, file)) {
+            serverStarter.ensureServerStarted(TypeSpecLspServerDescriptor(project))
+        }
+
+        scheduleCompilerMissingNotificationSync(project)
+    }
+
+    private fun scheduleCompilerMissingNotificationSync(project: Project) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
             return
         }

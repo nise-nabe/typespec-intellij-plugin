@@ -13,19 +13,19 @@ class TypeSpecActivationHelperSettingsTest : BasePlatformTestCase() {
         assertFalse(TypeSpecActivationHelper.isEnabledInSettings(project))
     }
 
-    fun testIsEligibleExceptPackageResolutionIsFalseWhenServiceDisabled() {
+    fun testIsEnabledIsFalseWhenServiceDisabled() {
         val settings = TypeSpecServiceSettings.getInstance(project)
         val file = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
 
         settings.serviceMode = TypeSpecServiceMode.DISABLED
-        assertFalse(TypeSpecLspServerActivationRule.isEligibleExceptPackageResolution(project, file))
+        assertFalse(TypeSpecLspServerActivationRule.isEnabled(project, file))
     }
 
-    fun testIsEligibleExceptPackageResolutionIsFalseForNonTypeSpecFile() {
+    fun testIsEnabledIsFalseForNonTypeSpecFile() {
         val settings = TypeSpecServiceSettings.getInstance(project)
         settings.serviceMode = TypeSpecServiceMode.ENABLED
         val file = myFixture.configureByText("main.json", "{}").virtualFile
 
-        assertFalse(TypeSpecLspServerActivationRule.isEligibleExceptPackageResolution(project, file))
+        assertFalse(TypeSpecLspServerActivationRule.isEnabled(project, file))
     }
 }

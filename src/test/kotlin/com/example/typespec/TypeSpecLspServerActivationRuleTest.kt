@@ -9,12 +9,12 @@ class TypeSpecLspServerActivationRuleTest : BasePlatformTestCase() {
         assertFalse(TypeSpecLspServerActivationRule.isFileAcceptable(file))
     }
 
-    fun testIsEligibleExceptPackageResolutionIsFalseInUnitTestModeForTypeSpecFile() {
+    fun testIsEnabledIsFalseInUnitTestModeForTypeSpecFile() {
         val settings = TypeSpecServiceSettings.getInstance(project)
         settings.serviceMode = TypeSpecServiceMode.ENABLED
         val file = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
 
-        assertFalse(TypeSpecLspServerActivationRule.isEligibleExceptPackageResolution(project, file))
+        assertFalse(TypeSpecLspServerActivationRule.isEnabled(project, file))
     }
 
     fun testIsEnabledAndAvailableIsFalseWhenPackageIsNotResolvable() {

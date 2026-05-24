@@ -20,10 +20,7 @@ class TypeSpecLspServerSupportProvider : LspServerSupportProvider {
         file: VirtualFile,
         serverStarter: LspServerSupportProvider.LspServerStarter,
     ) {
-        TypeSpecLspPackageResolutionCoordinator.onTypeSpecFileOpened(project, file)
-        if (TypeSpecLspServerActivationRule.isEnabledAndAvailable(project, file)) {
-            serverStarter.ensureServerStarted(TypeSpecLspServerDescriptor(project))
-        }
+        TypeSpecLspPackageResolutionCoordinator.onTypeSpecFileOpened(project, file, serverStarter)
     }
 
     override fun createLspServerWidgetItem(
@@ -50,9 +47,6 @@ object TypeSpecLspServerActivationRule : LspServerActivationRule(TypeSpecLspServ
     override fun restartService(project: Project) {
         restartTypeSpecServerAsync(project)
     }
-
-    internal fun isEligibleExceptPackageResolution(project: Project, file: VirtualFile): Boolean =
-        isEnabled(project, file)
 }
 
 @Suppress("UnstableApiUsage")
