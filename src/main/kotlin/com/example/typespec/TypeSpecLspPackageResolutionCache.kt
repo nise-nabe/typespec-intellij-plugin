@@ -3,12 +3,19 @@ package com.example.typespec
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import java.util.concurrent.atomic.AtomicLong
 
 @Service(Service.Level.PROJECT)
 internal class TypeSpecLspPackageResolutionCache {
+    private val resolutionUpdateGeneration = AtomicLong(0L)
     private var packageKey: String? = null
     private var resolvable: Boolean? = null
     private var checkedAtMillis: Long = 0L
+
+    fun nextResolutionUpdateGeneration(): Long = resolutionUpdateGeneration.incrementAndGet()
+
+    fun isLatestResolutionUpdate(generation: Long): Boolean =
+        resolutionUpdateGeneration.get() == generation
 
     fun getOrCompute(project: Project, nowMillis: Long = System.currentTimeMillis()): Boolean {
         val selectedPackage = TypeSpecPackageResolution.getSelectedPackage(project)

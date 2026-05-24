@@ -93,6 +93,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         if (project.isDisposed) {
             return
         }
+        val generation = TypeSpecLspPackageResolutionCache.getInstance(project).nextResolutionUpdateGeneration()
         AppExecutorUtil.getAppExecutorService().execute {
             if (project.isDisposed) {
                 return@execute
@@ -101,6 +102,10 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             ApplicationManager.getApplication().invokeLater(
                 {
                     if (project.isDisposed) {
+                        return@invokeLater
+                    }
+                    val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
+                    if (!cache.isLatestResolutionUpdate(generation)) {
                         return@invokeLater
                     }
                     applyResolutionSnapshot(project, snapshot, restartPolicy)
