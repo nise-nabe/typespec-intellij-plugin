@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 internal enum class CliRequirement {
     None,
     Compiler,
-    OpenApi3,
 }
 
 internal data class ActionVisibility(
@@ -31,11 +30,6 @@ internal object TypeSpecActionSupport {
     val projectWithCompilerCliOnly = ActionVisibility(
         requireServiceEnabled = false,
         cli = CliRequirement.Compiler,
-    )
-    val projectWithOpenApi3Cli = ActionVisibility(cli = CliRequirement.OpenApi3)
-    val projectWithOpenApi3CliOnly = ActionVisibility(
-        requireServiceEnabled = false,
-        cli = CliRequirement.OpenApi3,
     )
     val typeSpecFileWithCompilerCli = ActionVisibility(
         requireVirtualFile = true,
@@ -81,7 +75,6 @@ internal object TypeSpecActionSupport {
         return when (policy.cli) {
             CliRequirement.None -> true
             CliRequirement.Compiler -> TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project)
-            CliRequirement.OpenApi3 -> TypeSpecCompilerPackageResolver.isOpenApi3CliResolvable(project)
         }
     }
 }
