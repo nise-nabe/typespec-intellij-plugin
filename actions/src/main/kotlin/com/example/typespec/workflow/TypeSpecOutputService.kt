@@ -22,7 +22,6 @@ class TypeSpecOutputService {
         font = Font(Font.MONOSPACED, Font.PLAIN, 12)
     }
 
-    @Synchronized
     fun append(line: String) {
         val timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
         val entry = "[$timestamp] $line"

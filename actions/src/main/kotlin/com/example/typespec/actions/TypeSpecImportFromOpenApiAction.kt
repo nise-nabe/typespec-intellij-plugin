@@ -5,6 +5,7 @@ import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecCliRunner
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.example.typespec.workflow.TypeSpecWorkflowGuards
+import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -66,13 +67,11 @@ class TypeSpecImportFromOpenApiAction : AnAction(
 
                 val npx = TypeSpecCliResolver.resolveNpxCli(targetFolder)
                 if (npx == null) {
-                    com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
-                        Messages.showErrorDialog(
-                            project,
-                            TypeSpecBundle.message("action.importOpenApi.npxMissing"),
-                            TypeSpecBundle.message("action.importOpenApi.title"),
-                        )
-                    }
+                    TypeSpecWorkflowOutcomes.presentErrorOnEdt(
+                        project,
+                        TypeSpecBundle.message("action.importOpenApi.npxMissing"),
+                        "action.importOpenApi.title",
+                    )
                     return
                 }
 
@@ -88,13 +87,12 @@ class TypeSpecImportFromOpenApiAction : AnAction(
                         refreshAndOpen(project, targetFolder)
                     }
                 } else {
-                    com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
-                        Messages.showWarningDialog(
-                            project,
-                            TypeSpecBundle.message("action.importOpenApi.failed", exitCode),
-                            TypeSpecBundle.message("action.importOpenApi.title"),
-                        )
-                    }
+                    TypeSpecWorkflowOutcomes.presentWarningOnEdt(
+                        project,
+                        "action.importOpenApi.failed",
+                        "action.importOpenApi.title",
+                        exitCode,
+                    )
                 }
             }
         })

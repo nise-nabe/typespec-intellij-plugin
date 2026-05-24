@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
+import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -79,13 +79,12 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
                         return
                     }
                 if (exitCode != 0) {
-                    ApplicationManager.getApplication().invokeLater {
-                        Messages.showWarningDialog(
-                            project,
-                            TypeSpecBundle.message("action.emit.failed", exitCode),
-                            TypeSpecBundle.message("action.emit.title"),
-                        )
-                    }
+                    TypeSpecWorkflowOutcomes.presentWarningOnEdt(
+                        project,
+                        "action.emit.failed",
+                        "action.emit.title",
+                        exitCode,
+                    )
                 }
             }
         })

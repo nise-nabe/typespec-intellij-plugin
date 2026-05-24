@@ -4,6 +4,7 @@ import com.example.typespec.TypeSpecBundle
 import com.example.typespec.workflow.TypeSpecCliRunner
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.example.typespec.workflow.TypeSpecProjectContext
+import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -68,24 +69,21 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                         return
                     }
                     if (exitCode != 0) {
-                        ApplicationManager.getApplication().invokeLater {
-                            Messages.showWarningDialog(
-                                project,
-                                TypeSpecBundle.message("action.previewOpenApi.failed", exitCode),
-                                TypeSpecBundle.message("action.previewOpenApi.title"),
-                            )
-                        }
+                        TypeSpecWorkflowOutcomes.presentWarningOnEdt(
+                            project,
+                            "action.previewOpenApi.failed",
+                            "action.previewOpenApi.title",
+                            exitCode,
+                        )
                         return
                     }
                     val openApiFile = findOpenApiFile(tempDir)
                     if (openApiFile == null) {
-                        ApplicationManager.getApplication().invokeLater {
-                            Messages.showWarningDialog(
-                                project,
-                                TypeSpecBundle.message("action.previewOpenApi.noOutput"),
-                                TypeSpecBundle.message("action.previewOpenApi.title"),
-                            )
-                        }
+                        TypeSpecWorkflowOutcomes.presentErrorOnEdt(
+                            project,
+                            TypeSpecBundle.message("action.previewOpenApi.noOutput"),
+                            "action.previewOpenApi.title",
+                        )
                         return
                     }
                     val previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
