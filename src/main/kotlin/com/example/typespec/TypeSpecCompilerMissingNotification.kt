@@ -46,6 +46,6 @@ internal object TypeSpecCompilerMissingNotification {
                 },
             )
         notification.notify(project)
-        tracker.rememberCompilerMissingNotification(notification)
+        tracker.rememberCompilerMissingNotification(notification, packageKey)
     }
 }

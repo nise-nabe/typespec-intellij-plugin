@@ -1,5 +1,7 @@
 package com.example.typespec
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -10,6 +12,7 @@ class TypeSpecLspNotificationTrackerLogicTest {
         val tracker = TypeSpecLspNotificationTracker()
 
         assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
+        tracker.rememberCompilerMissingNotification(stubNotification(), "default")
         assertFalse(tracker.tryAcquireCompilerMissingNotification("default"))
     }
 
@@ -18,6 +21,7 @@ class TypeSpecLspNotificationTrackerLogicTest {
         val tracker = TypeSpecLspNotificationTracker()
 
         assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
+        tracker.rememberCompilerMissingNotification(stubNotification(), "default")
         assertTrue(tracker.tryAcquireCompilerMissingNotification("custom-path"))
     }
 
@@ -26,7 +30,10 @@ class TypeSpecLspNotificationTrackerLogicTest {
         val tracker = TypeSpecLspNotificationTracker()
 
         assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
+        tracker.rememberCompilerMissingNotification(stubNotification(), "default")
         tracker.clearCompilerMissingNotification()
         assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
     }
+
+    private fun stubNotification(): Notification = Notification("TypeSpec Notifications", "", "", NotificationType.WARNING)
 }

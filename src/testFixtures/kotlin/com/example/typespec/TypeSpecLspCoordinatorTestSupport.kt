@@ -1,5 +1,7 @@
 package com.example.typespec
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
@@ -15,6 +17,16 @@ import java.util.concurrent.TimeUnit
 object TypeSpecLspCoordinatorTestSupport {
     private const val MAX_DRAIN_ROUNDS = 32
     private const val DRAIN_TIMEOUT_SECONDS = 10L
+
+    internal fun seedCompilerMissingNotification(tracker: TypeSpecLspNotificationTracker, packageKey: String) {
+        check(tracker.tryAcquireCompilerMissingNotification(packageKey)) {
+            "Tracker already suppressing compiler-missing notification for $packageKey"
+        }
+        tracker.rememberCompilerMissingNotification(
+            Notification(TYPESPEC_NOTIFICATION_GROUP_ID, "", "", NotificationType.WARNING),
+            packageKey,
+        )
+    }
 
     fun drainResolutionCoordinatorQueues() {
         repeat(MAX_DRAIN_ROUNDS) { round ->

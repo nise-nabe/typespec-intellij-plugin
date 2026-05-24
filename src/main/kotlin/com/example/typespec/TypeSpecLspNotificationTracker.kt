@@ -1,9 +1,11 @@
 package com.example.typespec
 
 import com.intellij.notification.Notification
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 @Service(Service.Level.PROJECT)
 internal class TypeSpecLspNotificationTracker {
@@ -11,25 +13,33 @@ internal class TypeSpecLspNotificationTracker {
     private var lastNotifiedPackageKey: String? = null
     private var compilerMissingNotification: Notification? = null
 
-    fun tryAcquireCompilerMissingNotification(packageKey: String): Boolean {
-        if (compilerMissingNotified && lastNotifiedPackageKey == packageKey) {
-            return false
-        }
+    @RequiresEdt
+    fun tryAcquireCompilerMissingNotification(packageKey: String): Boolean =
+        !compilerMissingNotified || lastNotifiedPackageKey != packageKey
+
+    @RequiresEdt
+    fun rememberCompilerMissingNotification(notification: Notification, packageKey: String) {
         compilerMissingNotified = true
         lastNotifiedPackageKey = packageKey
-        return true
-    }
-
-    fun rememberCompilerMissingNotification(notification: Notification) {
-        compilerMissingNotification?.expire()
+        expireActiveCompilerMissingNotification()
         compilerMissingNotification = notification
     }
 
+    @RequiresEdt
     fun clearCompilerMissingNotification() {
         compilerMissingNotified = false
         lastNotifiedPackageKey = null
-        compilerMissingNotification?.expire()
+        expireActiveCompilerMissingNotification()
         compilerMissingNotification = null
+    }
+
+    private fun expireActiveCompilerMissingNotification() {
+        val notification = compilerMissingNotification ?: return
+        val application = ApplicationManager.getApplication() ?: return
+        if (application.isDisposed) {
+            return
+        }
+        notification.expire()
     }
 
     companion object {
