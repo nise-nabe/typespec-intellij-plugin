@@ -3,7 +3,6 @@ package com.example.typespec.workflow
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Comparator
-import java.util.stream.Stream
 
 internal const val TYPESPEC_OPENAPI3_EMITTER = "@typespec/openapi3"
 
@@ -27,14 +26,7 @@ internal object TypeSpecOpenApiPreview {
                 return candidate
             }
         }
-        Files.walk(directory).use { paths: Stream<Path> ->
-            return paths
-                .filter { Files.isRegularFile(it) }
-                .filter { it.fileName.toString().lowercase().endsWith(".json") }
-                .sorted(Comparator.comparing { it.fileName.toString().lowercase() })
-                .findFirst()
-                .orElse(null)
-        }
+        return null
     }
 
     fun buildSwaggerPreviewHtml(jsonSpec: String): String {

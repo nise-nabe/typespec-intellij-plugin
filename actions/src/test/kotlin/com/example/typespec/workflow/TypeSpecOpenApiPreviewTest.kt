@@ -32,13 +32,19 @@ class TypeSpecOpenApiPreviewTest {
     }
 
     @Test
-    fun findOpenApiOutputFileIsDeterministic() {
-        Files.writeString(tempDir.resolve("z-spec.yaml"), "openapi: 3.0.0")
+    fun findOpenApiOutputFileIgnoresUnrecognizedJsonFiles() {
         Files.writeString(tempDir.resolve("a-spec.json"), "{\"openapi\":\"3.0.0\"}")
+
+        assertNull(TypeSpecOpenApiPreview.findOpenApiOutputFile(tempDir))
+    }
+
+    @Test
+    fun findOpenApiOutputFileAcceptsOpenApiYaml() {
+        Files.writeString(tempDir.resolve("openapi.yaml"), "openapi: 3.0.0")
 
         val selected = TypeSpecOpenApiPreview.findOpenApiOutputFile(tempDir)
 
-        assertEquals("a-spec.json", selected?.fileName?.toString())
+        assertEquals("openapi.yaml", selected?.fileName?.toString())
     }
 
     @Test
