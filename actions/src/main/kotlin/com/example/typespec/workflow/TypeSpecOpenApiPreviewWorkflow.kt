@@ -33,10 +33,7 @@ internal object TypeSpecOpenApiPreviewWorkflow {
                         TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
                         null
                     }
-                    0 -> {
-                        openPreviewHtml(project, workDir)
-                        0
-                    }
+                    0 -> if (openPreviewHtml(project, workDir)) 0 else 1
                     else -> {
                         TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
                         exitCode
@@ -54,7 +51,7 @@ internal object TypeSpecOpenApiPreviewWorkflow {
         }
     }
 
-    private fun openPreviewHtml(project: Project, workDir: Path) {
+    private fun openPreviewHtml(project: Project, workDir: Path): Boolean {
         val openApiFile = TypeSpecOpenApiPreview.findOpenApiOutputFile(workDir)
         if (openApiFile == null) {
             TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
@@ -63,9 +60,9 @@ internal object TypeSpecOpenApiPreviewWorkflow {
                 TypeSpecBundle.message("action.previewOpenApi.noOutput"),
                 "action.previewOpenApi.title",
             )
-            return
+            return false
         }
-        try {
+        return try {
             val previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
             previewHtml.toFile().deleteOnExit()
             Files.writeString(
@@ -76,6 +73,7 @@ internal object TypeSpecOpenApiPreviewWorkflow {
             ApplicationManager.getApplication().invokeLater {
                 BrowserUtil.browse(previewHtml.toUri())
             }
+            true
         } catch (e: Exception) {
             TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
             TypeSpecWorkflowOutcomes.presentErrorOnEdt(
@@ -83,6 +81,7 @@ internal object TypeSpecOpenApiPreviewWorkflow {
                 e.message ?: e.toString(),
                 "action.previewOpenApi.title",
             )
+            false
         }
     }
 }
