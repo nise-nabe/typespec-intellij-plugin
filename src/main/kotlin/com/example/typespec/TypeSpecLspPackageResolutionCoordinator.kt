@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
@@ -57,10 +58,6 @@ internal object TypeSpecLspPackageResolutionCoordinator {
     }
 
     private fun scheduleCompilerMissingNotificationSync(project: Project) {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-            return
-        }
-
         AppExecutorUtil.getAppExecutorService().execute {
             applyResolutionOnEdt(project, RestartPolicy.Never) {
                 ResolutionSnapshot(
@@ -97,6 +94,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         snapshot: ResolutionSnapshot,
         restartPolicy: RestartPolicy,
     ) {
+        ThreadingAssertions.assertEventDispatchThread()
         syncCompilerMissingNotification(project, snapshot.isResolvable)
         when (restartPolicy) {
             RestartPolicy.Always -> TypeSpecLspServerActivationRule.restartService(project)

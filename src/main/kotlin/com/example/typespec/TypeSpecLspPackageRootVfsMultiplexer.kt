@@ -17,27 +17,33 @@ internal class TypeSpecLspPackageRootVfsMultiplexer : Disposable {
     init {
         VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(
             object : AsyncFileListener {
-                override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-                    val affectedProjects = findAffectedProjects(events)
-                    if (affectedProjects.isEmpty()) {
-                        return null
-                    }
-                    return object : AsyncFileListener.ChangeApplier {
-                        override fun afterVfsChange() {
-                            for (project in affectedProjects) {
-                                if (project.isDisposed) {
-                                    unwatch(project)
-                                    continue
-                                }
-                                TypeSpecLspPackageResolutionCacheWatcher.getInstance(project)
-                                    .onPackageRootAffected()
-                            }
-                        }
-                    }
-                }
+                override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? =
+                    prepareChangeForProjects(events)
             },
             this,
         )
+    }
+
+    internal fun prepareChangeForTest(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? =
+        prepareChangeForProjects(events)
+
+    private fun prepareChangeForProjects(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
+        val affectedProjects = findAffectedProjects(events)
+        if (affectedProjects.isEmpty()) {
+            return null
+        }
+        return object : AsyncFileListener.ChangeApplier {
+            override fun afterVfsChange() {
+                for (project in affectedProjects) {
+                    if (project.isDisposed) {
+                        unwatch(project)
+                        continue
+                    }
+                    TypeSpecLspPackageResolutionCacheWatcher.getInstance(project)
+                        .onPackageRootAffected()
+                }
+            }
+        }
     }
 
     fun watchPackageRoot(project: Project, packageRootPath: String) {

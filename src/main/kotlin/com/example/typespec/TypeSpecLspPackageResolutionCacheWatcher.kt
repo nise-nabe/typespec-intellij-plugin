@@ -32,7 +32,7 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
     }
 
     private fun scheduleRecheck() {
-        if (project.isDisposed || ApplicationManager.getApplication().isUnitTestMode) {
+        if (project.isDisposed) {
             return
         }
         if (!recheckScheduled.compareAndSet(false, true)) {
