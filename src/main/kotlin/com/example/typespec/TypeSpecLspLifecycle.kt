@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 internal object TypeSpecLspLifecycle {
     fun onConfigurationChanged(project: Project) {
         TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
+        TypeSpecLspPackageResolutionCacheWatcher.getInstance(project).updateWatchedPackageRoot()
         restartTypeSpecServerAsync(project)
     }
 }

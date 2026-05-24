@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class TypeSpecLspPackageResolutionVfsListenerTest {
+class TypeSpecPackagePathMatchingTest {
     @Test
     fun vfsPathIsUnderPackageRootMatchesPackageDirectoryAndChildren() {
         val packageRoot = "C:/project/node_modules/@typespec/compiler"
