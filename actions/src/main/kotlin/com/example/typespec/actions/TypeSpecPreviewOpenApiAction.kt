@@ -56,7 +56,7 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                 val tempDir = Files.createTempDirectory("typespec-openapi-preview-")
                 try {
                     val runner = TypeSpecCliRunner(project)
-                    val future = runner.compile(
+                    val exitCode = runner.compile(
                         project = project,
                         projectRoot = resolution.projectRoot,
                         entrypoint = entrypoint,
@@ -71,7 +71,6 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                         showCompilerMissing(project)
                         return
                     }
-                    val exitCode = future.get()
                     if (exitCode != 0) {
                         ApplicationManager.getApplication().invokeLater {
                             Messages.showWarningDialog(

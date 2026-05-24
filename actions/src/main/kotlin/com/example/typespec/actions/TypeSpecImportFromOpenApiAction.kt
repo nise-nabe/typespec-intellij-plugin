@@ -81,7 +81,7 @@ class TypeSpecImportFromOpenApiAction : AnAction(
                     "--output-dir",
                     targetFolder.toString(),
                 )
-                val exitCode = TypeSpecCliRunner(project).run(npx, args, TypeSpecBundle.message("action.importOpenApi.progress")).get()
+                val exitCode = TypeSpecCliRunner(project).run(npx, args, TypeSpecBundle.message("action.importOpenApi.progress"))
                 if (exitCode == 0) {
                     com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
                         refreshAndOpen(project, targetFolder)

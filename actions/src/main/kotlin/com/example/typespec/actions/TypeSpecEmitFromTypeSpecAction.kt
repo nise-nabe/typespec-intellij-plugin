@@ -73,7 +73,7 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.emit.progress"), true) {
             override fun run(indicator: ProgressIndicator) {
                 val runner = TypeSpecCliRunner(project)
-                val future = runner.compile(project, resolution.projectRoot, entrypoint, emitters)
+                val exitCode = runner.compile(project, resolution.projectRoot, entrypoint, emitters)
                     ?: run {
                         ApplicationManager.getApplication().invokeLater {
                             Messages.showErrorDialog(
@@ -85,7 +85,6 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
                         }
                         return
                     }
-                val exitCode = future.get()
                 if (exitCode != 0) {
                     ApplicationManager.getApplication().invokeLater {
                         Messages.showWarningDialog(

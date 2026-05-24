@@ -72,7 +72,7 @@ class TypeSpecCreateProjectAction : AnAction(
 
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.createProject.progress"), true) {
             override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
-                val exitCode = TypeSpecCliRunner(project).run(cli, args, TypeSpecBundle.message("action.createProject.progress")).get()
+                val exitCode = TypeSpecCliRunner(project).run(cli, args, TypeSpecBundle.message("action.createProject.progress"))
                 if (exitCode == 0) {
                     com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
                         NotificationGroupManager.getInstance()
