@@ -18,7 +18,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         TypeSpecLspPackageResolutionCacheWatcher.getInstance(project).updateWatchedPackageRoot()
         val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
         cache.invalidate()
-        val isResolvable = TypeSpecLspServerLoader.isSelectedPackageResolvable(project)
+        val isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project)
         syncCompilerMissingNotification(project, isResolvable)
         restartTypeSpecServerAsync(project)
     }
@@ -28,7 +28,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
         val wasResolvable = cache.peekResolvable()
         cache.invalidate()
-        val isResolvable = TypeSpecLspServerLoader.isSelectedPackageResolvable(project)
+        val isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project)
         syncCompilerMissingNotification(project, isResolvable)
         if (wasResolvable != null && wasResolvable != isResolvable) {
             restartTypeSpecServerAsync(project)
@@ -47,7 +47,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             if (project.isDisposed) {
                 return@execute
             }
-            val isResolvable = TypeSpecLspServerLoader.isSelectedPackageResolvable(project)
+            val isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project)
             ApplicationManager.getApplication().invokeLater(
                 {
                     if (project.isDisposed) {
@@ -70,7 +70,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             return
         }
 
-        val packageKey = TypeSpecLspServerLoader.getSelectedPackage(project).systemDependentPath
+        val packageKey = TypeSpecPackageResolution.getSelectedPackage(project).systemDependentPath
         if (!TypeSpecLspNotificationTracker.getInstance(project).shouldNotifyCompilerMissing(packageKey)) {
             return
         }

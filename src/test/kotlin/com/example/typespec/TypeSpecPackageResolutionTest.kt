@@ -8,7 +8,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-class TypeSpecLspServerLoaderTest {
+class TypeSpecPackageResolutionTest {
     @TempDir
     lateinit var tempDir: Path
 
@@ -19,7 +19,7 @@ class TypeSpecLspServerLoaderTest {
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
         val nodePackage = NodePackage(packageDirectory.toString())
 
-        assertTrue(TypeSpecLspServerLoader.isPackageWithServerScript(nodePackage))
+        assertTrue(TypeSpecPackageResolution.isPackageWithServerScript(nodePackage))
     }
 
     @Test
@@ -28,6 +28,6 @@ class TypeSpecLspServerLoaderTest {
         Files.createDirectories(packageDirectory)
         val nodePackage = NodePackage(packageDirectory.toString())
 
-        assertFalse(TypeSpecLspServerLoader.isPackageWithServerScript(nodePackage))
+        assertFalse(TypeSpecPackageResolution.isPackageWithServerScript(nodePackage))
     }
 }

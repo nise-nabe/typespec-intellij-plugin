@@ -23,7 +23,7 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
         if (ApplicationManager.getApplication().isUnitTestMode) {
             return
         }
-        val packageRootPath = TypeSpecLspServerLoader.getSelectedPackage(project).systemDependentPath
+        val packageRootPath = TypeSpecPackageResolution.getSelectedPackage(project).systemDependentPath
         TypeSpecLspPackageRootVfsMultiplexer.getInstance().watchPackageRoot(project, packageRootPath)
     }
 

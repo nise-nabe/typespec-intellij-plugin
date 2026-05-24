@@ -25,13 +25,13 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
         val settings = TypeSpecServiceSettings.getInstance(project)
         settings.lspServerPackage = NodePackage(packageDirectory.toString())
 
-        assertFalse(TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
+        assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
 
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
         TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
 
-        assertTrue(TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
+        assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
     }
 
     fun testResolvablePackageAllowsCompilerMissingNotificationAgainAfterClear() {
@@ -43,7 +43,7 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
         TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
 
         val packageKey = packageDirectory.toString()
-        assertTrue(TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
+        assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
         assertFalse(tracker.shouldNotifyCompilerMissing(packageKey))
 
@@ -61,7 +61,7 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
             TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
 
             val unresolvableKey = unresolvableDirectory.toString()
-            assertFalse(TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
+            assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
             assertTrue(tracker.shouldNotifyCompilerMissing(unresolvableKey))
             assertFalse(tracker.shouldNotifyCompilerMissing(unresolvableKey))
 
@@ -69,7 +69,7 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
             Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
             settings.lspServerPackage = NodePackage(packageDirectory.toString())
 
-            assertTrue(TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
+            assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
             assertTrue(tracker.shouldNotifyCompilerMissing(packageDirectory.toString()))
         } finally {
             unresolvableDirectory.toFile().deleteRecursively()

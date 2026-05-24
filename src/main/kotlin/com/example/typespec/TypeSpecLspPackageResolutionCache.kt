@@ -11,12 +11,12 @@ internal class TypeSpecLspPackageResolutionCache {
     private var checkedAtMillis: Long = 0L
 
     fun getOrCompute(project: Project, nowMillis: Long = System.currentTimeMillis()): Boolean {
-        val selectedPackage = TypeSpecLspServerLoader.getSelectedPackage(project)
+        val selectedPackage = TypeSpecPackageResolution.getSelectedPackage(project)
         return getOrCompute(
             packageKey = selectedPackage.systemDependentPath,
             nowMillis = nowMillis,
         ) {
-            TypeSpecLspServerLoader.isPackageWithServerScript(selectedPackage)
+            TypeSpecPackageResolution.isPackageWithServerScript(selectedPackage)
         }
     }
 

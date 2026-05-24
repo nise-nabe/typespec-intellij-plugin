@@ -5,27 +5,14 @@ import com.intellij.lang.typescript.lsp.LspServerLoader
 import com.intellij.lang.typescript.lsp.LspServerPackageDescriptor
 import com.intellij.lang.typescript.lsp.PackageVersion
 import com.intellij.openapi.project.Project
-import java.nio.file.Files
-import java.nio.file.Paths
 
 internal const val TYPESPEC_COMPILER_PACKAGE_NAME = "@typespec/compiler"
-private const val TYPESPEC_SERVER_SCRIPT_PATH = "/cmd/tsp-server.js"
+private const val TYPESPEC_SERVER_SCRIPT_PATH = "/$TYPESPEC_SERVER_SCRIPT_RELATIVE_PATH"
 
 @Suppress("UnstableApiUsage")
 object TypeSpecLspServerLoader : LspServerLoader(TypeSpecLspServerPackageDescriptor) {
     override fun getSelectedPackage(project: Project): NodePackage =
-        TypeSpecServiceSettings.getInstance(project).lspServerPackage
-
-    internal fun isSelectedPackageResolvable(project: Project): Boolean =
-        TypeSpecLspPackageResolutionCache.getInstance(project).getOrCompute(project)
-
-    internal fun isPackageWithServerScript(nodePackage: NodePackage): Boolean {
-        val packageDirectory = Paths.get(nodePackage.systemDependentPath)
-        if (!Files.isDirectory(packageDirectory)) {
-            return false
-        }
-        return Files.exists(packageDirectory.resolve(TYPESPEC_SERVER_SCRIPT_PATH.removePrefix("/")))
-    }
+        TypeSpecPackageResolution.getSelectedPackage(project)
 }
 
 @Suppress("UnstableApiUsage")
