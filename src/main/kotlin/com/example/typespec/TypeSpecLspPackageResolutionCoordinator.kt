@@ -94,26 +94,50 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             return
         }
         val generation = TypeSpecLspPackageResolutionCache.getInstance(project).nextResolutionUpdateGeneration()
-        AppExecutorUtil.getAppExecutorService().execute {
-            if (project.isDisposed) {
-                return@execute
-            }
-            val snapshot = prepareOnBackground(project)
-            ApplicationManager.getApplication().invokeLater(
-                {
-                    if (project.isDisposed) {
-                        return@invokeLater
-                    }
-                    val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
-                    if (!cache.isLatestResolutionUpdate(generation)) {
-                        return@invokeLater
-                    }
-                    applyResolutionSnapshot(project, snapshot, restartPolicy)
-                },
-                ModalityState.nonModal(),
-                project.disposed,
-            )
+        submitResolutionUpdate(project, generation, restartPolicy, prepareOnBackground)
+    }
+
+    private fun submitResolutionUpdate(
+        project: Project,
+        generation: Long,
+        restartPolicy: RestartPolicy,
+        prepareOnBackground: (Project) -> ResolutionSnapshot,
+    ) {
+        val runUpdate = Runnable {
+            runResolutionUpdate(project, generation, restartPolicy, prepareOnBackground)
         }
+        if (ApplicationManager.getApplication().isDispatchThread) {
+            AppExecutorUtil.getAppExecutorService().execute(runUpdate)
+        } else {
+            runUpdate.run()
+        }
+    }
+
+    @RequiresBackgroundThread
+    private fun runResolutionUpdate(
+        project: Project,
+        generation: Long,
+        restartPolicy: RestartPolicy,
+        prepareOnBackground: (Project) -> ResolutionSnapshot,
+    ) {
+        if (project.isDisposed) {
+            return
+        }
+        val snapshot = prepareOnBackground(project)
+        ApplicationManager.getApplication().invokeLater(
+            {
+                if (project.isDisposed) {
+                    return@invokeLater
+                }
+                val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
+                if (!cache.isLatestResolutionUpdate(generation)) {
+                    return@invokeLater
+                }
+                applyResolutionSnapshot(project, snapshot, restartPolicy)
+            },
+            ModalityState.nonModal(),
+            project.disposed,
+        )
     }
 
     @RequiresBackgroundThread
