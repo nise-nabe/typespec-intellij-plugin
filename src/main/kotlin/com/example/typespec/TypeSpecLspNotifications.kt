@@ -1,6 +1,5 @@
 package com.example.typespec
 
-import com.intellij.lang.typescript.lsp.defaultPackageKey
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -22,7 +21,7 @@ internal object TypeSpecLspNotifications {
             return
         }
 
-        val packageKey = TypeSpecServiceSettings.getInstance(project).state.lspServerPackageName ?: defaultPackageKey
+        val packageKey = TypeSpecLspServerLoader.getSelectedPackage(project).systemDependentPath
         if (!TypeSpecLspNotificationTracker.getInstance(project).shouldNotifyCompilerMissing(packageKey)) {
             return
         }
