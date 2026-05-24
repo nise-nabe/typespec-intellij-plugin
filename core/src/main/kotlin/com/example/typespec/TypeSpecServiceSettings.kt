@@ -33,7 +33,7 @@ class TypeSpecServiceSettings(
         }
 
     var lspServerPackage: NodePackage
-        get() = createPackage(state.lspServerPackageName, TypeSpecPackageDescriptors.compilerCli.serverPackage)
+        get() = createPackage(state.lspServerPackageName, TypeSpecPackageDescriptors.lspServer.serverPackage)
         set(value) {
             val path = value.systemDependentPath
             val changed = state.lspServerPackageName != path
