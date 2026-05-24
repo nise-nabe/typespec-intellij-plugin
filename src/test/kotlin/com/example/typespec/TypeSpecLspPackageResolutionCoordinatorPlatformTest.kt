@@ -35,48 +35,40 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
     }
 
     fun testOnConfigurationChangedClearsCompilerMissingTrackerWhenPackageIsResolvable() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
-        val packageKey = packageDirectory.toString()
+        val packageKey = selectedPackageKey
 
-        Files.createDirectories(packageDirectory.resolve("cmd"))
-        Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
-        settings.lspServerPackage = NodePackage(packageKey)
-        TypeSpecLspCoordinatorTestSupport.seedCompilerMissingNotification(tracker, packageKey)
+        writeTypeSpecServerScript()
+        configureSelectedPackage()
+        seedCompilerMissingNotification(tracker, packageKey)
 
         TypeSpecLspPackageResolutionCoordinator.onConfigurationChanged(project)
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testOnPackageRootAffectedClearsTrackerWhenPackageBecomesResolvable() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
-        val packageKey = packageDirectory.toString()
+        val packageKey = selectedPackageKey
 
-        settings.lspServerPackage = NodePackage(packageKey)
+        configureSelectedPackage()
         assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        TypeSpecLspCoordinatorTestSupport.seedCompilerMissingNotification(tracker, packageKey)
+        seedCompilerMissingNotification(tracker, packageKey)
 
-        Files.createDirectories(packageDirectory.resolve("cmd"))
-        Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
+        writeTypeSpecServerScript()
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testOnPackageRootAffectedFromBackgroundThreadAppliesOnEdt() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
-        val packageKey = packageDirectory.toString()
-
-        settings.lspServerPackage = NodePackage(packageKey)
-        Files.createDirectories(packageDirectory.resolve("cmd"))
-        Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
+        configureSelectedPackage()
+        writeTypeSpecServerScript()
 
         val failure = AtomicReference<Throwable>()
         val task = AppExecutorUtil.getAppExecutorService().submit {
@@ -87,37 +79,32 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
             }
         }
         task.get(10, TimeUnit.SECONDS)
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertNull(failure.get())
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
     }
 
     fun testWatcherNotifiesCoordinatorWhenPackageRootChanges() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
-        val packageKey = packageDirectory.toString()
+        val packageKey = selectedPackageKey
 
-        settings.lspServerPackage = NodePackage(packageKey)
+        configureSelectedPackage()
         TypeSpecLspPackageRootVfsMultiplexer.getInstance().watchPackageRoot(project, packageKey)
-        TypeSpecLspCoordinatorTestSupport.seedCompilerMissingNotification(tracker, packageKey)
+        seedCompilerMissingNotification(tracker, packageKey)
 
-        Files.createDirectories(packageDirectory.resolve("cmd"))
-        Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
+        writeTypeSpecServerScript()
 
         TypeSpecLspPackageResolutionCacheWatcher.getInstance(project).onPackageRootAffected()
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testMultiplexerRoutesPackageRootEventsToWatcher() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
-        val packageKey = packageDirectory.toString()
-
-        settings.lspServerPackage = NodePackage(packageKey)
-        TypeSpecLspPackageRootVfsMultiplexer.getInstance().watchPackageRoot(project, packageKey)
+        configureSelectedPackage()
+        TypeSpecLspPackageRootVfsMultiplexer.getInstance().watchPackageRoot(project, selectedPackageKey)
 
         val serverScriptPath = packageDirectory.resolve("cmd/tsp-server.js")
         Files.createDirectories(serverScriptPath.parent)
@@ -136,14 +123,13 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         val applier = multiplexer.prepareChangeForTest(listOf(changeEvent))
         assertNotNull(applier)
         applier!!.afterVfsChange()
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
     }
 
     fun testOnTypeSpecFileOpenedDoesNotStartServerWhenActivationIsDisabledInUnitTestMode() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
-        settings.serviceMode = TypeSpecServiceMode.ENABLED
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
         val file = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
         var ensureServerStartedCalled = false
         val serverStarter = object : LspServerSupportProvider.LspServerStarter {
@@ -153,19 +139,18 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         }
 
         TypeSpecLspPackageResolutionCoordinator.onTypeSpecFileOpened(project, file, serverStarter)
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertFalse(ensureServerStartedCalled)
     }
 
     fun testOnPackageRootAffectedDoesNotRestartWhenResolvableStateWasUncached() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
-        settings.lspServerPackage = NodePackage(packageDirectory.toString())
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        configureSelectedPackage()
+        drainCoordinatorQueues()
         resetTypeSpecLspRestartRequestCountForTests()
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
     }
@@ -219,52 +204,71 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
     }
 
     fun testOnPackageRootAffectedDoesNotRestartWhenResolvableStateIsUnchanged() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
-        settings.lspServerPackage = NodePackage(packageDirectory.toString())
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        configureSelectedPackage()
+        drainCoordinatorQueues()
         TypeSpecPackageResolution.isSelectedPackageResolvable(project)
         resetTypeSpecLspRestartRequestCountForTests()
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        drainCoordinatorQueues()
 
         assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
     }
 
     fun testOnConfigurationChangedClearsCompilerMissingTrackerWhenServiceDisabled() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
-        val packageKey = packageDirectory.toString()
+        val packageKey = selectedPackageKey
 
-        settings.serviceMode = TypeSpecServiceMode.ENABLED
-        settings.lspServerPackage = NodePackage(packageKey)
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        configureSelectedPackage()
         assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        TypeSpecLspCoordinatorTestSupport.seedCompilerMissingNotification(tracker, packageKey)
+        seedCompilerMissingNotification(tracker, packageKey)
 
-        settings.serviceMode = TypeSpecServiceMode.DISABLED
-        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.DISABLED
+        drainCoordinatorQueues()
 
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testSettingsChangeUsesCoordinatorToClearTrackerWhenPackageBecomesResolvable() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
         val unresolvableDirectory = Files.createTempDirectory("typespec-unresolvable")
         try {
-            settings.lspServerPackage = NodePackage(unresolvableDirectory.toString())
             val unresolvableKey = unresolvableDirectory.toString()
-            TypeSpecLspCoordinatorTestSupport.seedCompilerMissingNotification(tracker, unresolvableKey)
+            configureLspPackage(unresolvableKey)
+            seedCompilerMissingNotification(tracker, unresolvableKey)
 
-            Files.createDirectories(packageDirectory.resolve("cmd"))
-            Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
-            settings.lspServerPackage = NodePackage(packageDirectory.toString())
-            TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+            writeTypeSpecServerScript()
+            configureSelectedPackage()
+            drainCoordinatorQueues()
 
             assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-            assertTrue(tracker.tryAcquireCompilerMissingNotification(packageDirectory.toString()))
+            assertTrue(tracker.tryAcquireCompilerMissingNotification(selectedPackageKey))
         } finally {
             unresolvableDirectory.toFile().deleteRecursively()
         }
+    }
+
+    private val selectedPackageKey: String
+        get() = packageDirectory.toString()
+
+    private fun configureSelectedPackage() {
+        configureLspPackage(selectedPackageKey)
+    }
+
+    private fun configureLspPackage(packageKey: String) {
+        TypeSpecServiceSettings.getInstance(project).lspServerPackage = NodePackage(packageKey)
+    }
+
+    private fun writeTypeSpecServerScript() {
+        TypeSpecLspCoordinatorTestSupport.writeTypeSpecServerScript(packageDirectory)
+    }
+
+    private fun drainCoordinatorQueues() {
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
+    }
+
+    private fun seedCompilerMissingNotification(tracker: TypeSpecLspNotificationTracker, packageKey: String) {
+        TypeSpecLspCoordinatorTestSupport.seedCompilerMissingNotification(tracker, packageKey)
     }
 }

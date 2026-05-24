@@ -53,6 +53,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         file: VirtualFile,
         serverStarter: LspServerSupportProvider.LspServerStarter,
     ) {
+        // Skip background resolution while disabled; service-enabled checks live in applyResolutionSnapshot.
         if (!TypeSpecLspServerActivationRule.isEnabled(project, file)) {
             return
         }
@@ -61,7 +62,9 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             serverStarter.ensureServerStarted(TypeSpecLspServerDescriptor(project))
         }
 
-        scheduleCompilerMissingNotificationSync(project)
+        scheduleResolutionUpdate(project, RestartPolicy.Never) { currentProject ->
+            computeResolutionSnapshot(currentProject, captureWasResolvable = false)
+        }
     }
 
     @TestOnly
@@ -71,12 +74,6 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         restartPolicy: RestartPolicy,
     ) {
         applyResolutionSnapshot(project, snapshot, restartPolicy)
-    }
-
-    private fun scheduleCompilerMissingNotificationSync(project: Project) {
-        scheduleResolutionUpdate(project, RestartPolicy.Never) { currentProject ->
-            computeResolutionSnapshot(currentProject, captureWasResolvable = false)
-        }
     }
 
     private fun scheduleResolutionUpdate(
