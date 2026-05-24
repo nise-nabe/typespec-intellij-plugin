@@ -7,6 +7,8 @@ import java.util.stream.Stream
 
 internal const val TYPESPEC_OPENAPI3_EMITTER = "@typespec/openapi3"
 
+private val PREFERRED_OPENAPI_OUTPUT_NAMES = listOf("openapi.json", "openapi.yaml", "openapi.yml")
+
 internal object TypeSpecOpenApiPreview {
     fun resolvePreviewEmitter(configuredEmitters: List<String>): String? =
         configuredEmitters.firstOrNull { it == TYPESPEC_OPENAPI3_EMITTER }
@@ -19,6 +21,12 @@ internal object TypeSpecOpenApiPreview {
     )
 
     fun findOpenApiOutputFile(directory: Path): Path? {
+        for (name in PREFERRED_OPENAPI_OUTPUT_NAMES) {
+            val candidate = directory.resolve(name)
+            if (Files.isRegularFile(candidate)) {
+                return candidate
+            }
+        }
         Files.walk(directory).use { paths: Stream<Path> ->
             return paths
                 .filter { Files.isRegularFile(it) }

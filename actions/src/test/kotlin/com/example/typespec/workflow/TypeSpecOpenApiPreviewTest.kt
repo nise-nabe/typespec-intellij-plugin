@@ -22,6 +22,16 @@ class TypeSpecOpenApiPreviewTest {
     }
 
     @Test
+    fun findOpenApiOutputFilePrefersOpenApiJson() {
+        Files.writeString(tempDir.resolve("z-spec.yaml"), "openapi: 3.0.0")
+        Files.writeString(tempDir.resolve("openapi.json"), "{\"openapi\":\"3.0.0\"}")
+
+        val selected = TypeSpecOpenApiPreview.findOpenApiOutputFile(tempDir)
+
+        assertEquals("openapi.json", selected?.fileName?.toString())
+    }
+
+    @Test
     fun findOpenApiOutputFileIsDeterministic() {
         Files.writeString(tempDir.resolve("z-spec.yaml"), "openapi: 3.0.0")
         Files.writeString(tempDir.resolve("a-spec.json"), "{\"openapi\":\"3.0.0\"}")
