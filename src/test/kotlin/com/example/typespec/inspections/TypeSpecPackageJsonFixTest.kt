@@ -38,7 +38,11 @@ class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
 
         val updated = metadata()
         assertEquals(RECOMMENDED_TYPESPEC_EXPORT, updated.input.typespecExport)
-        assertTrue(evaluateRules(updated.input).none { it == TypeSpecPackageJsonRule.TPKG003 })
+        assertTrue(
+            evaluateRules(updated.input).none {
+                it == TypeSpecPackageJsonRule.TPKG003 || it == TypeSpecPackageJsonRule.TPKG005
+            },
+        )
     }
 
     @Test

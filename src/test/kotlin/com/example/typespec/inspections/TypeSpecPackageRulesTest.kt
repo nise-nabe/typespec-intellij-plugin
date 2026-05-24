@@ -59,17 +59,17 @@ class TypeSpecPackageRulesTest {
             setOf(
                 TypeSpecPackageJsonRule.TPKG001,
                 TypeSpecPackageJsonRule.TPKG002,
-                TypeSpecPackageJsonRule.TPKG003,
+                TypeSpecPackageJsonRule.TPKG005,
             ),
             evaluateRules(input).toSet(),
         )
         assertEquals(
             TypeSpecFindingSeverity.INFORMATION,
-            TypeSpecPackageJsonRule.TPKG003.severity(input),
+            TypeSpecPackageJsonRule.TPKG005.severity(input),
         )
         assertEquals(
             "inspection.tpkg005",
-            TypeSpecPackageJsonRule.TPKG003.messageKey(input),
+            TypeSpecPackageJsonRule.TPKG005.messageKey(input),
         )
     }
 
@@ -80,13 +80,13 @@ class TypeSpecPackageRulesTest {
         assertEquals(
             setOf(
                 TypeSpecPackageJsonRule.TPKG001,
-                TypeSpecPackageJsonRule.TPKG003,
+                TypeSpecPackageJsonRule.TPKG005,
             ),
             evaluateRules(input).toSet(),
         )
         assertEquals(
             TypeSpecFindingSeverity.INFORMATION,
-            TypeSpecPackageJsonRule.TPKG003.severity(input),
+            TypeSpecPackageJsonRule.TPKG005.severity(input),
         )
     }
 
