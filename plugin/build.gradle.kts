@@ -20,6 +20,7 @@ dependencies {
         pluginComposedModule(project(":core"))
         pluginComposedModule(project(":lsp"))
         pluginComposedModule(project(":inspections"))
+        pluginComposedModule(project(":actions"))
     }
 }
 

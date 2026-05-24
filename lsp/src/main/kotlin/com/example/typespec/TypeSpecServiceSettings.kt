@@ -25,7 +25,7 @@ object TypeSpecLspServerLoader : LspServerLoader(TypeSpecLspServerPackageDescrip
     override fun getSelectedPackage(project: Project): NodePackage =
         TypeSpecServiceSettings.getInstance(project).lspServerPackage
 
-    internal fun isSelectedPackageResolvable(project: Project): Boolean =
+    fun isSelectedPackageResolvable(project: Project): Boolean =
         TypeSpecLspPackageResolutionCache.getInstance(project).getOrCompute(project)
 
     internal fun isPackageWithServerScript(nodePackage: NodePackage): Boolean {

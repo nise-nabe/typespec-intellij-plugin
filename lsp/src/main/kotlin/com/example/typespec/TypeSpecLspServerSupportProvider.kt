@@ -73,7 +73,7 @@ object TypeSpecActivationHelper : ServiceActivationHelper {
 @Suppress("UnstableApiUsage")
 class TypeSpecLspServerDescriptor(project: Project) : JSNodeLspServerDescriptor(project, TypeSpecLspServerActivationRule, "TypeSpec")
 
-internal fun restartTypeSpecServerAsync(project: Project) {
+fun restartTypeSpecServerAsync(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
         return
     }

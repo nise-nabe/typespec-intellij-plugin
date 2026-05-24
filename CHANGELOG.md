@@ -10,6 +10,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added VS Code parity workflow actions: restart TypeSpec server, show output, emit from TypeSpec, create project (`tsp init`), import from OpenAPI 3, and preview API documentation (Swagger UI in browser)
+- Added TypeSpec compile run configuration with context-menu producer for `.tsp` files
+- Added TypeSpec output tool window for CLI and workflow logs
+- Documented LSP-provided editor capabilities in `docs/lsp-capabilities.md`
 - Added project settings UI to configure the `@typespec/compiler` package path and enable or disable the TypeSpec Language Server
 - Added Language Services status bar widget integration with a link to TypeSpec settings
 - Added balloon notification when `@typespec/compiler` cannot be resolved while opening `.tsp` files

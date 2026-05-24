@@ -11,6 +11,7 @@ pluginManagement {
 
 include("core")
 include("lsp")
+include("actions")
 include("inspections")
 include("plugin")
 
