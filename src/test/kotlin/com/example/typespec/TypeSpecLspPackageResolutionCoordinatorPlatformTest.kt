@@ -296,6 +296,18 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
+    fun testOnConfigurationChangedDoesNotRestartWhenServiceDisabled() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        configureSelectedPackage()
+        drainCoordinatorQueues()
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.DISABLED
+        drainCoordinatorQueues()
+
+        assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
+    }
+
     fun testSettingsChangeUsesCoordinatorToClearTrackerWhenPackageBecomesResolvable() {
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
         val unresolvableDirectory = Files.createTempDirectory("typespec-unresolvable")
