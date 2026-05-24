@@ -18,26 +18,15 @@ private const val NOTIFICATION_GROUP_ID = "TypeSpec Notifications"
 
 internal object TypeSpecLspPackageResolutionCoordinator {
     fun onConfigurationChanged(project: Project) {
-        TypeSpecLspPackageResolutionCacheWatcher.getInstance(project).updateWatchedPackageRoot()
-        applyResolutionOnEdt(project, RestartPolicy.Always) {
-            val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
-            cache.invalidate()
-            ResolutionSnapshot(
-                isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
-            )
+        scheduleResolutionUpdate(project, RestartPolicy.Always) { currentProject ->
+            TypeSpecLspPackageResolutionCacheWatcher.getInstance(currentProject).updateWatchedPackageRoot()
+            computeResolutionSnapshot(currentProject, captureWasResolvable = false)
         }
     }
 
-    @RequiresBackgroundThread
     fun onPackageRootAffected(project: Project) {
-        applyResolutionOnEdt(project, RestartPolicy.OnResolvableChange) {
-            val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
-            val wasResolvable = cache.peekResolvable()
-            cache.invalidate()
-            ResolutionSnapshot(
-                isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
-                wasResolvable = wasResolvable,
-            )
+        scheduleResolutionUpdate(project, RestartPolicy.OnResolvableChange) { currentProject ->
+            computeResolutionSnapshot(currentProject, captureWasResolvable = true)
         }
     }
 
@@ -58,33 +47,48 @@ internal object TypeSpecLspPackageResolutionCoordinator {
     }
 
     private fun scheduleCompilerMissingNotificationSync(project: Project) {
-        AppExecutorUtil.getAppExecutorService().execute {
-            applyResolutionOnEdt(project, RestartPolicy.Never) {
-                ResolutionSnapshot(
-                    isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
-                )
-            }
+        scheduleResolutionUpdate(project, RestartPolicy.Never) { currentProject ->
+            computeResolutionSnapshot(currentProject, captureWasResolvable = false)
         }
     }
 
-    private fun applyResolutionOnEdt(
+    private fun scheduleResolutionUpdate(
         project: Project,
         restartPolicy: RestartPolicy,
-        prepare: () -> ResolutionSnapshot,
+        prepareOnBackground: (Project) -> ResolutionSnapshot,
     ) {
         if (project.isDisposed) {
             return
         }
-        val snapshot = prepare()
-        ApplicationManager.getApplication().invokeLater(
-            {
-                if (project.isDisposed) {
-                    return@invokeLater
-                }
-                applyResolutionSnapshot(project, snapshot, restartPolicy)
-            },
-            ModalityState.nonModal(),
-            project.disposed,
+        AppExecutorUtil.getAppExecutorService().execute {
+            if (project.isDisposed) {
+                return@execute
+            }
+            val snapshot = prepareOnBackground(project)
+            ApplicationManager.getApplication().invokeLater(
+                {
+                    if (project.isDisposed) {
+                        return@invokeLater
+                    }
+                    applyResolutionSnapshot(project, snapshot, restartPolicy)
+                },
+                ModalityState.nonModal(),
+                project.disposed,
+            )
+        }
+    }
+
+    @RequiresBackgroundThread
+    private fun computeResolutionSnapshot(
+        project: Project,
+        captureWasResolvable: Boolean,
+    ): ResolutionSnapshot {
+        val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
+        val wasResolvable = if (captureWasResolvable) cache.peekResolvable() else null
+        cache.invalidate()
+        return ResolutionSnapshot(
+            isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
+            wasResolvable = wasResolvable,
         )
     }
 

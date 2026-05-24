@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -185,6 +186,9 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
     private fun drainResolutionCoordinatorQueues() {
         repeat(32) {
+            val backgroundQueueDrained = CountDownLatch(1)
+            AppExecutorUtil.getAppExecutorService().execute { backgroundQueueDrained.countDown() }
+            assertTrue(backgroundQueueDrained.await(10, TimeUnit.SECONDS))
             UIUtil.dispatchAllInvocationEvents()
             if (!ApplicationManager.getApplication().isDispatchThread) {
                 Thread.yield()
