@@ -14,6 +14,7 @@ internal object TypeSpecCliResolver {
         val compilerPackage = TypeSpecCompilerPackageResolver.getSelectedPackage(project)
         val packageDirectory = Paths.get(compilerPackage.systemDependentPath)
         return resolveNodeScriptCli(
+            project = project,
             script = packageDirectory.resolve(TYPESPEC_COMPILER_CLI_SCRIPT),
             workingDirectory = contextDirectory,
             displayName = TYPESPEC_COMPILER_CLI_SCRIPT.substringAfterLast('/'),
@@ -32,6 +33,7 @@ internal object TypeSpecCliResolver {
             compilerPackageDirectory = compilerPackageDirectory,
         ) ?: return null
         return resolveNodeScriptCli(
+            project = project,
             script = packageDirectory.resolve(TYPESPEC_OPENAPI3_CLI_SCRIPT),
             workingDirectory = workingDirectory,
             displayName = "tsp-openapi3",
@@ -39,6 +41,7 @@ internal object TypeSpecCliResolver {
     }
 
     private fun resolveNodeScriptCli(
+        project: Project,
         script: Path,
         workingDirectory: Path,
         displayName: String,
@@ -46,13 +49,12 @@ internal object TypeSpecCliResolver {
         if (!Files.isRegularFile(script)) {
             return null
         }
+        val nodeExecutable = TypeSpecNodeExecutableResolver.resolveExecutable(project)
         return TypeSpecCliCommand(
-            executable = NODE_EXECUTABLE,
+            executable = nodeExecutable,
             args = listOf(script.toString()),
             workingDirectory = workingDirectory,
-            displayCommand = "$NODE_EXECUTABLE $displayName",
+            displayCommand = "$nodeExecutable $displayName",
         )
     }
-
-    private const val NODE_EXECUTABLE = "node"
 }
