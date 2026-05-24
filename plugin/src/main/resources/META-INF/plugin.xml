@@ -78,8 +78,8 @@
         <runConfigurationProducer implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationProducer"/>
     </extensions>
 
-    <actions>
-        <group id="TypeSpec.Tools" popup="true" textKey="group.typespec.tools" bundle="messages.TypeSpecBundle">
+    <actions resource-bundle="messages.TypeSpecBundle">
+        <group id="TypeSpec.Tools" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <action id="TypeSpec.RestartServer" class="com.example.typespec.actions.TypeSpecRestartServerAction"/>
             <action id="TypeSpec.ShowOutput" class="com.example.typespec.actions.TypeSpecShowOutputAction"/>
