@@ -27,12 +27,16 @@ internal fun shouldRequestServiceRestart(
     project: Project,
     restartPolicy: RestartPolicy,
     snapshot: ResolutionSnapshot,
-): Boolean = when (restartPolicy) {
-    RestartPolicy.Always -> true
-    RestartPolicy.OnResolvableChange ->
-        TypeSpecActivationHelper.isEnabledInSettings(project) &&
+): Boolean {
+    if (!TypeSpecActivationHelper.isEnabledInSettings(project)) {
+        return false
+    }
+    return when (restartPolicy) {
+        RestartPolicy.Always -> true
+        RestartPolicy.OnResolvableChange ->
             shouldRestartForResolvableChange(snapshot.wasResolvable, snapshot.isResolvable)
-    RestartPolicy.Never -> false
+        RestartPolicy.Never -> false
+    }
 }
 
 internal data class ResolutionSnapshot(
