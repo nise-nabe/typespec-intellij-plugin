@@ -1,5 +1,5 @@
 [versions]
-jdk = "21"
+jdk = "25"
 kotlin = "2.3.21"
 junit = "5.11.4"
 junit4 = "4.13.2"
