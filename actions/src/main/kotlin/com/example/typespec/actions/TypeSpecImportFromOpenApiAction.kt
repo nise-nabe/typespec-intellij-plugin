@@ -1,6 +1,7 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
+import com.example.typespec.virtualFilePathEquals
 import com.example.typespec.workflow.TypeSpecCliJobResult
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliResolver
@@ -85,17 +86,15 @@ class TypeSpecImportFromOpenApiAction : AnAction(
     }
 
     private fun refreshAndOpen(project: Project, targetFolder: Path) {
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(targetFolder.toString())?.let { directory ->
-            val entrypoint = TypeSpecProjectContext.resolveEntrypointFile(
-                targetFolder,
-                directory.children.firstOrNull { it.extension == "tsp" }?.let { Paths.get(it.path) },
-            )
-            val fileToOpen = entrypoint?.let { path ->
-                directory.children.firstOrNull { it.path == path.toString() }
-            } ?: directory.children.firstOrNull { it.extension == "tsp" }
-            fileToOpen?.let { tspFile ->
-                FileEditorManager.getInstance(project).openFile(tspFile, true)
-            }
+        val normalizedTarget = targetFolder.toAbsolutePath().normalize()
+        val directory = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(normalizedTarget.toFile())
+            ?: return
+        val preferredTsp = directory.children.firstOrNull { it.extension == "tsp" }?.let { Paths.get(it.path) }
+        val entrypoint = TypeSpecProjectContext.resolveEntrypointFile(normalizedTarget, preferredTsp) ?: return
+        val fileToOpen = directory.children.firstOrNull { virtualFilePathEquals(it, entrypoint) }
+            ?: LocalFileSystem.getInstance().refreshAndFindFileByIoFile(entrypoint.toFile())
+        fileToOpen?.let { tspFile ->
+            FileEditorManager.getInstance(project).openFile(tspFile, true)
         }
     }
 }

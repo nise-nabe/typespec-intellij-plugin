@@ -1,6 +1,14 @@
 package com.example.typespec
 
 import com.intellij.openapi.vfs.VirtualFile
+import java.nio.file.Path
+import java.nio.file.Paths
+
+fun nioPathsEqual(left: Path, right: Path): Boolean =
+    left.toAbsolutePath().normalize() == right.toAbsolutePath().normalize()
+
+fun virtualFilePathEquals(file: VirtualFile, path: Path): Boolean =
+    nioPathsEqual(Paths.get(file.path), path)
 
 fun vfsFileIsUnderPackageRoot(file: VirtualFile, normalizedPackageRoot: String): Boolean =
     vfsPathIsUnderPackageRoot(file.path, normalizedPackageRoot)
