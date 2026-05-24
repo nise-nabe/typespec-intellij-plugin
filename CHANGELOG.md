@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Target **IntelliJ IDEA 2026.2** (platform build 262.0 and later); the plugin build uses JDK 25 to match the JBR bundled with IDEA 2026.2
+
 ### Added
 
 - Added TypeSpec `package.json` inspections for likely TypeSpec extension packages, reporting missing recommended metadata:
