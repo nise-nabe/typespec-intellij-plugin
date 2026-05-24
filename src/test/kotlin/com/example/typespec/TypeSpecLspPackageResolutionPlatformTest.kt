@@ -29,7 +29,6 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
 
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
     }

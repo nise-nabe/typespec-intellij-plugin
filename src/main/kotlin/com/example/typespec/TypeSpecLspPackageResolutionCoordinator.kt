@@ -147,9 +147,11 @@ internal object TypeSpecLspPackageResolutionCoordinator {
     ): ResolutionSnapshot {
         val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
         val wasResolvable = if (captureWasResolvable) cache.peekResolvable() else null
-        cache.invalidate()
+        val selectedPackage = TypeSpecPackageResolution.getSelectedPackage(project)
+        val isResolvable = TypeSpecPackageResolution.isPackageWithServerScript(selectedPackage)
+        cache.recordResolvable(isResolvable)
         return ResolutionSnapshot(
-            isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
+            isResolvable = isResolvable,
             wasResolvable = wasResolvable,
         )
     }

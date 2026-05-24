@@ -4,13 +4,20 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
+/**
+ * Project-scoped state for LSP package resolution orchestration.
+ *
+ * - [nextResolutionUpdateGeneration] / [isLatestResolutionUpdate]: stale async update suppression
+ * - [peekResolvable] / [recordResolvable]: last coordinator-confirmed resolvable flag for VFS deltas
+ *
+ * Fresh disk checks use [TypeSpecPackageResolution.isPackageWithServerScript] directly; this service
+ * does not TTL-cache filesystem probes.
+ */
 @Service(Service.Level.PROJECT)
 internal class TypeSpecLspPackageResolutionCache {
     private val lock = Any()
     private var resolutionUpdateGeneration: Long = 0L
-    private var packageKey: String? = null
-    private var resolvable: Boolean? = null
-    private var checkedAtMillis: Long = 0L
+    private var lastResolvable: Boolean? = null
 
     fun nextResolutionUpdateGeneration(): Long = synchronized(lock) {
         resolutionUpdateGeneration += 1
@@ -21,49 +28,19 @@ internal class TypeSpecLspPackageResolutionCache {
         resolutionUpdateGeneration == generation
     }
 
-    fun getOrCompute(project: Project, nowMillis: Long = System.currentTimeMillis()): Boolean {
-        val selectedPackage = TypeSpecPackageResolution.getSelectedPackage(project)
-        return getOrCompute(
-            packageKey = selectedPackage.systemDependentPath,
-            nowMillis = nowMillis,
-        ) {
-            TypeSpecPackageResolution.isPackageWithServerScript(selectedPackage)
-        }
+    fun peekResolvable(): Boolean? = synchronized(lock) {
+        lastResolvable
     }
 
-    internal fun getOrCompute(
-        packageKey: String,
-        nowMillis: Long,
-        compute: () -> Boolean,
-    ): Boolean = synchronized(lock) {
-        val cachedResolvable = resolvable
-        if (this.packageKey == packageKey &&
-            cachedResolvable != null &&
-            nowMillis - checkedAtMillis < RESOLUTION_CACHE_TTL_MILLIS
-        ) {
-            return@synchronized cachedResolvable
-        }
-
-        val result = compute()
-        this.packageKey = packageKey
-        resolvable = result
-        checkedAtMillis = nowMillis
-        result
+    fun recordResolvable(resolvable: Boolean) = synchronized(lock) {
+        lastResolvable = resolvable
     }
 
-    fun invalidate() = synchronized(lock) {
-        packageKey = null
-        resolvable = null
-        checkedAtMillis = 0L
-    }
-
-    internal fun peekResolvable(): Boolean? = synchronized(lock) {
-        resolvable
+    internal fun clearLastResolvable() = synchronized(lock) {
+        lastResolvable = null
     }
 
     companion object {
-        internal const val RESOLUTION_CACHE_TTL_MILLIS = 30_000L
-
         fun getInstance(project: Project): TypeSpecLspPackageResolutionCache = project.service()
     }
 }

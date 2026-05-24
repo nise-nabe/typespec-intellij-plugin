@@ -58,7 +58,6 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         val packageKey = packageDirectory.toString()
 
         settings.lspServerPackage = NodePackage(packageKey)
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
         assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
@@ -78,7 +77,6 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         val packageKey = packageDirectory.toString()
 
         settings.lspServerPackage = NodePackage(packageKey)
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
 
@@ -103,7 +101,6 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         val packageKey = packageDirectory.toString()
 
         settings.lspServerPackage = NodePackage(packageKey)
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         TypeSpecLspPackageRootVfsMultiplexer.getInstance().watchPackageRoot(project, packageKey)
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
         assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
@@ -123,7 +120,6 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         val packageKey = packageDirectory.toString()
 
         settings.lspServerPackage = NodePackage(packageKey)
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         TypeSpecLspPackageRootVfsMultiplexer.getInstance().watchPackageRoot(project, packageKey)
 
         val serverScriptPath = packageDirectory.resolve("cmd/tsp-server.js")
@@ -169,7 +165,6 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         val settings = TypeSpecServiceSettings.getInstance(project)
         settings.lspServerPackage = NodePackage(packageDirectory.toString())
         TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         resetTypeSpecLspRestartRequestCountForTests()
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
@@ -246,7 +241,6 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
         settings.serviceMode = TypeSpecServiceMode.ENABLED
         settings.lspServerPackage = NodePackage(packageKey)
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
         assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))

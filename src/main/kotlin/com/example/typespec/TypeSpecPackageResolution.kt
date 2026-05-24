@@ -20,5 +20,5 @@ internal object TypeSpecPackageResolution {
     }
 
     fun isSelectedPackageResolvable(project: Project): Boolean =
-        TypeSpecLspPackageResolutionCache.getInstance(project).getOrCompute(project)
+        isPackageWithServerScript(getSelectedPackage(project))
 }
