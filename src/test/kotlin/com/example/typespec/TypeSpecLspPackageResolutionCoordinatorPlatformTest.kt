@@ -162,6 +162,24 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         assertFalse(ensureServerStartedCalled)
     }
 
+    fun testOnConfigurationChangedClearsCompilerMissingTrackerWhenServiceDisabled() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        val tracker = TypeSpecLspNotificationTracker.getInstance(project)
+        val packageKey = packageDirectory.toString()
+
+        settings.serviceMode = TypeSpecServiceMode.ENABLED
+        settings.lspServerPackage = NodePackage(packageKey)
+        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
+        assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
+        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertFalse(tracker.shouldNotifyCompilerMissing(packageKey))
+
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        drainResolutionCoordinatorQueues()
+
+        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
+    }
+
     fun testSettingsChangeUsesCoordinatorToClearTrackerWhenPackageBecomesResolvable() {
         val settings = TypeSpecServiceSettings.getInstance(project)
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)

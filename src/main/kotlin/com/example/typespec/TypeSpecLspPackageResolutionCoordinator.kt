@@ -114,6 +114,10 @@ internal object TypeSpecLspPackageResolutionCoordinator {
 
     @RequiresEdt
     private fun syncCompilerMissingNotification(project: Project, isResolvable: Boolean) {
+        if (!TypeSpecActivationHelper.isEnabledInSettings(project)) {
+            TypeSpecLspNotificationTracker.getInstance(project).clearCompilerMissingNotification()
+            return
+        }
         if (isResolvable) {
             TypeSpecLspNotificationTracker.getInstance(project).clearCompilerMissingNotification()
             return
