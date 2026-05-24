@@ -46,7 +46,7 @@ class TypeSpecServiceSettings(
         }
 
     private fun notifySettingsChanged() {
-        TypeSpecCompilerPackageResolutionCache.getInstance(project).invalidate()
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
         project.messageBus.syncPublisher(TypeSpecServiceSettingsListener.TOPIC).onServiceSettingsChanged(project)
     }
 

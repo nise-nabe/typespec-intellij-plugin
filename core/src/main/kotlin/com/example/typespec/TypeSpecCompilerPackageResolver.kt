@@ -10,12 +10,19 @@ object TypeSpecCompilerPackageResolver {
         TypeSpecServiceSettings.getInstance(project).lspServerPackage
 
     fun isCompilerCliResolvable(project: Project): Boolean =
-        TypeSpecCompilerPackageResolutionCache.getInstance(project).getOrCompute(project)
+        TypeSpecPackageResolutionCache.getInstance(project).getOrCompute(project).compilerCliResolvable
 
     fun hasCompilerCli(packageDirectory: Path): Boolean {
         if (!Files.isDirectory(packageDirectory)) {
             return false
         }
         return Files.isRegularFile(packageDirectory.resolve(TYPESPEC_COMPILER_CLI_SCRIPT))
+    }
+
+    fun hasLspServerScript(packageDirectory: Path): Boolean {
+        if (!Files.isDirectory(packageDirectory)) {
+            return false
+        }
+        return Files.isRegularFile(packageDirectory.resolve(TYPESPEC_LSP_SERVER_SCRIPT))
     }
 }
