@@ -30,10 +30,7 @@ internal object TypeSpecOpenApiPreview {
         Files.walk(directory).use { paths: Stream<Path> ->
             return paths
                 .filter { Files.isRegularFile(it) }
-                .filter {
-                    val name = it.fileName.toString().lowercase()
-                    name.endsWith(".json") || name.endsWith(".yaml") || name.endsWith(".yml")
-                }
+                .filter { it.fileName.toString().lowercase().endsWith(".json") }
                 .sorted(Comparator.comparing { it.fileName.toString().lowercase() })
                 .findFirst()
                 .orElse(null)
