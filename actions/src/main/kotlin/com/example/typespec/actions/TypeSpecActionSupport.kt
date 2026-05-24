@@ -7,6 +7,7 @@ import com.example.typespec.TypeSpecServiceSettings
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -25,6 +26,19 @@ internal object TypeSpecActionSupport {
     fun updateForProject(event: AnActionEvent) {
         val project = event.project
         event.presentation.isEnabledAndVisible = project != null
+    }
+
+    fun updateWhenServiceEnabled(
+        event: AnActionEvent,
+        requireResolvableCompiler: Boolean = true,
+    ) {
+        val project = event.project
+        val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
+        val enabled = project != null &&
+            isServiceEnabled(project) &&
+            (file == null || isTypeSpecContext(file)) &&
+            (!requireResolvableCompiler || TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project))
+        event.presentation.isEnabledAndVisible = enabled
     }
 
     fun updateActionThread(): ActionUpdateThread = ActionUpdateThread.BGT

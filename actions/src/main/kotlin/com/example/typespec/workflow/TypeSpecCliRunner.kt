@@ -51,7 +51,6 @@ internal class TypeSpecCliRunner(
     }
 
     fun compile(
-        project: Project,
         projectRoot: Path,
         entrypoint: Path,
         emitters: List<String>,

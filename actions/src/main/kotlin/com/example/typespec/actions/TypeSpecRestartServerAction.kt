@@ -6,7 +6,6 @@ import com.example.typespec.workflow.TypeSpecOutputService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAware
 
 class TypeSpecRestartServerAction : AnAction(
@@ -17,11 +16,7 @@ class TypeSpecRestartServerAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        val project = event.project
-        val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
-        event.presentation.isEnabledAndVisible = project != null &&
-            TypeSpecActionSupport.isServiceEnabled(project) &&
-            (file == null || TypeSpecActionSupport.isTypeSpecContext(file))
+        TypeSpecActionSupport.updateWhenServiceEnabled(event, requireResolvableCompiler = false)
     }
 
     override fun actionPerformed(event: AnActionEvent) {
