@@ -34,6 +34,43 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         }
     }
 
+    fun testSupersededGenerationDoesNotCommitStaleResolvableState() {
+        val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
+        val initialGeneration = cache.nextResolutionUpdateGeneration()
+        assertTrue(
+            TypeSpecLspPackageResolutionCoordinator.tryApplyResolutionSnapshotForTests(
+                project,
+                initialGeneration,
+                ResolutionSnapshot(isResolvable = true),
+                RestartPolicy.Never,
+            ),
+        )
+        assertTrue(cache.peekResolvable()!!)
+
+        val supersededGeneration = cache.nextResolutionUpdateGeneration()
+        val latestGeneration = cache.nextResolutionUpdateGeneration()
+
+        assertFalse(
+            TypeSpecLspPackageResolutionCoordinator.tryApplyResolutionSnapshotForTests(
+                project,
+                supersededGeneration,
+                ResolutionSnapshot(isResolvable = false),
+                RestartPolicy.Never,
+            ),
+        )
+        assertTrue(cache.peekResolvable()!!)
+
+        assertTrue(
+            TypeSpecLspPackageResolutionCoordinator.tryApplyResolutionSnapshotForTests(
+                project,
+                latestGeneration,
+                ResolutionSnapshot(isResolvable = false),
+                RestartPolicy.Never,
+            ),
+        )
+        assertFalse(cache.peekResolvable()!!)
+    }
+
     fun testOnConfigurationChangedClearsCompilerMissingTrackerWhenPackageIsResolvable() {
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
         val packageKey = selectedPackageKey

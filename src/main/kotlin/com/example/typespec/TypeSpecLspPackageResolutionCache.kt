@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
  * Project-scoped state for LSP package resolution orchestration.
  *
  * - [nextResolutionUpdateGeneration] / [isLatestResolutionUpdate]: stale async update suppression
- * - [peekResolvable] / [recordResolvable]: last coordinator-confirmed resolvable flag for VFS deltas
+ * - [peekResolvable] / [recordResolvable]: last applied resolvable flag (committed on EDT apply only)
  *
  * Fresh disk checks use [TypeSpecPackageResolution.isPackageWithServerScript] directly; this service
  * does not TTL-cache filesystem probes.

@@ -120,11 +120,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
                 if (project.isDisposed) {
                     return@invokeLater
                 }
-                val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
-                if (!cache.isLatestResolutionUpdate(generation)) {
-                    return@invokeLater
-                }
-                applyResolutionSnapshot(project, snapshot, restartPolicy)
+                tryApplyResolutionSnapshot(project, generation, snapshot, restartPolicy)
             },
             ModalityState.nonModal(),
             project.disposed,
@@ -140,12 +136,35 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         val wasResolvable = if (captureWasResolvable) cache.peekResolvable() else null
         val selectedPackage = TypeSpecPackageResolution.getSelectedPackage(project)
         val isResolvable = TypeSpecPackageResolution.isPackageWithServerScript(selectedPackage)
-        cache.recordResolvable(isResolvable)
         return ResolutionSnapshot(
             isResolvable = isResolvable,
             wasResolvable = wasResolvable,
         )
     }
+
+    @RequiresEdt
+    private fun tryApplyResolutionSnapshot(
+        project: Project,
+        generation: Long,
+        snapshot: ResolutionSnapshot,
+        restartPolicy: RestartPolicy,
+    ): Boolean {
+        ThreadingAssertions.assertEventDispatchThread()
+        val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
+        if (!cache.isLatestResolutionUpdate(generation)) {
+            return false
+        }
+        applyResolutionSnapshot(project, snapshot, restartPolicy)
+        return true
+    }
+
+    @TestOnly
+    internal fun tryApplyResolutionSnapshotForTests(
+        project: Project,
+        generation: Long,
+        snapshot: ResolutionSnapshot,
+        restartPolicy: RestartPolicy,
+    ): Boolean = tryApplyResolutionSnapshot(project, generation, snapshot, restartPolicy)
 
     @RequiresEdt
     private fun applyResolutionSnapshot(
@@ -154,6 +173,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         restartPolicy: RestartPolicy,
     ) {
         ThreadingAssertions.assertEventDispatchThread()
+        TypeSpecLspPackageResolutionCache.getInstance(project).recordResolvable(snapshot.isResolvable)
         TypeSpecCompilerMissingNotification.sync(project, snapshot.isResolvable)
         when (restartPolicy) {
             RestartPolicy.Always -> requestServiceRestart(project)
