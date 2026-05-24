@@ -49,6 +49,12 @@ object TypeSpecLspServerActivationRule : LspServerActivationRule(TypeSpecLspServ
     override fun restartService(project: Project) {
         restartTypeSpecServerAsync(project)
     }
+
+    internal fun wouldActivateIfPackageResolvable(project: Project, file: VirtualFile): Boolean =
+        TypeSpecActivationHelper.isProjectContext(project, file) &&
+            TypeSpecActivationHelper.isEnabledInSettings(project) &&
+            TypeSpecActivationHelper.isEnabledByEnvironment(project, file) &&
+            isFileAcceptable(file)
 }
 
 @Suppress("UnstableApiUsage")
