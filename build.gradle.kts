@@ -12,12 +12,6 @@ plugins {
     alias(libs.plugins.changelog)
 }
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
-    }
-}
-
 group = "com.example.typespec"
 version = "0.2.0-eap.1"
 
