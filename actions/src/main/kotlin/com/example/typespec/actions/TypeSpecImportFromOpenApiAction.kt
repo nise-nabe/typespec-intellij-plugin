@@ -5,20 +5,18 @@ import com.example.typespec.workflow.TypeSpecCliJobResult
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecCliWorkflow
-import com.example.typespec.workflow.toJobResult
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecWorkflowGuards
+import com.example.typespec.workflow.toJobResult
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
-import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -30,7 +28,7 @@ class TypeSpecImportFromOpenApiAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.update(event, TypeSpecActionSupport.projectWithOpenApi3Cli)
+        TypeSpecActionSupport.update(event, TypeSpecActionSupport.projectWithOpenApi3CliOnly)
     }
 
     override fun actionPerformed(event: AnActionEvent) {
@@ -40,6 +38,15 @@ class TypeSpecImportFromOpenApiAction : AnAction(
             .withTitle(TypeSpecBundle.message("action.importOpenApi.targetFolder"))
         val targetFolder = FileChooser.chooseFile(folderDescriptor, project, null)?.path?.let { Paths.get(it) }
             ?: return
+        if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
+                project,
+                targetFolder,
+                "action.importOpenApi.nonEmptyWarning",
+                "action.importOpenApi.title",
+            )
+        ) {
+            return
+        }
 
         val openApiDescriptor = FileChooserDescriptor(true, false, false, false, false, false)
             .withTitle(TypeSpecBundle.message("action.importOpenApi.sourceFile"))
@@ -59,29 +66,21 @@ class TypeSpecImportFromOpenApiAction : AnAction(
                 failureMessageKey = "action.importOpenApi.failed",
             ),
             onSuccess = {
-                ApplicationManager.getApplication().invokeLater {
-                    refreshAndOpen(project, targetFolder)
-                }
+                refreshAndOpen(project, targetFolder)
             },
         ) { runner, indicator ->
-            if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
-                    project,
-                    targetFolder,
-                    "action.importOpenApi.nonEmptyWarning",
-                    "action.importOpenApi.title",
-                )
-            ) {
-                return@runCliJob TypeSpecCliJobResult.AbortedByUser
-            }
-            Files.createDirectories(targetFolder)
-            val cli = TypeSpecCliResolver.resolveOpenApi3Cli(project, targetFolder)
+            val targetDirectory = TypeSpecWorkflowGuards.ensureTargetDirectory(targetFolder)
+            val cli = TypeSpecCliResolver.resolveOpenApi3Cli(project, targetDirectory.path)
                 ?: return@runCliJob TypeSpecCliJobResult.CliUnavailable
             val args = listOf(
                 sourceFile,
                 "--output-dir",
-                targetFolder.toString(),
+                targetDirectory.path.toString(),
             )
-            runner.run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"), indicator).toJobResult()
+            val result = runner.run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"), indicator)
+                .toJobResult()
+            TypeSpecWorkflowGuards.rollbackCreatedDirectory(targetDirectory, result)
+            result
         }
     }
 

@@ -21,9 +21,6 @@ internal object TypeSpecCliResolver {
         )
     }
 
-    fun isOpenApi3CliResolvable(project: Project): Boolean =
-        TypeSpecCompilerPackageResolver.isOpenApi3CliResolvable(project)
-
     fun resolveOpenApi3Cli(project: Project, workingDirectory: Path): TypeSpecCliCommand? {
         val compilerPackageDirectory = Paths.get(
             TypeSpecCompilerPackageResolver.getSelectedPackage(project).systemDependentPath,

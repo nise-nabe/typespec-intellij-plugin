@@ -28,7 +28,15 @@ internal data class ActionVisibility(
 internal object TypeSpecActionSupport {
     val projectOnly = ActionVisibility(requireServiceEnabled = false)
     val projectWithCompilerCli = ActionVisibility(cli = CliRequirement.Compiler)
+    val projectWithCompilerCliOnly = ActionVisibility(
+        requireServiceEnabled = false,
+        cli = CliRequirement.Compiler,
+    )
     val projectWithOpenApi3Cli = ActionVisibility(cli = CliRequirement.OpenApi3)
+    val projectWithOpenApi3CliOnly = ActionVisibility(
+        requireServiceEnabled = false,
+        cli = CliRequirement.OpenApi3,
+    )
     val typeSpecFileWithCompilerCli = ActionVisibility(
         requireVirtualFile = true,
         requireTypeSpecContextWhenFileRequired = true,

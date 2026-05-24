@@ -5,16 +5,14 @@ import com.example.typespec.workflow.TypeSpecCliJobResult
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecCliWorkflow
-import com.example.typespec.workflow.toJobResult
 import com.example.typespec.workflow.TypeSpecWorkflowGuards
+import com.example.typespec.workflow.toJobResult
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
-import java.nio.file.Files
 
 class TypeSpecCreateProjectAction : AnAction(
     TypeSpecBundle.message("action.createProject.text"),
@@ -24,7 +22,7 @@ class TypeSpecCreateProjectAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.update(event, TypeSpecActionSupport.projectWithCompilerCli)
+        TypeSpecActionSupport.update(event, TypeSpecActionSupport.projectWithCompilerCliOnly)
     }
 
     override fun actionPerformed(event: AnActionEvent) {
@@ -34,6 +32,15 @@ class TypeSpecCreateProjectAction : AnAction(
             return
         }
         val targetPath = dialog.targetPath() ?: return
+        if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
+                project,
+                targetPath,
+                "action.createProject.nonEmptyWarning",
+                "action.createProject.title",
+            )
+        ) {
+            return
+        }
 
         val template = dialog.selectedTemplate()
         val args = buildList {
@@ -51,31 +58,23 @@ class TypeSpecCreateProjectAction : AnAction(
                 titleKey = "action.createProject.title",
             ),
             onSuccess = {
-                ApplicationManager.getApplication().invokeLater {
-                    NotificationGroupManager.getInstance()
-                        .getNotificationGroup("TypeSpec Notifications")
-                        .createNotification(
-                            TypeSpecBundle.message("action.createProject.success.title"),
-                            TypeSpecBundle.message("action.createProject.success.content"),
-                            NotificationType.INFORMATION,
-                        )
-                        .notify(project)
-                }
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup("TypeSpec Notifications")
+                    .createNotification(
+                        TypeSpecBundle.message("action.createProject.success.title"),
+                        TypeSpecBundle.message("action.createProject.success.content"),
+                        NotificationType.INFORMATION,
+                    )
+                    .notify(project)
             },
         ) { runner, indicator ->
-            if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
-                    project,
-                    targetPath,
-                    "action.createProject.nonEmptyWarning",
-                    "action.createProject.title",
-                )
-            ) {
-                return@runCliJob TypeSpecCliJobResult.AbortedByUser
-            }
-            Files.createDirectories(targetPath)
-            val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath)
+            val targetDirectory = TypeSpecWorkflowGuards.ensureTargetDirectory(targetPath)
+            val cli = TypeSpecCliResolver.resolveTspCli(project, targetDirectory.path)
                 ?: return@runCliJob TypeSpecCliJobResult.CliUnavailable
-            runner.run(cli, args, TypeSpecBundle.message("action.createProject.progress"), indicator).toJobResult()
+            val result = runner.run(cli, args, TypeSpecBundle.message("action.createProject.progress"), indicator)
+                .toJobResult()
+            TypeSpecWorkflowGuards.rollbackCreatedDirectory(targetDirectory, result)
+            result
         }
     }
 }

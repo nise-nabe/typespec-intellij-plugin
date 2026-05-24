@@ -1,6 +1,7 @@
 package com.example.typespec.workflow
 
 import com.example.typespec.TypeSpecBundle
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -50,7 +51,9 @@ internal object TypeSpecCliWorkflow {
                 -> Unit
                 is TypeSpecCliJobResult.Finished -> {
                     if (result.exitCode == 0) {
-                        onSuccess?.invoke()
+                        onSuccess?.let { callback ->
+                            ApplicationManager.getApplication().invokeLater { callback() }
+                        }
                     } else if (spec.failureMessageKey != null) {
                         TypeSpecWorkflowOutcomes.presentWarningOnEdt(
                             project,
