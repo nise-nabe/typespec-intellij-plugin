@@ -11,28 +11,32 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 private const val NOTIFICATION_GROUP_ID = "TypeSpec Notifications"
 
 internal object TypeSpecLspPackageResolutionCoordinator {
     fun onConfigurationChanged(project: Project) {
         TypeSpecLspPackageResolutionCacheWatcher.getInstance(project).updateWatchedPackageRoot()
-        val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
-        cache.invalidate()
-        val isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project)
-        syncCompilerMissingNotification(project, isResolvable)
-        restartTypeSpecServerAsync(project)
+        applyResolutionOnEdt(project, RestartPolicy.Always) {
+            val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
+            cache.invalidate()
+            ResolutionSnapshot(
+                isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
+            )
+        }
     }
 
     @RequiresBackgroundThread
     fun onPackageRootAffected(project: Project) {
-        val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
-        val wasResolvable = cache.peekResolvable()
-        cache.invalidate()
-        val isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project)
-        syncCompilerMissingNotification(project, isResolvable)
-        if (wasResolvable != null && wasResolvable != isResolvable) {
-            restartTypeSpecServerAsync(project)
+        applyResolutionOnEdt(project, RestartPolicy.OnResolvableChange) {
+            val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
+            val wasResolvable = cache.peekResolvable()
+            cache.invalidate()
+            ResolutionSnapshot(
+                isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
+                wasResolvable = wasResolvable,
+            )
         }
     }
 
@@ -58,23 +62,55 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         }
 
         AppExecutorUtil.getAppExecutorService().execute {
-            if (project.isDisposed) {
-                return@execute
+            applyResolutionOnEdt(project, RestartPolicy.Never) {
+                ResolutionSnapshot(
+                    isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project),
+                )
             }
-            val isResolvable = TypeSpecPackageResolution.isSelectedPackageResolvable(project)
-            ApplicationManager.getApplication().invokeLater(
-                {
-                    if (project.isDisposed) {
-                        return@invokeLater
-                    }
-                    syncCompilerMissingNotification(project, isResolvable)
-                },
-                ModalityState.nonModal(),
-                project.disposed,
-            )
         }
     }
 
+    private fun applyResolutionOnEdt(
+        project: Project,
+        restartPolicy: RestartPolicy,
+        prepare: () -> ResolutionSnapshot,
+    ) {
+        if (project.isDisposed) {
+            return
+        }
+        val snapshot = prepare()
+        ApplicationManager.getApplication().invokeLater(
+            {
+                if (project.isDisposed) {
+                    return@invokeLater
+                }
+                applyResolutionSnapshot(project, snapshot, restartPolicy)
+            },
+            ModalityState.nonModal(),
+            project.disposed,
+        )
+    }
+
+    @RequiresEdt
+    private fun applyResolutionSnapshot(
+        project: Project,
+        snapshot: ResolutionSnapshot,
+        restartPolicy: RestartPolicy,
+    ) {
+        syncCompilerMissingNotification(project, snapshot.isResolvable)
+        when (restartPolicy) {
+            RestartPolicy.Always -> restartTypeSpecServerAsync(project)
+            RestartPolicy.OnResolvableChange -> {
+                val wasResolvable = snapshot.wasResolvable
+                if (wasResolvable != null && wasResolvable != snapshot.isResolvable) {
+                    restartTypeSpecServerAsync(project)
+                }
+            }
+            RestartPolicy.Never -> Unit
+        }
+    }
+
+    @RequiresEdt
     private fun syncCompilerMissingNotification(project: Project, isResolvable: Boolean) {
         if (isResolvable) {
             TypeSpecLspNotificationTracker.getInstance(project).clearCompilerMissingNotification()
@@ -105,4 +141,15 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             )
             .notify(project)
     }
+}
+
+private data class ResolutionSnapshot(
+    val isResolvable: Boolean,
+    val wasResolvable: Boolean? = null,
+)
+
+private enum class RestartPolicy {
+    Always,
+    OnResolvableChange,
+    Never,
 }
