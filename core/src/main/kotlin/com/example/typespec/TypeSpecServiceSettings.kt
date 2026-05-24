@@ -1,8 +1,6 @@
 package com.example.typespec
 
 import com.intellij.javascript.nodejs.util.NodePackage
-import com.intellij.lang.typescript.lsp.LspServerPackageDescriptor
-import com.intellij.lang.typescript.lsp.PackageVersion
 import com.intellij.lang.typescript.lsp.createPackage
 import com.intellij.lang.typescript.lsp.defaultPackageKey
 import com.intellij.openapi.components.BaseState
@@ -35,7 +33,7 @@ class TypeSpecServiceSettings(
         }
 
     var lspServerPackage: NodePackage
-        get() = createPackage(state.lspServerPackageName, TypeSpecCompilerPackageDescriptor.serverPackage)
+        get() = createPackage(state.lspServerPackageName, TypeSpecPackageDescriptors.compilerCli.serverPackage)
         set(value) {
             val path = value.systemDependentPath
             val changed = state.lspServerPackageName != path
@@ -58,14 +56,4 @@ class TypeSpecServiceSettings(
 class TypeSpecServiceState : BaseState() {
     var serviceModeName by string(TypeSpecServiceMode.ENABLED.name)
     var lspServerPackageName by string(defaultPackageKey)
-}
-
-@Suppress("UnstableApiUsage")
-private object TypeSpecCompilerPackageDescriptor : LspServerPackageDescriptor(
-    TYPESPEC_COMPILER_PACKAGE_NAME,
-    PackageVersion.downloadable("1.10.0"),
-    "/cmd/tsp.js",
-) {
-    override val registryVersion: String
-        get() = ""
 }
