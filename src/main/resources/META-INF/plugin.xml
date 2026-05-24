@@ -37,6 +37,7 @@
         <platform.lsp.serverSupportProvider implementation="com.example.typespec.TypeSpecLspServerSupportProvider"/>
         <spellchecker.bundledDictionaryProvider implementation="com.example.typespec.TypeSpecBundledDictionaryProvider"/>
         <projectSettings service="com.example.typespec.TypeSpecServiceSettings" />
+        <postStartupActivity implementation="com.example.typespec.TypeSpecLspPackageResolutionCacheWatcherInitializer"/>
 
         <projectConfigurable parentId="language"
                              instance="com.example.typespec.TypeSpecSettingsConfigurable"

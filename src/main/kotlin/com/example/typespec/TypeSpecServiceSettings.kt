@@ -131,6 +131,8 @@ internal class TypeSpecLspPackageResolutionCache {
         checkedAtMillis = 0L
     }
 
+    internal fun peekResolvable(): Boolean? = resolvable
+
     companion object {
         internal const val RESOLUTION_CACHE_TTL_MILLIS = 30_000L
 

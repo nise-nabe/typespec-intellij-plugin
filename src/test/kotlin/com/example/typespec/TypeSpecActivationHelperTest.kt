@@ -3,9 +3,10 @@ package com.example.typespec
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import com.intellij.javascript.nodejs.util.NodePackage
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import com.intellij.javascript.nodejs.util.NodePackage
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -42,6 +43,23 @@ class TypeSpecLspServerLoaderTest {
         val nodePackage = NodePackage(packageDirectory.toString())
 
         assertFalse(TypeSpecLspServerLoader.isPackageWithServerScript(nodePackage))
+    }
+}
+
+class TypeSpecLspPackageResolutionVfsListenerTest {
+    @Test
+    fun vfsPathIsUnderPackageRootMatchesPackageDirectoryAndChildren() {
+        val packageRoot = "C:/project/node_modules/@typespec/compiler"
+
+        assertTrue(vfsPathIsUnderPackageRoot(packageRoot, packageRoot))
+        assertTrue(vfsPathIsUnderPackageRoot("$packageRoot/cmd/tsp-server.js", packageRoot))
+        assertFalse(vfsPathIsUnderPackageRoot("C:/project/node_modules/other", packageRoot))
+    }
+
+    @Test
+    fun normalizePackageRootReturnsNullForBlankPath() {
+        assertNull(normalizePackageRoot(""))
+        assertNull(normalizePackageRoot("   "))
     }
 }
 
