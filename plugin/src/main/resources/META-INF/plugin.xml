@@ -66,6 +66,14 @@
 
         <projectService serviceImplementation="com.example.typespec.workflow.TypeSpecOutputService"/>
 
+        <projectService serviceInterface="com.example.typespec.TypeSpecLanguageServerCommandExecutor"
+                          serviceImplementation="com.example.typespec.TypeSpecLanguageServerCommandExecutorImpl"/>
+
+        <projectListeners>
+            <listener class="com.example.typespec.TypeSpecLspServiceSettingsListener"
+                      topic="com.example.typespec.TypeSpecServiceSettingsListener"/>
+        </projectListeners>
+
         <configurationType implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationType"/>
         <runConfigurationProducer implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationProducer"/>
     </extensions>

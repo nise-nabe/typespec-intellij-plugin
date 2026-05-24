@@ -2,7 +2,7 @@ package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
 import com.example.typespec.TypeSpecFileType
-import com.example.typespec.TypeSpecLspServerLoader
+import com.example.typespec.TypeSpecCompilerPackageResolver
 import com.example.typespec.TypeSpecServiceMode
 import com.example.typespec.TypeSpecServiceSettings
 import com.example.typespec.workflow.TypeSpecOutputService
@@ -22,7 +22,7 @@ internal object TypeSpecActionSupport {
             isServiceEnabled(project) &&
             file != null &&
             isTypeSpecContext(file) &&
-            (!requireResolvableCompiler || TypeSpecLspServerLoader.isSelectedPackageResolvable(project))
+            (!requireResolvableCompiler || TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project))
         event.presentation.isEnabledAndVisible = enabled
     }
 

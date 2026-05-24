@@ -1,7 +1,7 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
-import com.example.typespec.restartTypeSpecServerAsync
+import com.example.typespec.TypeSpecLanguageServerCommandExecutor
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -28,7 +28,7 @@ class TypeSpecRestartServerAction : AnAction(
         val project = event.project ?: return
         val output = TypeSpecOutputService.getInstance(project)
         output.append(TypeSpecBundle.message("action.restartServer.started"))
-        restartTypeSpecServerAsync(project)
+        TypeSpecLanguageServerCommandExecutor.getInstance(project)?.restartServerAsync(project)
         output.show(project)
     }
 }

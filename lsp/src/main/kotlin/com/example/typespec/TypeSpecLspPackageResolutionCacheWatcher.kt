@@ -62,6 +62,7 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
         val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
         val wasResolvable = cache.peekResolvable()
         cache.invalidate()
+        TypeSpecCompilerPackageResolutionCache.getInstance(project).invalidate()
 
         val isResolvable = TypeSpecLspServerLoader.isSelectedPackageResolvable(project)
         if (isResolvable) {

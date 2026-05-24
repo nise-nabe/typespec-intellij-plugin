@@ -1,6 +1,6 @@
 package com.example.typespec.workflow
 
-import com.example.typespec.TypeSpecLspServerLoader
+import com.example.typespec.TypeSpecCompilerPackageResolver
 import com.intellij.openapi.project.Project
 import java.nio.file.Files
 import java.nio.file.Path
@@ -10,7 +10,7 @@ internal object TypeSpecCliResolver {
     private const val TSP_JS_RELATIVE = "cmd/tsp.js"
 
     fun resolveTspCli(project: Project, contextDirectory: Path): TypeSpecCliCommand? {
-        val compilerPackage = TypeSpecLspServerLoader.getSelectedPackage(project)
+        val compilerPackage = TypeSpecCompilerPackageResolver.getSelectedPackage(project)
         val packageDirectory = Paths.get(compilerPackage.systemDependentPath)
         if (!Files.isDirectory(packageDirectory)) {
             return null
