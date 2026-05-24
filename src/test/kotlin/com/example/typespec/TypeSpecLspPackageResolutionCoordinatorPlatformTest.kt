@@ -18,6 +18,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
     override fun setUp() {
         super.setUp()
         packageDirectory = Files.createTempDirectory("typespec-coordinator")
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
         TypeSpecLspPackageRootVfsMultiplexer.getInstance().unwatch(project)
         resetTypeSpecLspRestartRequestCountForTests()
     }
@@ -185,6 +186,34 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         configureSelectedPackage()
         drainCoordinatorQueues()
         resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
+        drainCoordinatorQueues()
+
+        assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
+    }
+
+    fun testApplyResolutionSnapshotDoesNotRestartOnResolvableChangeWhenServiceDisabled() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.DISABLED
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
+            project,
+            ResolutionSnapshot(isResolvable = true, wasResolvable = false),
+            RestartPolicy.OnResolvableChange,
+        )
+
+        assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
+    }
+
+    fun testOnPackageRootAffectedDoesNotRestartWhenServiceDisabled() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        configureSelectedPackage()
+        drainCoordinatorQueues()
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.DISABLED
+        writeTypeSpecServerScript()
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
         drainCoordinatorQueues()

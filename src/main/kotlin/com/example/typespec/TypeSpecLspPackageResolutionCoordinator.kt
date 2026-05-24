@@ -23,6 +23,18 @@ internal fun resetTypeSpecLspRestartRequestCountForTests() {
 internal fun shouldRestartForResolvableChange(wasResolvable: Boolean?, isResolvable: Boolean): Boolean =
     wasResolvable != null && wasResolvable != isResolvable
 
+internal fun shouldRequestServiceRestart(
+    project: Project,
+    restartPolicy: RestartPolicy,
+    snapshot: ResolutionSnapshot,
+): Boolean = when (restartPolicy) {
+    RestartPolicy.Always -> true
+    RestartPolicy.OnResolvableChange ->
+        TypeSpecActivationHelper.isEnabledInSettings(project) &&
+            shouldRestartForResolvableChange(snapshot.wasResolvable, snapshot.isResolvable)
+    RestartPolicy.Never -> false
+}
+
 internal data class ResolutionSnapshot(
     val isResolvable: Boolean,
     val wasResolvable: Boolean? = null,
@@ -53,7 +65,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         file: VirtualFile,
         serverStarter: LspServerSupportProvider.LspServerStarter,
     ) {
-        // Skip background resolution while disabled; service-enabled checks live in applyResolutionSnapshot.
+        // Activation off (settings, environment, or file type): no server start and no resolution pipeline.
         if (!TypeSpecLspServerActivationRule.isEnabled(project, file)) {
             return
         }
@@ -175,14 +187,8 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         ThreadingAssertions.assertEventDispatchThread()
         TypeSpecLspPackageResolutionCache.getInstance(project).recordResolvable(snapshot.isResolvable)
         TypeSpecCompilerMissingNotification.sync(project, snapshot.isResolvable)
-        when (restartPolicy) {
-            RestartPolicy.Always -> requestServiceRestart(project)
-            RestartPolicy.OnResolvableChange -> {
-                if (shouldRestartForResolvableChange(snapshot.wasResolvable, snapshot.isResolvable)) {
-                    requestServiceRestart(project)
-                }
-            }
-            RestartPolicy.Never -> Unit
+        if (shouldRequestServiceRestart(project, restartPolicy, snapshot)) {
+            requestServiceRestart(project)
         }
     }
 
