@@ -13,8 +13,32 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val NOTIFICATION_GROUP_ID = "TypeSpec Notifications"
+
+@TestOnly
+internal val typeSpecLspRestartRequestCountForTests = AtomicInteger(0)
+
+@TestOnly
+internal fun resetTypeSpecLspRestartRequestCountForTests() {
+    typeSpecLspRestartRequestCountForTests.set(0)
+}
+
+internal fun shouldRestartForResolvableChange(wasResolvable: Boolean?, isResolvable: Boolean): Boolean =
+    wasResolvable != null && wasResolvable != isResolvable
+
+internal data class ResolutionSnapshot(
+    val isResolvable: Boolean,
+    val wasResolvable: Boolean? = null,
+)
+
+internal enum class RestartPolicy {
+    Always,
+    OnResolvableChange,
+    Never,
+}
 
 internal object TypeSpecLspPackageResolutionCoordinator {
     fun onConfigurationChanged(project: Project) {
@@ -44,6 +68,15 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         }
 
         scheduleCompilerMissingNotificationSync(project)
+    }
+
+    @TestOnly
+    internal fun applyResolutionSnapshotForTests(
+        project: Project,
+        snapshot: ResolutionSnapshot,
+        restartPolicy: RestartPolicy,
+    ) {
+        applyResolutionSnapshot(project, snapshot, restartPolicy)
     }
 
     private fun scheduleCompilerMissingNotificationSync(project: Project) {
@@ -101,15 +134,20 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         ThreadingAssertions.assertEventDispatchThread()
         syncCompilerMissingNotification(project, snapshot.isResolvable)
         when (restartPolicy) {
-            RestartPolicy.Always -> TypeSpecLspServerActivationRule.restartService(project)
+            RestartPolicy.Always -> requestServiceRestart(project)
             RestartPolicy.OnResolvableChange -> {
-                val wasResolvable = snapshot.wasResolvable
-                if (wasResolvable != null && wasResolvable != snapshot.isResolvable) {
-                    TypeSpecLspServerActivationRule.restartService(project)
+                if (shouldRestartForResolvableChange(snapshot.wasResolvable, snapshot.isResolvable)) {
+                    requestServiceRestart(project)
                 }
             }
             RestartPolicy.Never -> Unit
         }
+    }
+
+    @RequiresEdt
+    private fun requestServiceRestart(project: Project) {
+        typeSpecLspRestartRequestCountForTests.incrementAndGet()
+        TypeSpecLspServerActivationRule.restartService(project)
     }
 
     @RequiresEdt
@@ -147,15 +185,4 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             )
             .notify(project)
     }
-}
-
-private data class ResolutionSnapshot(
-    val isResolvable: Boolean,
-    val wasResolvable: Boolean? = null,
-)
-
-private enum class RestartPolicy {
-    Always,
-    OnResolvableChange,
-    Never,
 }

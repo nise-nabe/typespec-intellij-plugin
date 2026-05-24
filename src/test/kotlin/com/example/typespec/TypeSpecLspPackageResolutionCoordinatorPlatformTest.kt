@@ -21,13 +21,19 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
     override fun setUp() {
         super.setUp()
         packageDirectory = Files.createTempDirectory("typespec-coordinator")
+        TypeSpecLspPackageRootVfsMultiplexer.getInstance().unwatch(project)
+        resetTypeSpecLspRestartRequestCountForTests()
     }
 
     override fun tearDown() {
         try {
-            packageDirectory.toFile().deleteRecursively()
+            resetTypeSpecLspRestartRequestCountForTests()
         } finally {
-            super.tearDown()
+            try {
+                packageDirectory.toFile().deleteRecursively()
+            } finally {
+                super.tearDown()
+            }
         }
     }
 
@@ -160,6 +166,80 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         drainResolutionCoordinatorQueues()
 
         assertFalse(ensureServerStartedCalled)
+    }
+
+    fun testOnPackageRootAffectedDoesNotRestartWhenResolvableStateWasUncached() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        drainResolutionCoordinatorQueues()
+        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
+        drainResolutionCoordinatorQueues()
+
+        assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
+    }
+
+    fun testApplyResolutionSnapshotRestartsWhenPackageBecomesResolvable() {
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
+            project,
+            ResolutionSnapshot(isResolvable = true, wasResolvable = false),
+            RestartPolicy.OnResolvableChange,
+        )
+
+        assertEquals(1, typeSpecLspRestartRequestCountForTests.get())
+    }
+
+    fun testApplyResolutionSnapshotRestartsWhenPackageBecomesUnresolvable() {
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
+            project,
+            ResolutionSnapshot(isResolvable = false, wasResolvable = true),
+            RestartPolicy.OnResolvableChange,
+        )
+
+        assertEquals(1, typeSpecLspRestartRequestCountForTests.get())
+    }
+
+    fun testApplyResolutionSnapshotDoesNotRestartWhenResolvableStateIsUnchanged() {
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
+            project,
+            ResolutionSnapshot(isResolvable = false, wasResolvable = false),
+            RestartPolicy.OnResolvableChange,
+        )
+
+        assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
+    }
+
+    fun testApplyResolutionSnapshotDoesNotRestartWhenPreviousResolvableStateWasUncached() {
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
+            project,
+            ResolutionSnapshot(isResolvable = false, wasResolvable = null),
+            RestartPolicy.OnResolvableChange,
+        )
+
+        assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
+    }
+
+    fun testOnPackageRootAffectedDoesNotRestartWhenResolvableStateIsUnchanged() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        drainResolutionCoordinatorQueues()
+        TypeSpecPackageResolution.isSelectedPackageResolvable(project)
+        resetTypeSpecLspRestartRequestCountForTests()
+
+        TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
+        drainResolutionCoordinatorQueues()
+
+        assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
     }
 
     fun testOnConfigurationChangedClearsCompilerMissingTrackerWhenServiceDisabled() {
