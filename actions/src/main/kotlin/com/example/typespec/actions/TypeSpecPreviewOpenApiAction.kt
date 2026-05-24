@@ -3,8 +3,8 @@ package com.example.typespec.actions
 import com.example.typespec.TypeSpecBundle
 import com.example.typespec.workflow.TYPESPEC_OPENAPI3_EMITTER
 import com.example.typespec.workflow.TypeSpecCliRunner
+import com.example.typespec.workflow.TypeSpecCliWorkflow
 import com.example.typespec.workflow.TypeSpecOpenApiPreview
-import com.example.typespec.workflow.TypeSpecOutputService
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecTspConfigReader
 import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
@@ -14,8 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import java.nio.file.Files
@@ -55,63 +53,57 @@ class TypeSpecPreviewOpenApiAction : AnAction(
             return
         }
 
-        val output = TypeSpecOutputService.getInstance(project)
-        output.show(project)
-        output.clear()
-
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.previewOpenApi.progress"), true) {
-            override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
-                val tempDir = Files.createTempDirectory("typespec-openapi-preview-")
-                var previewHtml: java.nio.file.Path? = null
-                try {
-                    val runner = TypeSpecCliRunner(project)
-                    val exitCode = runner.compile(
-                        project = project,
-                        projectRoot = resolution.projectRoot,
-                        entrypoint = entrypoint,
-                        emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
-                        extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(tempDir),
-                    ) ?: run {
-                        TypeSpecActionSupport.showCompilerMissing(project, "action.previewOpenApi.title")
-                        return
-                    }
-                    if (exitCode != 0) {
-                        TypeSpecWorkflowOutcomes.presentWarningOnEdt(
-                            project,
-                            "action.previewOpenApi.failed",
-                            "action.previewOpenApi.title",
-                            exitCode,
-                        )
-                        return
-                    }
-                    val openApiFile = TypeSpecOpenApiPreview.findOpenApiOutputFile(tempDir)
-                    if (openApiFile == null) {
-                        TypeSpecWorkflowOutcomes.presentErrorOnEdt(
-                            project,
-                            TypeSpecBundle.message("action.previewOpenApi.noOutput"),
-                            "action.previewOpenApi.title",
-                        )
-                        return
-                    }
-                    val openApiJson = Files.readString(openApiFile)
-                    previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
-                    Files.writeString(previewHtml, TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(openApiJson))
-                    val htmlToOpen = previewHtml
-                    ApplicationManager.getApplication().invokeLater {
-                        BrowserUtil.browse(htmlToOpen.toUri())
-                    }
-                } catch (e: Exception) {
-                    ApplicationManager.getApplication().invokeLater {
-                        Messages.showErrorDialog(
-                            project,
-                            e.message ?: e.toString(),
-                            TypeSpecBundle.message("action.previewOpenApi.title"),
-                        )
-                    }
-                } finally {
-                    TypeSpecOpenApiPreview.deleteRecursivelyQuietly(tempDir)
+        TypeSpecCliWorkflow.prepareOutput(project)
+        TypeSpecCliWorkflow.runBackground(project, "action.previewOpenApi.progress") {
+            val tempDir = Files.createTempDirectory("typespec-openapi-preview-")
+            var previewHtml: java.nio.file.Path? = null
+            try {
+                val exitCode = TypeSpecCliRunner(project).compile(
+                    project = project,
+                    projectRoot = resolution.projectRoot,
+                    entrypoint = entrypoint,
+                    emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
+                    extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(tempDir),
+                ) ?: run {
+                    TypeSpecCliWorkflow.showCompilerMissing(project, "action.previewOpenApi.title")
+                    return@runBackground
                 }
+                if (exitCode != 0) {
+                    TypeSpecWorkflowOutcomes.presentWarningOnEdt(
+                        project,
+                        "action.previewOpenApi.failed",
+                        "action.previewOpenApi.title",
+                        exitCode,
+                    )
+                    return@runBackground
+                }
+                val openApiFile = TypeSpecOpenApiPreview.findOpenApiOutputFile(tempDir)
+                if (openApiFile == null) {
+                    TypeSpecWorkflowOutcomes.presentErrorOnEdt(
+                        project,
+                        TypeSpecBundle.message("action.previewOpenApi.noOutput"),
+                        "action.previewOpenApi.title",
+                    )
+                    return@runBackground
+                }
+                val openApiJson = Files.readString(openApiFile)
+                previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
+                Files.writeString(previewHtml, TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(openApiJson))
+                val htmlToOpen = previewHtml
+                ApplicationManager.getApplication().invokeLater {
+                    BrowserUtil.browse(htmlToOpen.toUri())
+                }
+            } catch (e: Exception) {
+                ApplicationManager.getApplication().invokeLater {
+                    Messages.showErrorDialog(
+                        project,
+                        e.message ?: e.toString(),
+                        TypeSpecBundle.message("action.previewOpenApi.title"),
+                    )
+                }
+            } finally {
+                TypeSpecOpenApiPreview.deleteRecursivelyQuietly(tempDir)
             }
-        })
+        }
     }
 }

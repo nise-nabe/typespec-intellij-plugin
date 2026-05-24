@@ -2,20 +2,16 @@ package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
 import com.example.typespec.workflow.TypeSpecCliRunner
-import com.example.typespec.workflow.TypeSpecOutputService
+import com.example.typespec.workflow.TypeSpecCliWorkflow
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecTspConfigReader
+import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
-import java.nio.file.Paths
 
 class TypeSpecEmitFromTypeSpecAction : AnAction(
     TypeSpecBundle.message("action.emit.text"),
@@ -66,27 +62,21 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
             }
         }
 
-        val output = TypeSpecOutputService.getInstance(project)
-        output.show(project)
-        output.clear()
-
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.emit.progress"), true) {
-            override fun run(indicator: ProgressIndicator) {
-                val runner = TypeSpecCliRunner(project)
-                val exitCode = runner.compile(project, resolution.projectRoot, entrypoint, emitters)
-                    ?: run {
-                        TypeSpecActionSupport.showCompilerMissing(project, "action.emit.title")
-                        return
-                    }
-                if (exitCode != 0) {
-                    TypeSpecWorkflowOutcomes.presentWarningOnEdt(
-                        project,
-                        "action.emit.failed",
-                        "action.emit.title",
-                        exitCode,
-                    )
+        TypeSpecCliWorkflow.prepareOutput(project)
+        TypeSpecCliWorkflow.runBackground(project, "action.emit.progress") {
+            val exitCode = TypeSpecCliRunner(project).compile(project, resolution.projectRoot, entrypoint, emitters)
+                ?: run {
+                    TypeSpecCliWorkflow.showCompilerMissing(project, "action.emit.title")
+                    return@runBackground
                 }
+            if (exitCode != 0) {
+                TypeSpecWorkflowOutcomes.presentWarningOnEdt(
+                    project,
+                    "action.emit.failed",
+                    "action.emit.title",
+                    exitCode,
+                )
             }
-        })
+        }
     }
 }

@@ -49,11 +49,15 @@ internal object TypeSpecActionSupport {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, "settings.typespec")
     }
 
-    fun showCompilerMissing(project: Project, titleKey: String) {
+    fun showCompilerMissing(
+        project: Project,
+        titleKey: String,
+        messageKey: String = "workflow.compilerMissing",
+    ) {
         ApplicationManager.getApplication().invokeLater {
             Messages.showErrorDialog(
                 project,
-                TypeSpecBundle.message("action.emit.compilerMissing"),
+                TypeSpecBundle.message(messageKey),
                 TypeSpecBundle.message(titleKey),
             )
             openSettings(project)
