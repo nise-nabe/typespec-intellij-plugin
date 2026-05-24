@@ -1,7 +1,6 @@
 package com.example.typespec.workflow
 
 import com.example.typespec.TypeSpecBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import java.nio.file.Files
@@ -21,15 +20,11 @@ internal object TypeSpecWorkflowGuards {
         if (!hasEntries) {
             return true
         }
-        var proceed = false
-        ApplicationManager.getApplication().invokeAndWait {
-            proceed = Messages.showYesNoDialog(
-                project,
-                TypeSpecBundle.message(warningMessageKey),
-                TypeSpecBundle.message(titleKey),
-                Messages.getWarningIcon(),
-            ) == Messages.YES
-        }
-        return proceed
+        return Messages.showYesNoDialog(
+            project,
+            TypeSpecBundle.message(warningMessageKey),
+            TypeSpecBundle.message(titleKey),
+            Messages.getWarningIcon(),
+        ) == Messages.YES
     }
 }
