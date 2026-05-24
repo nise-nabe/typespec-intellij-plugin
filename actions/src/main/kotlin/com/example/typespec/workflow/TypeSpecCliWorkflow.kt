@@ -33,25 +33,27 @@ internal object TypeSpecCliWorkflow {
         project: Project,
         spec: TypeSpecCliJobSpec,
         cancellable: Boolean = true,
-        onExitCode: ((exitCode: Int) -> Unit)? = null,
-        task: (TypeSpecCliRunner, ProgressIndicator) -> Int?,
+        onSuccess: (() -> Unit)? = null,
+        task: (TypeSpecCliRunner, ProgressIndicator) -> TypeSpecCliJobResult,
     ) {
         prepareOutput(project)
         runBackground(project, spec.progressMessageKey, cancellable) { indicator ->
-            when (val exitCode = task(TypeSpecCliRunner(project), indicator)) {
-                null -> TypeSpecWorkflowOutcomes.presentCompilerMissingOnEdt(
+            when (val result = task(TypeSpecCliRunner(project), indicator)) {
+                TypeSpecCliJobResult.CliUnavailable -> TypeSpecWorkflowOutcomes.presentCompilerMissingOnEdt(
                     project,
                     spec.titleKey,
                     spec.cliUnavailableMessageKey,
                 )
-                else -> {
-                    onExitCode?.invoke(exitCode)
-                    if (exitCode != 0 && spec.failureMessageKey != null) {
+                TypeSpecCliJobResult.AbortedByUser, TypeSpecCliJobResult.Cancelled -> Unit
+                is TypeSpecCliJobResult.Finished -> {
+                    if (result.exitCode == 0) {
+                        onSuccess?.invoke()
+                    } else if (spec.failureMessageKey != null) {
                         TypeSpecWorkflowOutcomes.presentWarningOnEdt(
                             project,
                             spec.failureMessageKey,
                             spec.titleKey,
-                            exitCode,
+                            result.exitCode,
                         )
                     }
                 }

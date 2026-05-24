@@ -22,22 +22,34 @@ internal object TypeSpecOpenApiPreviewWorkflow {
         ) { runner, indicator ->
             val workDir = Files.createTempDirectory("typespec-openapi-preview-")
             try {
-                when (val outcome = executePreview(runner, project, resolution, entrypoint, workDir, indicator)) {
-                    PreviewRunOutcome.MissingCompiler -> null
-                    is PreviewRunOutcome.CompileFailed -> outcome.exitCode
-                    PreviewRunOutcome.PreviewFailed -> 1
-                    PreviewRunOutcome.Ok -> 0
-                }
+                previewResult(runner, project, resolution, entrypoint, workDir, indicator)
             } catch (e: Exception) {
                 TypeSpecWorkflowOutcomes.presentErrorOnEdt(
                     project,
                     e.message ?: e.toString(),
                     "action.previewOpenApi.title",
                 )
-                -1
+                TypeSpecCliJobResult.Finished(-1)
             } finally {
                 TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
             }
+        }
+    }
+
+    private fun previewResult(
+        runner: TypeSpecCliRunner,
+        project: Project,
+        resolution: TypeSpecProjectResolution,
+        entrypoint: Path,
+        workDir: Path,
+        indicator: ProgressIndicator,
+    ): TypeSpecCliJobResult {
+        return when (val outcome = executePreview(runner, project, resolution, entrypoint, workDir, indicator)) {
+            PreviewRunOutcome.MissingCompiler -> TypeSpecCliJobResult.CliUnavailable
+            PreviewRunOutcome.Cancelled -> TypeSpecCliJobResult.Cancelled
+            is PreviewRunOutcome.CompileFailed -> TypeSpecCliJobResult.Finished(outcome.exitCode)
+            PreviewRunOutcome.PreviewFailed -> TypeSpecCliJobResult.Finished(1)
+            PreviewRunOutcome.Ok -> TypeSpecCliJobResult.Finished(0)
         }
     }
 
@@ -49,20 +61,27 @@ internal object TypeSpecOpenApiPreviewWorkflow {
         workDir: Path,
         indicator: ProgressIndicator,
     ): PreviewRunOutcome {
-        val exitCode = runner.compile(
-            projectRoot = resolution.projectRoot,
-            entrypoint = entrypoint,
-            emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
-            extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(workDir),
-            indicator = indicator,
-        ) ?: return PreviewRunOutcome.MissingCompiler
-        if (exitCode != 0) {
-            return PreviewRunOutcome.CompileFailed(exitCode)
-        }
-        return if (openPreviewHtml(project, workDir)) {
-            PreviewRunOutcome.Ok
-        } else {
-            PreviewRunOutcome.PreviewFailed
+        return when (
+            val compileResult = runner.compile(
+                projectRoot = resolution.projectRoot,
+                entrypoint = entrypoint,
+                emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
+                extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(workDir),
+                indicator = indicator,
+            )
+        ) {
+            TypeSpecCliJobResult.CliUnavailable -> PreviewRunOutcome.MissingCompiler
+            TypeSpecCliJobResult.Cancelled -> PreviewRunOutcome.Cancelled
+            TypeSpecCliJobResult.AbortedByUser -> PreviewRunOutcome.Cancelled
+            is TypeSpecCliJobResult.Finished -> {
+                if (compileResult.exitCode != 0) {
+                    PreviewRunOutcome.CompileFailed(compileResult.exitCode)
+                } else if (openPreviewHtml(project, workDir)) {
+                    PreviewRunOutcome.Ok
+                } else {
+                    PreviewRunOutcome.PreviewFailed
+                }
+            }
         }
     }
 
@@ -100,6 +119,8 @@ internal object TypeSpecOpenApiPreviewWorkflow {
 
 private sealed interface PreviewRunOutcome {
     data object MissingCompiler : PreviewRunOutcome
+
+    data object Cancelled : PreviewRunOutcome
 
     data class CompileFailed(val exitCode: Int) : PreviewRunOutcome
 

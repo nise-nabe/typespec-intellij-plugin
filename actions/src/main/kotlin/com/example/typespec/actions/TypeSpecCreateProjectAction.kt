@@ -1,9 +1,11 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
+import com.example.typespec.workflow.TypeSpecCliJobResult
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecCliWorkflow
+import com.example.typespec.workflow.toJobResult
 import com.example.typespec.workflow.TypeSpecWorkflowGuards
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -48,18 +50,16 @@ class TypeSpecCreateProjectAction : AnAction(
                 progressMessageKey = "action.createProject.progress",
                 titleKey = "action.createProject.title",
             ),
-            onExitCode = { exitCode ->
-                if (exitCode == 0) {
-                    ApplicationManager.getApplication().invokeLater {
-                        NotificationGroupManager.getInstance()
-                            .getNotificationGroup("TypeSpec Notifications")
-                            .createNotification(
-                                TypeSpecBundle.message("action.createProject.success.title"),
-                                TypeSpecBundle.message("action.createProject.success.content"),
-                                NotificationType.INFORMATION,
-                            )
-                            .notify(project)
-                    }
+            onSuccess = {
+                ApplicationManager.getApplication().invokeLater {
+                    NotificationGroupManager.getInstance()
+                        .getNotificationGroup("TypeSpec Notifications")
+                        .createNotification(
+                            TypeSpecBundle.message("action.createProject.success.title"),
+                            TypeSpecBundle.message("action.createProject.success.content"),
+                            NotificationType.INFORMATION,
+                        )
+                        .notify(project)
                 }
             },
         ) { runner, indicator ->
@@ -70,11 +70,12 @@ class TypeSpecCreateProjectAction : AnAction(
                     "action.createProject.title",
                 )
             ) {
-                return@runCliJob 0
+                return@runCliJob TypeSpecCliJobResult.AbortedByUser
             }
             Files.createDirectories(targetPath)
-            val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath) ?: return@runCliJob null
-            runner.run(cli, args, TypeSpecBundle.message("action.createProject.progress"), indicator)
+            val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath)
+                ?: return@runCliJob TypeSpecCliJobResult.CliUnavailable
+            runner.run(cli, args, TypeSpecBundle.message("action.createProject.progress"), indicator).toJobResult()
         }
     }
 }

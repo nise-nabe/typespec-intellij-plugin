@@ -1,9 +1,11 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
+import com.example.typespec.workflow.TypeSpecCliJobResult
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecCliWorkflow
+import com.example.typespec.workflow.toJobResult
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecWorkflowGuards
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -56,11 +58,9 @@ class TypeSpecImportFromOpenApiAction : AnAction(
                 cliUnavailableMessageKey = "action.importOpenApi.openapi3Missing",
                 failureMessageKey = "action.importOpenApi.failed",
             ),
-            onExitCode = { exitCode ->
-                if (exitCode == 0) {
-                    ApplicationManager.getApplication().invokeLater {
-                        refreshAndOpen(project, targetFolder)
-                    }
+            onSuccess = {
+                ApplicationManager.getApplication().invokeLater {
+                    refreshAndOpen(project, targetFolder)
                 }
             },
         ) { runner, indicator ->
@@ -71,16 +71,17 @@ class TypeSpecImportFromOpenApiAction : AnAction(
                     "action.importOpenApi.title",
                 )
             ) {
-                return@runCliJob 0
+                return@runCliJob TypeSpecCliJobResult.AbortedByUser
             }
             Files.createDirectories(targetFolder)
-            val cli = TypeSpecCliResolver.resolveOpenApi3Cli(project, targetFolder) ?: return@runCliJob null
+            val cli = TypeSpecCliResolver.resolveOpenApi3Cli(project, targetFolder)
+                ?: return@runCliJob TypeSpecCliJobResult.CliUnavailable
             val args = listOf(
                 sourceFile,
                 "--output-dir",
                 targetFolder.toString(),
             )
-            runner.run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"), indicator)
+            runner.run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"), indicator).toJobResult()
         }
     }
 

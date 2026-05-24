@@ -16,7 +16,7 @@ internal class TypeSpecCliRunner(
         additionalArgs: List<String>,
         title: String,
         indicator: ProgressIndicator? = null,
-    ): Int {
+    ): TypeSpecCliProcessOutcome {
         val output = TypeSpecOutputService.getInstance(project)
         val command = baseCommand.copy(
             args = baseCommand.args + additionalArgs,
@@ -48,15 +48,15 @@ internal class TypeSpecCliRunner(
                 if (indicator?.isCanceled == true) {
                     processHandler.destroyProcess()
                     output.append("Process cancelled by user")
-                    return -1
+                    return TypeSpecCliProcessOutcome.Cancelled
                 }
                 Thread.sleep(50)
             }
             processHandler.waitFor()
-            exitCode
+            TypeSpecCliProcessOutcome.Exited(exitCode)
         } catch (e: Exception) {
             output.append("Failed to start process: ${e.message}")
-            -1
+            TypeSpecCliProcessOutcome.FailedToStart(e.message ?: e.toString())
         }
     }
 
@@ -66,14 +66,14 @@ internal class TypeSpecCliRunner(
         emitters: List<String>,
         extraArgs: List<String> = emptyList(),
         indicator: ProgressIndicator? = null,
-    ): Int? {
-        val cli = TypeSpecCliResolver.resolveTspCli(project, projectRoot) ?: return null
+    ): TypeSpecCliJobResult {
+        val cli = TypeSpecCliResolver.resolveTspCli(project, projectRoot) ?: return TypeSpecCliJobResult.CliUnavailable
         val request = TypeSpecCompileRequest(
             projectRoot = projectRoot,
             entrypoint = entrypoint,
             emitters = emitters,
             extraArgs = extraArgs,
         )
-        return run(cli, buildTypeSpecCompileTspArgs(request), "TypeSpec compile", indicator)
+        return run(cli, buildTypeSpecCompileTspArgs(request), "TypeSpec compile", indicator).toJobResult()
     }
 }
