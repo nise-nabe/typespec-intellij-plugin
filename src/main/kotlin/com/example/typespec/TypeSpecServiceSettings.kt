@@ -6,7 +6,6 @@ import com.intellij.lang.typescript.lsp.LspServerPackageDescriptor
 import com.intellij.lang.typescript.lsp.PackageVersion
 import com.intellij.lang.typescript.lsp.createPackage
 import com.intellij.lang.typescript.lsp.defaultPackageKey
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -15,7 +14,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lsp.api.LspServerManager
 import java.nio.file.Files
 import java.nio.file.Paths
 
@@ -28,7 +26,7 @@ object TypeSpecLspServerLoader : LspServerLoader(TypeSpecLspServerPackageDescrip
         TypeSpecServiceSettings.getInstance(project).lspServerPackage
 
     internal fun isSelectedPackageResolvable(project: Project): Boolean =
-        isPackageWithServerScript(getSelectedPackage(project))
+        TypeSpecLspPackageResolutionCache.getInstance(project).getOrCompute(project)
 
     internal fun isPackageWithServerScript(nodePackage: NodePackage): Boolean {
         val packageDirectory = Paths.get(nodePackage.systemDependentPath)
@@ -65,6 +63,7 @@ class TypeSpecServiceSettings(
             val changed = state.serviceModeName != value.name
             state.serviceModeName = value.name
             if (changed) {
+                TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
                 restartTypeSpecServerAsync(project)
             }
         }
@@ -76,6 +75,7 @@ class TypeSpecServiceSettings(
             val changed = state.lspServerPackageName != path
             state.lspServerPackageName = path
             if (changed) {
+                TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
                 restartTypeSpecServerAsync(project)
             }
         }
@@ -90,11 +90,50 @@ class TypeSpecServiceState : BaseState() {
     var lspServerPackageName by string(defaultPackageKey)
 }
 
-internal fun restartTypeSpecServerAsync(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-        return
+@Service(Service.Level.PROJECT)
+internal class TypeSpecLspPackageResolutionCache {
+    private var packageKey: String? = null
+    private var resolvable: Boolean? = null
+    private var checkedAtMillis: Long = 0L
+
+    fun getOrCompute(project: Project, nowMillis: Long = System.currentTimeMillis()): Boolean {
+        val selectedPackage = TypeSpecLspServerLoader.getSelectedPackage(project)
+        return getOrCompute(
+            packageKey = selectedPackage.systemDependentPath,
+            nowMillis = nowMillis,
+        ) {
+            TypeSpecLspServerLoader.isPackageWithServerScript(selectedPackage)
+        }
     }
-    ApplicationManager.getApplication().invokeLater({
-        LspServerManager.getInstance(project).stopAndRestartIfNeeded(TypeSpecLspServerSupportProvider::class.java)
-    }, project.disposed)
+
+    internal fun getOrCompute(
+        packageKey: String,
+        nowMillis: Long,
+        compute: () -> Boolean,
+    ): Boolean {
+        if (this.packageKey == packageKey &&
+            resolvable != null &&
+            nowMillis - checkedAtMillis < RESOLUTION_CACHE_TTL_MILLIS
+        ) {
+            return resolvable!!
+        }
+
+        val result = compute()
+        this.packageKey = packageKey
+        resolvable = result
+        checkedAtMillis = nowMillis
+        return result
+    }
+
+    fun invalidate() {
+        packageKey = null
+        resolvable = null
+        checkedAtMillis = 0L
+    }
+
+    companion object {
+        internal const val RESOLUTION_CACHE_TTL_MILLIS = 30_000L
+
+        fun getInstance(project: Project): TypeSpecLspPackageResolutionCache = project.service()
+    }
 }

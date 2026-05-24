@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
 
@@ -74,3 +75,12 @@ object TypeSpecActivationHelper : ServiceActivationHelper {
 
 @Suppress("UnstableApiUsage")
 class TypeSpecLspServerDescriptor(project: Project) : JSNodeLspServerDescriptor(project, TypeSpecLspServerActivationRule, "TypeSpec")
+
+internal fun restartTypeSpecServerAsync(project: Project) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+        return
+    }
+    ApplicationManager.getApplication().invokeLater({
+        LspServerManager.getInstance(project).stopAndRestartIfNeeded(TypeSpecLspServerSupportProvider::class.java)
+    }, project.disposed)
+}
