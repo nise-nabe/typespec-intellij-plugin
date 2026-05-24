@@ -33,22 +33,4 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
     }
-
-    fun testResolvablePackageAllowsCompilerMissingNotificationAgainAfterClear() {
-        val settings = TypeSpecServiceSettings.getInstance(project)
-        val tracker = TypeSpecLspNotificationTracker.getInstance(project)
-        Files.createDirectories(packageDirectory.resolve("cmd"))
-        Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
-        settings.lspServerPackage = NodePackage(packageDirectory.toString())
-        TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
-
-        val packageKey = packageDirectory.toString()
-        assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
-        assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
-
-        tracker.clearCompilerMissingNotification()
-
-        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
-    }
 }

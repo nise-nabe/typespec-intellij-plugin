@@ -1,17 +1,14 @@
 package com.example.typespec
 
 import com.intellij.javascript.nodejs.util.NodePackage
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.ui.UIUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -49,7 +46,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
 
         TypeSpecLspPackageResolutionCoordinator.onConfigurationChanged(project)
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
@@ -70,7 +67,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
@@ -94,7 +91,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
             }
         }
         task.get(10, TimeUnit.SECONDS)
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertNull(failure.get())
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
@@ -115,7 +112,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
 
         TypeSpecLspPackageResolutionCacheWatcher.getInstance(project).onPackageRootAffected()
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
@@ -146,7 +143,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         val applier = multiplexer.prepareChangeForTest(listOf(changeEvent))
         assertNotNull(applier)
         applier!!.afterVfsChange()
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
     }
@@ -163,7 +160,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         }
 
         TypeSpecLspPackageResolutionCoordinator.onTypeSpecFileOpened(project, file, serverStarter)
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertFalse(ensureServerStartedCalled)
     }
@@ -171,12 +168,12 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
     fun testOnPackageRootAffectedDoesNotRestartWhenResolvableStateWasUncached() {
         val settings = TypeSpecServiceSettings.getInstance(project)
         settings.lspServerPackage = NodePackage(packageDirectory.toString())
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
         TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         resetTypeSpecLspRestartRequestCountForTests()
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
     }
@@ -232,12 +229,12 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
     fun testOnPackageRootAffectedDoesNotRestartWhenResolvableStateIsUnchanged() {
         val settings = TypeSpecServiceSettings.getInstance(project)
         settings.lspServerPackage = NodePackage(packageDirectory.toString())
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
         TypeSpecPackageResolution.isSelectedPackageResolvable(project)
         resetTypeSpecLspRestartRequestCountForTests()
 
         TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
     }
@@ -255,7 +252,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
 
         settings.serviceMode = TypeSpecServiceMode.DISABLED
-        drainResolutionCoordinatorQueues()
+        TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
         assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
@@ -273,24 +270,12 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
             Files.createDirectories(packageDirectory.resolve("cmd"))
             Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
             settings.lspServerPackage = NodePackage(packageDirectory.toString())
-            drainResolutionCoordinatorQueues()
+            TypeSpecLspCoordinatorTestSupport.drainResolutionCoordinatorQueues()
 
             assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
             assertTrue(tracker.tryAcquireCompilerMissingNotification(packageDirectory.toString()))
         } finally {
             unresolvableDirectory.toFile().deleteRecursively()
-        }
-    }
-
-    private fun drainResolutionCoordinatorQueues() {
-        repeat(32) {
-            val backgroundQueueDrained = CountDownLatch(1)
-            AppExecutorUtil.getAppExecutorService().execute { backgroundQueueDrained.countDown() }
-            assertTrue(backgroundQueueDrained.await(10, TimeUnit.SECONDS))
-            UIUtil.dispatchAllInvocationEvents()
-            if (!ApplicationManager.getApplication().isDispatchThread) {
-                Thread.yield()
-            }
         }
     }
 }
