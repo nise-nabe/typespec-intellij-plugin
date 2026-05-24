@@ -9,6 +9,9 @@ import com.intellij.lang.typescript.lsp.defaultPackageKey
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 
@@ -33,7 +36,8 @@ private object TypeSpecLspServerPackageDescriptor : LspServerPackageDescriptor(
 }
 
 @Service(Service.Level.PROJECT)
-class TypeSpecServiceSettings: SimplePersistentStateComponent<TypeSpecServiceState>(TypeSpecServiceState()) {
+@State(name = "TypeSpecServiceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+class TypeSpecServiceSettings : SimplePersistentStateComponent<TypeSpecServiceState>(TypeSpecServiceState()) {
     var lspServerPackage: NodePackage
         get() = createPackage(state.lspServerPackageName, TypeSpecLspServerLoader.packageDescriptor.serverPackage)
         set(value) {
