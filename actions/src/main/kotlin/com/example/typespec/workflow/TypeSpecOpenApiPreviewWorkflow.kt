@@ -3,6 +3,7 @@ package com.example.typespec.workflow
 import com.example.typespec.TypeSpecBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,10 +19,10 @@ internal object TypeSpecOpenApiPreviewWorkflow {
                 titleKey = "action.previewOpenApi.title",
                 failureMessageKey = "action.previewOpenApi.failed",
             ),
-        ) { runner ->
+        ) { runner, indicator ->
             val workDir = Files.createTempDirectory("typespec-openapi-preview-")
             try {
-                when (val outcome = executePreview(runner, project, resolution, entrypoint, workDir)) {
+                when (val outcome = executePreview(runner, project, resolution, entrypoint, workDir, indicator)) {
                     PreviewRunOutcome.MissingCompiler -> null
                     is PreviewRunOutcome.CompileFailed -> outcome.exitCode
                     PreviewRunOutcome.PreviewFailed -> 1
@@ -46,12 +47,14 @@ internal object TypeSpecOpenApiPreviewWorkflow {
         resolution: TypeSpecProjectResolution,
         entrypoint: Path,
         workDir: Path,
+        indicator: ProgressIndicator,
     ): PreviewRunOutcome {
         val exitCode = runner.compile(
             projectRoot = resolution.projectRoot,
             entrypoint = entrypoint,
             emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
             extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(workDir),
+            indicator = indicator,
         ) ?: return PreviewRunOutcome.MissingCompiler
         if (exitCode != 0) {
             return PreviewRunOutcome.CompileFailed(exitCode)

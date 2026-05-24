@@ -48,16 +48,6 @@ class TypeSpecImportFromOpenApiAction : AnAction(
         val sourceFile = FileChooser.chooseFile(openApiDescriptor, project, null)?.path
             ?: return
 
-        if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
-                project,
-                targetFolder,
-                "action.importOpenApi.nonEmptyWarning",
-                "action.importOpenApi.title",
-            )
-        ) {
-            return
-        }
-
         TypeSpecCliWorkflow.runCliJob(
             project,
             TypeSpecCliJobSpec(
@@ -73,7 +63,16 @@ class TypeSpecImportFromOpenApiAction : AnAction(
                     }
                 }
             },
-        ) { runner ->
+        ) { runner, indicator ->
+            if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
+                    project,
+                    targetFolder,
+                    "action.importOpenApi.nonEmptyWarning",
+                    "action.importOpenApi.title",
+                )
+            ) {
+                return@runCliJob 0
+            }
             Files.createDirectories(targetFolder)
             val cli = TypeSpecCliResolver.resolveOpenApi3Cli(project, targetFolder) ?: return@runCliJob null
             val args = listOf(
@@ -81,7 +80,7 @@ class TypeSpecImportFromOpenApiAction : AnAction(
                 "--output-dir",
                 targetFolder.toString(),
             )
-            runner.run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"))
+            runner.run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"), indicator)
         }
     }
 

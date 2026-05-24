@@ -3,6 +3,7 @@ package com.example.typespec.workflow
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import java.nio.file.Path
@@ -14,6 +15,7 @@ internal class TypeSpecCliRunner(
         baseCommand: TypeSpecCliCommand,
         additionalArgs: List<String>,
         title: String,
+        indicator: ProgressIndicator? = null,
     ): Int {
         val output = TypeSpecOutputService.getInstance(project)
         val command = baseCommand.copy(
@@ -42,6 +44,14 @@ internal class TypeSpecCliRunner(
                 }
             })
             processHandler.startNotify()
+            while (!processHandler.isProcessTerminated) {
+                if (indicator?.isCanceled == true) {
+                    processHandler.destroyProcess()
+                    output.append("Process cancelled by user")
+                    return -1
+                }
+                Thread.sleep(50)
+            }
             processHandler.waitFor()
             exitCode
         } catch (e: Exception) {
@@ -55,6 +65,7 @@ internal class TypeSpecCliRunner(
         entrypoint: Path,
         emitters: List<String>,
         extraArgs: List<String> = emptyList(),
+        indicator: ProgressIndicator? = null,
     ): Int? {
         val cli = TypeSpecCliResolver.resolveTspCli(project, projectRoot) ?: return null
         val request = TypeSpecCompileRequest(
@@ -63,6 +74,6 @@ internal class TypeSpecCliRunner(
             emitters = emitters,
             extraArgs = extraArgs,
         )
-        return run(cli, buildTypeSpecCompileTspArgs(request), "TypeSpec compile")
+        return run(cli, buildTypeSpecCompileTspArgs(request), "TypeSpec compile", indicator)
     }
 }

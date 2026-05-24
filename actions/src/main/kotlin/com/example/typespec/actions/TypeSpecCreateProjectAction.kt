@@ -42,16 +42,6 @@ class TypeSpecCreateProjectAction : AnAction(
             }
         }
 
-        if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
-                project,
-                targetPath,
-                "action.createProject.nonEmptyWarning",
-                "action.createProject.title",
-            )
-        ) {
-            return
-        }
-
         TypeSpecCliWorkflow.runCliJob(
             project,
             TypeSpecCliJobSpec(
@@ -72,10 +62,19 @@ class TypeSpecCreateProjectAction : AnAction(
                     }
                 }
             },
-        ) { runner ->
+        ) { runner, indicator ->
+            if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
+                    project,
+                    targetPath,
+                    "action.createProject.nonEmptyWarning",
+                    "action.createProject.title",
+                )
+            ) {
+                return@runCliJob 0
+            }
             Files.createDirectories(targetPath)
             val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath) ?: return@runCliJob null
-            runner.run(cli, args, TypeSpecBundle.message("action.createProject.progress"))
+            runner.run(cli, args, TypeSpecBundle.message("action.createProject.progress"), indicator)
         }
     }
 }

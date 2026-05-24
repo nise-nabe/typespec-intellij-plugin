@@ -34,11 +34,11 @@ internal object TypeSpecCliWorkflow {
         spec: TypeSpecCliJobSpec,
         cancellable: Boolean = true,
         onExitCode: ((exitCode: Int) -> Unit)? = null,
-        task: (TypeSpecCliRunner) -> Int?,
+        task: (TypeSpecCliRunner, ProgressIndicator) -> Int?,
     ) {
         prepareOutput(project)
-        runBackground(project, spec.progressMessageKey, cancellable) {
-            when (val exitCode = task(TypeSpecCliRunner(project))) {
+        runBackground(project, spec.progressMessageKey, cancellable) { indicator ->
+            when (val exitCode = task(TypeSpecCliRunner(project), indicator)) {
                 null -> TypeSpecWorkflowOutcomes.presentCompilerMissingOnEdt(
                     project,
                     spec.titleKey,

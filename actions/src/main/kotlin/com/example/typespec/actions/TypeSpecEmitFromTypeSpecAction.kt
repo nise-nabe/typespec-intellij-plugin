@@ -68,8 +68,8 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
                 titleKey = "action.emit.title",
                 failureMessageKey = "action.emit.failed",
             ),
-        ) { runner ->
-            runner.compile(resolution.projectRoot, entrypoint, emitters)
+        ) { runner, indicator ->
+            runner.compile(resolution.projectRoot, entrypoint, emitters, indicator = indicator)
         }
     }
 }
