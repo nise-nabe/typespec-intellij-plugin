@@ -24,14 +24,4 @@ class TypeSpecLspPackageResolutionCacheLogicTest {
         cache.recordResolvable(true)
         assertTrue(cache.peekResolvable()!!)
     }
-
-    @Test
-    fun clearLastResolvableRemovesPeekSnapshot() {
-        val cache = TypeSpecLspPackageResolutionCache()
-
-        cache.recordResolvable(false)
-        cache.clearLastResolvable()
-
-        assertNull(cache.peekResolvable())
-    }
 }

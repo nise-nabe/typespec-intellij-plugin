@@ -36,10 +36,6 @@ internal class TypeSpecLspPackageResolutionCache {
         lastResolvable = resolvable
     }
 
-    internal fun clearLastResolvable() = synchronized(lock) {
-        lastResolvable = null
-    }
-
     companion object {
         fun getInstance(project: Project): TypeSpecLspPackageResolutionCache = project.service()
     }
