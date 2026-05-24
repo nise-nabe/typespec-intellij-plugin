@@ -20,28 +20,9 @@ class TypeSpecActivationHelperTest {
     }
 }
 
-class TypeSpecCompilerPackageResolverTest {
+class TypeSpecLspServerLoaderTest {
     @TempDir
     lateinit var tempDir: Path
-
-    @Test
-    fun hasProjectLocalCompilerPackageReturnsFalseWhenMissing() {
-        assertFalse(TypeSpecCompilerPackageResolver.hasProjectLocalCompilerPackage(tempDir.toString()))
-    }
-
-    @Test
-    fun hasProjectLocalCompilerPackageReturnsFalseWhenBasePathIsNull() {
-        assertFalse(TypeSpecCompilerPackageResolver.hasProjectLocalCompilerPackage(null))
-    }
-
-    @Test
-    fun hasProjectLocalCompilerPackageReturnsTrueWhenPackageJsonExists() {
-        val packageDirectory = tempDir.resolve("node_modules").resolve(TYPESPEC_COMPILER_PACKAGE_NAME)
-        Files.createDirectories(packageDirectory)
-        Files.writeString(packageDirectory.resolve("package.json"), "{}")
-
-        assertTrue(TypeSpecCompilerPackageResolver.hasProjectLocalCompilerPackage(tempDir.toString()))
-    }
 
     @Test
     fun isPackageWithServerScriptReturnsTrueWhenScriptExists() {
@@ -50,7 +31,7 @@ class TypeSpecCompilerPackageResolverTest {
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
         val nodePackage = NodePackage(packageDirectory.toString())
 
-        assertTrue(TypeSpecCompilerPackageResolver.isPackageWithServerScript(nodePackage))
+        assertTrue(TypeSpecLspServerLoader.isPackageWithServerScript(nodePackage))
     }
 
     @Test
@@ -59,7 +40,7 @@ class TypeSpecCompilerPackageResolverTest {
         Files.createDirectories(packageDirectory)
         val nodePackage = NodePackage(packageDirectory.toString())
 
-        assertFalse(TypeSpecCompilerPackageResolver.isPackageWithServerScript(nodePackage))
+        assertFalse(TypeSpecLspServerLoader.isPackageWithServerScript(nodePackage))
     }
 }
 

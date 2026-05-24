@@ -17,7 +17,7 @@ internal object TypeSpecLspNotifications {
         if (!TypeSpecLspServerActivationRule.wouldActivateIfPackageResolvable(project, file)) {
             return
         }
-        if (TypeSpecCompilerPackageResolver.isCompilerPackageResolvable(project)) {
+        if (TypeSpecLspServerLoader.isSelectedPackageResolvable(project)) {
             TypeSpecLspNotificationTracker.getInstance(project).clearCompilerMissingNotification()
             return
         }
