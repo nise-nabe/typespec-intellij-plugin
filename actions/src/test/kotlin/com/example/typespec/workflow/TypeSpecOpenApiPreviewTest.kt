@@ -32,9 +32,18 @@ class TypeSpecOpenApiPreviewTest {
     }
 
     @Test
-    fun buildSwaggerPreviewHtmlInlinesSpec() {
+    fun buildSwaggerPreviewHtmlEmbedsSpecSafely() {
         val html = TypeSpecOpenApiPreview.buildSwaggerPreviewHtml("""{"openapi":"3.0.0"}""")
 
-        assertTrue(html.contains("""spec: {"openapi":"3.0.0"}"""))
+        assertTrue(html.contains("""<script type="application/json" id="typespec-openapi-spec">{"openapi":"3.0.0"}</script>"""))
+        assertTrue(html.contains("JSON.parse(document.getElementById('typespec-openapi-spec').textContent)"))
+    }
+
+    @Test
+    fun buildSwaggerPreviewHtmlEscapesClosingScriptTag() {
+        val html = TypeSpecOpenApiPreview.buildSwaggerPreviewHtml("""{"x":"</script>"}""")
+
+        val specBlock = html.substringAfter("typespec-openapi-spec\">").substringBefore("</script>")
+        assertTrue(specBlock.contains("""<\/script>"""))
     }
 }

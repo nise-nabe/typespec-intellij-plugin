@@ -33,7 +33,7 @@ internal object TypeSpecOpenApiPreview {
     }
 
     fun buildSwaggerPreviewHtml(jsonSpec: String): String {
-        val inlinedSpec = jsonSpec.trim()
+        val embeddedSpec = jsonSpec.trim().replace("</", "<\\/")
         return """
             <!DOCTYPE html>
             <html>
@@ -43,9 +43,11 @@ internal object TypeSpecOpenApiPreview {
             </head>
             <body>
               <div id="swagger-ui"></div>
+              <script type="application/json" id="typespec-openapi-spec">$embeddedSpec</script>
               <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
               <script>
-                window.ui = SwaggerUIBundle({ spec: $inlinedSpec, dom_id: '#swagger-ui' });
+                const spec = JSON.parse(document.getElementById('typespec-openapi-spec').textContent);
+                window.ui = SwaggerUIBundle({ spec, dom_id: '#swagger-ui' });
               </script>
             </body>
             </html>
