@@ -28,7 +28,7 @@ class TypeSpecServiceSettings(
             val changed = state.serviceModeName != value.name
             state.serviceModeName = value.name
             if (changed) {
-                TypeSpecLspLifecycle.onConfigurationChanged(project)
+                TypeSpecLspPackageResolutionCoordinator.onConfigurationChanged(project)
             }
         }
 
@@ -39,7 +39,7 @@ class TypeSpecServiceSettings(
             val changed = state.lspServerPackageName != path
             state.lspServerPackageName = path
             if (changed) {
-                TypeSpecLspLifecycle.onConfigurationChanged(project)
+                TypeSpecLspPackageResolutionCoordinator.onConfigurationChanged(project)
             }
         }
 
