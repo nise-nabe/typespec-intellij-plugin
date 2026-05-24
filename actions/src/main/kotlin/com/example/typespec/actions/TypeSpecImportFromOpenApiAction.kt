@@ -89,8 +89,7 @@ class TypeSpecImportFromOpenApiAction : AnAction(
         val normalizedTarget = targetFolder.toAbsolutePath().normalize()
         val directory = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(normalizedTarget.toFile())
             ?: return
-        val preferredTsp = directory.children.firstOrNull { it.extension == "tsp" }?.let { Paths.get(it.path) }
-        val entrypoint = TypeSpecProjectContext.resolveEntrypointFile(normalizedTarget, preferredTsp) ?: return
+        val entrypoint = TypeSpecProjectContext.resolveEntrypointFile(normalizedTarget, null) ?: return
         val fileToOpen = directory.children.firstOrNull { virtualFilePathEquals(it, entrypoint) }
             ?: LocalFileSystem.getInstance().refreshAndFindFileByIoFile(entrypoint.toFile())
         fileToOpen?.let { tspFile ->
