@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Service(Service.Level.PROJECT)
@@ -44,22 +43,7 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
             if (project.isDisposed) {
                 return@execute
             }
-            recheckPackageResolution()
-        }
-    }
-
-    @RequiresBackgroundThread
-    private fun recheckPackageResolution() {
-        val cache = TypeSpecLspPackageResolutionCache.getInstance(project)
-        val wasResolvable = cache.peekResolvable()
-        cache.invalidate()
-
-        val isResolvable = TypeSpecLspServerLoader.isSelectedPackageResolvable(project)
-        if (isResolvable) {
-            TypeSpecLspNotificationTracker.getInstance(project).clearCompilerMissingNotification()
-        }
-        if (wasResolvable != isResolvable) {
-            restartTypeSpecServerAsync(project)
+            TypeSpecLspPackageResolutionCoordinator.onPackageRootAffected(project)
         }
     }
 

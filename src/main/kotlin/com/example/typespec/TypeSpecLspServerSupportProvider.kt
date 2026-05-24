@@ -20,7 +20,7 @@ class TypeSpecLspServerSupportProvider : LspServerSupportProvider {
         file: VirtualFile,
         serverStarter: LspServerSupportProvider.LspServerStarter,
     ) {
-        TypeSpecLspNotifications.onTypeSpecFileOpened(project, file)
+        TypeSpecLspPackageResolutionCoordinator.onTypeSpecFileOpened(project, file)
         if (TypeSpecLspServerActivationRule.isEnabledAndAvailable(project, file)) {
             serverStarter.ensureServerStarted(TypeSpecLspServerDescriptor(project))
         }
