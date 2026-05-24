@@ -13,7 +13,7 @@ private const val NOTIFICATION_GROUP_ID = "TypeSpec Notifications"
 
 internal object TypeSpecLspNotifications {
     fun onTypeSpecFileOpened(project: Project, file: VirtualFile) {
-        if (!TypeSpecLspServerActivationRule.wouldActivateIfPackageResolvable(project, file)) {
+        if (!TypeSpecLspServerActivationRule.isEligibleExceptPackageResolution(project, file)) {
             return
         }
         if (TypeSpecLspServerLoader.isSelectedPackageResolvable(project)) {
