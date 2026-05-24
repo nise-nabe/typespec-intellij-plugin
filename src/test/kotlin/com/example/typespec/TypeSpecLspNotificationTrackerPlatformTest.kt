@@ -6,7 +6,7 @@ class TypeSpecLspNotificationTrackerPlatformTest : BasePlatformTestCase() {
     fun testTrackerIsProjectScopedService() {
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
 
-        assertTrue(tracker.shouldNotifyCompilerMissing("default"))
-        assertFalse(tracker.shouldNotifyCompilerMissing("default"))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
+        assertFalse(tracker.tryAcquireCompilerMissingNotification("default"))
     }
 }

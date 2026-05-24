@@ -45,14 +45,14 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
         settings.lspServerPackage = NodePackage(packageKey)
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
-        assertFalse(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
+        assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
 
         TypeSpecLspPackageResolutionCoordinator.onConfigurationChanged(project)
         drainResolutionCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testOnPackageRootAffectedClearsTrackerWhenPackageBecomesResolvable() {
@@ -63,8 +63,8 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         settings.lspServerPackage = NodePackage(packageKey)
         TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
-        assertFalse(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
+        assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
 
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
@@ -73,7 +73,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         drainResolutionCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testOnPackageRootAffectedFromBackgroundThreadAppliesOnEdt() {
@@ -108,8 +108,8 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         settings.lspServerPackage = NodePackage(packageKey)
         TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         TypeSpecLspPackageRootVfsMultiplexer.getInstance().watchPackageRoot(project, packageKey)
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
-        assertFalse(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
+        assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
 
         Files.createDirectories(packageDirectory.resolve("cmd"))
         Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
@@ -118,7 +118,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         drainResolutionCoordinatorQueues()
 
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testMultiplexerRoutesPackageRootEventsToWatcher() {
@@ -251,13 +251,13 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         settings.lspServerPackage = NodePackage(packageKey)
         TypeSpecLspPackageResolutionCache.getInstance(project).invalidate()
         assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
-        assertFalse(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
+        assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
 
         settings.serviceMode = TypeSpecServiceMode.DISABLED
         drainResolutionCoordinatorQueues()
 
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 
     fun testSettingsChangeUsesCoordinatorToClearTrackerWhenPackageBecomesResolvable() {
@@ -267,8 +267,8 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         try {
             settings.lspServerPackage = NodePackage(unresolvableDirectory.toString())
             val unresolvableKey = unresolvableDirectory.toString()
-            assertTrue(tracker.shouldNotifyCompilerMissing(unresolvableKey))
-            assertFalse(tracker.shouldNotifyCompilerMissing(unresolvableKey))
+            assertTrue(tracker.tryAcquireCompilerMissingNotification(unresolvableKey))
+            assertFalse(tracker.tryAcquireCompilerMissingNotification(unresolvableKey))
 
             Files.createDirectories(packageDirectory.resolve("cmd"))
             Files.writeString(packageDirectory.resolve("cmd/tsp-server.js"), "// server")
@@ -276,7 +276,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
             drainResolutionCoordinatorQueues()
 
             assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-            assertTrue(tracker.shouldNotifyCompilerMissing(packageDirectory.toString()))
+            assertTrue(tracker.tryAcquireCompilerMissingNotification(packageDirectory.toString()))
         } finally {
             unresolvableDirectory.toFile().deleteRecursively()
         }

@@ -44,11 +44,11 @@ class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
 
         val packageKey = packageDirectory.toString()
         assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
-        assertFalse(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
+        assertFalse(tracker.tryAcquireCompilerMissingNotification(packageKey))
 
         tracker.clearCompilerMissingNotification()
 
-        assertTrue(tracker.shouldNotifyCompilerMissing(packageKey))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification(packageKey))
     }
 }

@@ -193,12 +193,13 @@ internal object TypeSpecLspPackageResolutionCoordinator {
             return
         }
 
+        val tracker = TypeSpecLspNotificationTracker.getInstance(project)
         val packageKey = TypeSpecPackageResolution.getSelectedPackage(project).systemDependentPath
-        if (!TypeSpecLspNotificationTracker.getInstance(project).shouldNotifyCompilerMissing(packageKey)) {
+        if (!tracker.tryAcquireCompilerMissingNotification(packageKey)) {
             return
         }
 
-        NotificationGroupManager.getInstance()
+        val notification = NotificationGroupManager.getInstance()
             .getNotificationGroup(NOTIFICATION_GROUP_ID)
             .createNotification(
                 TypeSpecBundle.message("notification.compilerMissing.title"),
@@ -212,6 +213,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
                     ShowSettingsUtil.getInstance().showSettingsDialog(project, TypeSpecSettingsConfigurable::class.java)
                 },
             )
-            .notify(project)
+        notification.notify(project)
+        tracker.rememberCompilerMissingNotification(notification)
     }
 }

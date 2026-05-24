@@ -6,27 +6,27 @@ import org.junit.jupiter.api.Test
 
 class TypeSpecLspNotificationTrackerLogicTest {
     @Test
-    fun shouldNotifyCompilerMissingOnlyOnceForSamePackageKey() {
+    fun tryAcquireCompilerMissingNotificationOnlyOnceForSamePackageKey() {
         val tracker = TypeSpecLspNotificationTracker()
 
-        assertTrue(tracker.shouldNotifyCompilerMissing("default"))
-        assertFalse(tracker.shouldNotifyCompilerMissing("default"))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
+        assertFalse(tracker.tryAcquireCompilerMissingNotification("default"))
     }
 
     @Test
-    fun shouldNotifyCompilerMissingAgainAfterPackageKeyChanges() {
+    fun tryAcquireCompilerMissingNotificationAgainAfterPackageKeyChanges() {
         val tracker = TypeSpecLspNotificationTracker()
 
-        assertTrue(tracker.shouldNotifyCompilerMissing("default"))
-        assertTrue(tracker.shouldNotifyCompilerMissing("custom-path"))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification("custom-path"))
     }
 
     @Test
     fun clearCompilerMissingNotificationAllowsSubsequentNotification() {
         val tracker = TypeSpecLspNotificationTracker()
 
-        assertTrue(tracker.shouldNotifyCompilerMissing("default"))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
         tracker.clearCompilerMissingNotification()
-        assertTrue(tracker.shouldNotifyCompilerMissing("default"))
+        assertTrue(tracker.tryAcquireCompilerMissingNotification("default"))
     }
 }
