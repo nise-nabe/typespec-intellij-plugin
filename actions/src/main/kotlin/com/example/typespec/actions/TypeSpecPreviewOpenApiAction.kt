@@ -65,7 +65,7 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                     emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
                     extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(tempDir),
                 ) ?: run {
-                    TypeSpecCliWorkflow.showCompilerMissing(project, "action.previewOpenApi.title")
+                    TypeSpecWorkflowOutcomes.presentCompilerMissingOnEdt(project, "action.previewOpenApi.title")
                     return@runBackground
                 }
                 if (exitCode != 0) {

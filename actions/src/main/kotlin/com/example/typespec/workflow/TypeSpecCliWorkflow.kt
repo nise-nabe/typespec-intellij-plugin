@@ -1,7 +1,6 @@
 package com.example.typespec.workflow
 
 import com.example.typespec.TypeSpecBundle
-import com.example.typespec.actions.TypeSpecActionSupport
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -30,11 +29,33 @@ internal object TypeSpecCliWorkflow {
         )
     }
 
-    fun showCompilerMissing(
+    fun runCliJob(
         project: Project,
-        titleKey: String,
-        messageKey: String = "workflow.compilerMissing",
+        spec: TypeSpecCliJobSpec,
+        cancellable: Boolean = true,
+        onExitCode: ((exitCode: Int) -> Unit)? = null,
+        task: (TypeSpecCliRunner) -> Int?,
     ) {
-        TypeSpecActionSupport.showCompilerMissing(project, titleKey, messageKey)
+        prepareOutput(project)
+        runBackground(project, spec.progressMessageKey, cancellable) {
+            when (val exitCode = task(TypeSpecCliRunner(project))) {
+                null -> TypeSpecWorkflowOutcomes.presentCompilerMissingOnEdt(
+                    project,
+                    spec.titleKey,
+                    spec.compilerMissingMessageKey,
+                )
+                else -> {
+                    onExitCode?.invoke(exitCode)
+                    if (exitCode != 0 && spec.failureMessageKey != null) {
+                        TypeSpecWorkflowOutcomes.presentWarningOnEdt(
+                            project,
+                            spec.failureMessageKey,
+                            spec.titleKey,
+                            exitCode,
+                        )
+                    }
+                }
+            }
+        }
     }
 }

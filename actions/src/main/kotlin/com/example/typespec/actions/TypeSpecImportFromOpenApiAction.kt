@@ -1,19 +1,23 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
+import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliResolver
-import com.example.typespec.workflow.TypeSpecCliRunner
 import com.example.typespec.workflow.TypeSpecCliWorkflow
+import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecWorkflowGuards
-import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class TypeSpecImportFromOpenApiAction : AnAction(
@@ -54,45 +58,44 @@ class TypeSpecImportFromOpenApiAction : AnAction(
             return
         }
 
-        TypeSpecCliWorkflow.prepareOutput(project)
-        TypeSpecCliWorkflow.runBackground(project, "action.importOpenApi.progress") {
+        TypeSpecCliWorkflow.runCliJob(
+            project,
+            TypeSpecCliJobSpec(
+                progressMessageKey = "action.importOpenApi.progress",
+                titleKey = "action.importOpenApi.title",
+                compilerMissingMessageKey = "action.importOpenApi.openapi3Missing",
+                failureMessageKey = "action.importOpenApi.failed",
+            ),
+            onExitCode = { exitCode ->
+                if (exitCode == 0) {
+                    ApplicationManager.getApplication().invokeLater {
+                        refreshAndOpen(project, targetFolder)
+                    }
+                }
+            },
+        ) { runner ->
             Files.createDirectories(targetFolder)
-
-            val cli = TypeSpecCliResolver.resolveOpenApi3Cli(project, targetFolder)
-            if (cli == null) {
-                TypeSpecCliWorkflow.showCompilerMissing(
-                    project,
-                    "action.importOpenApi.title",
-                    messageKey = "action.importOpenApi.openapi3Missing",
-                )
-                return@runBackground
-            }
-
+            val cli = TypeSpecCliResolver.resolveOpenApi3Cli(project, targetFolder) ?: return@runCliJob null
             val args = listOf(
                 sourceFile,
                 "--output-dir",
                 targetFolder.toString(),
             )
-            val exitCode = TypeSpecCliRunner(project).run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"))
-            if (exitCode == 0) {
-                com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
-                    refreshAndOpen(project, targetFolder)
-                }
-            } else {
-                TypeSpecWorkflowOutcomes.presentWarningOnEdt(
-                    project,
-                    "action.importOpenApi.failed",
-                    "action.importOpenApi.title",
-                    exitCode,
-                )
-            }
+            runner.run(cli, args, TypeSpecBundle.message("action.importOpenApi.progress"))
         }
     }
 
-    private fun refreshAndOpen(project: com.intellij.openapi.project.Project, targetFolder: java.nio.file.Path) {
+    private fun refreshAndOpen(project: Project, targetFolder: Path) {
         LocalFileSystem.getInstance().refreshAndFindFileByPath(targetFolder.toString())?.let { directory ->
-            directory.children.firstOrNull { it.extension == "tsp" }?.let { tspFile ->
-                com.intellij.openapi.fileEditor.FileEditorManager.getInstance(project).openFile(tspFile, true)
+            val entrypoint = TypeSpecProjectContext.resolveEntrypointFile(
+                targetFolder,
+                directory.children.firstOrNull { it.extension == "tsp" }?.let { Paths.get(it.path) },
+            )
+            val fileToOpen = entrypoint?.let { path ->
+                directory.children.firstOrNull { it.path == path.toString() }
+            } ?: directory.children.firstOrNull { it.extension == "tsp" }
+            fileToOpen?.let { tspFile ->
+                FileEditorManager.getInstance(project).openFile(tspFile, true)
             }
         }
     }

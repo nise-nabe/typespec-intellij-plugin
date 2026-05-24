@@ -1,8 +1,8 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
+import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliResolver
-import com.example.typespec.workflow.TypeSpecCliRunner
 import com.example.typespec.workflow.TypeSpecCliWorkflow
 import com.example.typespec.workflow.TypeSpecWorkflowGuards
 import com.intellij.notification.NotificationGroupManager
@@ -52,29 +52,30 @@ class TypeSpecCreateProjectAction : AnAction(
             return
         }
 
-        TypeSpecCliWorkflow.prepareOutput(project)
-        TypeSpecCliWorkflow.runBackground(project, "action.createProject.progress") {
-            Files.createDirectories(targetPath)
-
-            val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath)
-            if (cli == null) {
-                TypeSpecCliWorkflow.showCompilerMissing(project, "action.createProject.title")
-                return@runBackground
-            }
-
-            val exitCode = TypeSpecCliRunner(project).run(cli, args, TypeSpecBundle.message("action.createProject.progress"))
-            if (exitCode == 0) {
-                ApplicationManager.getApplication().invokeLater {
-                    NotificationGroupManager.getInstance()
-                        .getNotificationGroup("TypeSpec Notifications")
-                        .createNotification(
-                            TypeSpecBundle.message("action.createProject.success.title"),
-                            TypeSpecBundle.message("action.createProject.success.content"),
-                            NotificationType.INFORMATION,
-                        )
-                        .notify(project)
+        TypeSpecCliWorkflow.runCliJob(
+            project,
+            TypeSpecCliJobSpec(
+                progressMessageKey = "action.createProject.progress",
+                titleKey = "action.createProject.title",
+            ),
+            onExitCode = { exitCode ->
+                if (exitCode == 0) {
+                    ApplicationManager.getApplication().invokeLater {
+                        NotificationGroupManager.getInstance()
+                            .getNotificationGroup("TypeSpec Notifications")
+                            .createNotification(
+                                TypeSpecBundle.message("action.createProject.success.title"),
+                                TypeSpecBundle.message("action.createProject.success.content"),
+                                NotificationType.INFORMATION,
+                            )
+                            .notify(project)
+                    }
                 }
-            }
+            },
+        ) { runner ->
+            Files.createDirectories(targetPath)
+            val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath) ?: return@runCliJob null
+            runner.run(cli, args, TypeSpecBundle.message("action.createProject.progress"))
         }
     }
 }

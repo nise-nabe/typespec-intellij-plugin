@@ -1,11 +1,10 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
-import com.example.typespec.workflow.TypeSpecCliRunner
+import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliWorkflow
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecTspConfigReader
-import com.example.typespec.workflow.TypeSpecWorkflowOutcomes
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -62,21 +61,15 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
             }
         }
 
-        TypeSpecCliWorkflow.prepareOutput(project)
-        TypeSpecCliWorkflow.runBackground(project, "action.emit.progress") {
-            val exitCode = TypeSpecCliRunner(project).compile(project, resolution.projectRoot, entrypoint, emitters)
-                ?: run {
-                    TypeSpecCliWorkflow.showCompilerMissing(project, "action.emit.title")
-                    return@runBackground
-                }
-            if (exitCode != 0) {
-                TypeSpecWorkflowOutcomes.presentWarningOnEdt(
-                    project,
-                    "action.emit.failed",
-                    "action.emit.title",
-                    exitCode,
-                )
-            }
+        TypeSpecCliWorkflow.runCliJob(
+            project,
+            TypeSpecCliJobSpec(
+                progressMessageKey = "action.emit.progress",
+                titleKey = "action.emit.title",
+                failureMessageKey = "action.emit.failed",
+            ),
+        ) { runner ->
+            runner.compile(project, resolution.projectRoot, entrypoint, emitters)
         }
     }
 }
