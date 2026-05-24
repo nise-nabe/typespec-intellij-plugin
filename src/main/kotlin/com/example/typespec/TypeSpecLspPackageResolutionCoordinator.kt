@@ -41,8 +41,15 @@ internal fun shouldRequestServiceRestart(
 
 internal data class ResolutionSnapshot(
     val isResolvable: Boolean,
+    val packageKey: String,
     val wasResolvable: Boolean? = null,
 )
+
+internal fun shouldDeferCompilerMissingNotification(snapshot: ResolutionSnapshot): Boolean =
+    !snapshot.isResolvable && snapshot.wasResolvable == null
+
+internal fun shouldShowCompilerMissingNotification(snapshot: ResolutionSnapshot): Boolean =
+    !snapshot.isResolvable && snapshot.wasResolvable != null
 
 internal enum class RestartPolicy {
     Always,
@@ -60,6 +67,12 @@ internal object TypeSpecLspPackageResolutionCoordinator {
 
     fun onPackageRootAffected(project: Project) {
         scheduleResolutionUpdate(project, RestartPolicy.OnResolvableChange) { currentProject ->
+            computeResolutionSnapshot(currentProject, captureWasResolvable = true)
+        }
+    }
+
+    fun scheduleDeferredCompilerMissingRecheck(project: Project) {
+        scheduleResolutionUpdate(project, RestartPolicy.Never) { currentProject ->
             computeResolutionSnapshot(currentProject, captureWasResolvable = true)
         }
     }
@@ -152,8 +165,11 @@ internal object TypeSpecLspPackageResolutionCoordinator {
         val wasResolvable = if (captureWasResolvable) cache.peekResolvable() else null
         val selectedPackage = TypeSpecPackageResolution.getSelectedPackage(project)
         val isResolvable = TypeSpecPackageResolution.isPackageWithServerScript(selectedPackage)
+        val packageKey = normalizePackageRoot(selectedPackage.systemDependentPath)
+            ?: selectedPackage.systemDependentPath
         return ResolutionSnapshot(
             isResolvable = isResolvable,
+            packageKey = packageKey,
             wasResolvable = wasResolvable,
         )
     }
@@ -190,7 +206,7 @@ internal object TypeSpecLspPackageResolutionCoordinator {
     ) {
         ThreadingAssertions.assertEventDispatchThread()
         TypeSpecLspPackageResolutionCache.getInstance(project).recordResolvable(snapshot.isResolvable)
-        TypeSpecCompilerMissingNotification.sync(project, snapshot.isResolvable)
+        TypeSpecCompilerMissingNotification.sync(project, snapshot)
         if (shouldRequestServiceRestart(project, restartPolicy, snapshot)) {
             requestServiceRestart(project)
         }

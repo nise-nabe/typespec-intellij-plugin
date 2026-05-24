@@ -42,7 +42,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
             TypeSpecLspPackageResolutionCoordinator.tryApplyResolutionSnapshotForTests(
                 project,
                 initialGeneration,
-                ResolutionSnapshot(isResolvable = true),
+                resolutionSnapshot(isResolvable = true),
                 RestartPolicy.Never,
             ),
         )
@@ -55,7 +55,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
             TypeSpecLspPackageResolutionCoordinator.tryApplyResolutionSnapshotForTests(
                 project,
                 supersededGeneration,
-                ResolutionSnapshot(isResolvable = false),
+                resolutionSnapshot(isResolvable = false),
                 RestartPolicy.Never,
             ),
         )
@@ -65,7 +65,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
             TypeSpecLspPackageResolutionCoordinator.tryApplyResolutionSnapshotForTests(
                 project,
                 latestGeneration,
-                ResolutionSnapshot(isResolvable = false),
+                resolutionSnapshot(isResolvable = false),
                 RestartPolicy.Never,
             ),
         )
@@ -199,7 +199,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
         TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
             project,
-            ResolutionSnapshot(isResolvable = true, wasResolvable = false),
+            resolutionSnapshot(isResolvable = true, wasResolvable = false),
             RestartPolicy.OnResolvableChange,
         )
 
@@ -226,7 +226,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
         TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
             project,
-            ResolutionSnapshot(isResolvable = true, wasResolvable = false),
+            resolutionSnapshot(isResolvable = true, wasResolvable = false),
             RestartPolicy.OnResolvableChange,
         )
 
@@ -238,7 +238,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
         TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
             project,
-            ResolutionSnapshot(isResolvable = false, wasResolvable = true),
+            resolutionSnapshot(isResolvable = false, wasResolvable = true),
             RestartPolicy.OnResolvableChange,
         )
 
@@ -250,7 +250,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
         TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
             project,
-            ResolutionSnapshot(isResolvable = false, wasResolvable = false),
+            resolutionSnapshot(isResolvable = false, wasResolvable = false),
             RestartPolicy.OnResolvableChange,
         )
 
@@ -262,7 +262,7 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
         TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
             project,
-            ResolutionSnapshot(isResolvable = false, wasResolvable = null),
+            resolutionSnapshot(isResolvable = false, wasResolvable = null),
             RestartPolicy.OnResolvableChange,
         )
 
@@ -308,6 +308,25 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
         assertEquals(0, typeSpecLspRestartRequestCountForTests.get())
     }
 
+    fun testDeferredRecheckUpdatesResolvableStateAfterInitialUnresolvedSnapshot() {
+        configureSelectedPackage()
+        assertFalse(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
+
+        TypeSpecLspPackageResolutionCoordinator.applyResolutionSnapshotForTests(
+            project,
+            resolutionSnapshot(isResolvable = false, wasResolvable = null),
+            RestartPolicy.Never,
+        )
+        assertFalse(TypeSpecLspPackageResolutionCache.getInstance(project).peekResolvable()!!)
+
+        writeTypeSpecServerScript()
+        TypeSpecLspPackageResolutionCoordinator.scheduleDeferredCompilerMissingRecheck(project)
+        drainCoordinatorQueues()
+
+        assertTrue(TypeSpecPackageResolution.isSelectedPackageResolvable(project))
+        assertTrue(TypeSpecLspPackageResolutionCache.getInstance(project).peekResolvable()!!)
+    }
+
     fun testSettingsChangeUsesCoordinatorToClearTrackerWhenPackageBecomesResolvable() {
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
         val unresolvableDirectory = Files.createTempDirectory("typespec-unresolvable")
@@ -329,6 +348,19 @@ class TypeSpecLspPackageResolutionCoordinatorPlatformTest : BasePlatformTestCase
 
     private val selectedPackageKey: String
         get() = packageDirectory.toString()
+
+    private fun resolutionSnapshot(
+        isResolvable: Boolean,
+        wasResolvable: Boolean? = null,
+        packageKey: String = selectedPackageKey,
+    ): ResolutionSnapshot {
+        val normalizedPackageKey = normalizePackageRoot(packageKey) ?: packageKey
+        return ResolutionSnapshot(
+            isResolvable = isResolvable,
+            packageKey = normalizedPackageKey,
+            wasResolvable = wasResolvable,
+        )
+    }
 
     private fun configureSelectedPackage() {
         configureLspPackage(selectedPackageKey)

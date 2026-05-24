@@ -12,21 +12,36 @@ internal const val TYPESPEC_NOTIFICATION_GROUP_ID = "TypeSpec Notifications"
 
 internal object TypeSpecCompilerMissingNotification {
     @RequiresEdt
-    fun sync(project: Project, isResolvable: Boolean) {
+    fun sync(project: Project, snapshot: ResolutionSnapshot) {
+        val debounce = TypeSpecCompilerMissingNotificationDebounce.getInstance(project)
         if (!TypeSpecActivationHelper.isEnabledInSettings(project)) {
+            debounce.cancel()
             TypeSpecLspNotificationTracker.getInstance(project).clearCompilerMissingNotification()
             return
         }
-        if (isResolvable) {
+        if (snapshot.isResolvable) {
+            debounce.cancel()
             TypeSpecLspNotificationTracker.getInstance(project).clearCompilerMissingNotification()
             return
         }
         if (ApplicationManager.getApplication().isUnitTestMode) {
             return
         }
+        if (shouldDeferCompilerMissingNotification(snapshot)) {
+            debounce.scheduleRecheck()
+            return
+        }
+        if (!shouldShowCompilerMissingNotification(snapshot)) {
+            return
+        }
 
+        debounce.cancel()
+        showCompilerMissingNotification(project, snapshot.packageKey)
+    }
+
+    @RequiresEdt
+    private fun showCompilerMissingNotification(project: Project, packageKey: String) {
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
-        val packageKey = TypeSpecPackageResolution.getSelectedPackage(project).systemDependentPath
         if (!tracker.tryAcquireCompilerMissingNotification(packageKey)) {
             return
         }

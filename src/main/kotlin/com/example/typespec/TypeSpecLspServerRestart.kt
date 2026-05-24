@@ -5,6 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspServerManager
 
 internal fun restartTypeSpecServerAsync(project: Project) {
+    if (!TypeSpecActivationHelper.isEnabledInSettings(project)) {
+        return
+    }
     if (ApplicationManager.getApplication().isUnitTestMode) {
         return
     }
