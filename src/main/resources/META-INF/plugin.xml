@@ -12,6 +12,7 @@
             <li>Recognition of `.tsp` files</li>
             <li>Code completion, diagnostics, and navigation support powered by the TypeSpec Language Server</li>
             <li>LSP-based editing support for TypeSpec projects</li>
+            <li>Project settings to configure the TypeSpec Language Server package path and enable or disable the service</li>
             <li>Inspections and quick fixes for TypeSpec extension package <code>package.json</code> metadata</li>
         </ul>
     ]]></description>
@@ -36,6 +37,13 @@
         <platform.lsp.serverSupportProvider implementation="com.example.typespec.TypeSpecLspServerSupportProvider"/>
         <spellchecker.bundledDictionaryProvider implementation="com.example.typespec.TypeSpecBundledDictionaryProvider"/>
         <projectSettings service="com.example.typespec.TypeSpecServiceSettings" />
+
+        <projectConfigurable parentId="language"
+                             instance="com.example.typespec.TypeSpecSettingsConfigurable"
+                             id="settings.typespec"
+                             key="settings.typespec.title"
+                             bundle="messages.TypeSpecBundle"
+                             nonDefaultProject="true"/>
 
         <localInspection language="JSON"
                          shortName="TypeSpecPackageJsonInspection"

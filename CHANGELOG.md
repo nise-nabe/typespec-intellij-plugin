@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added project settings UI to configure the `@typespec/compiler` package path and enable or disable the TypeSpec Language Server
+- Added Language Services status bar widget integration with a link to TypeSpec settings
+- Added balloon notification when `@typespec/compiler` cannot be resolved while opening `.tsp` files
 - Added TypeSpec `package.json` inspections for likely TypeSpec extension packages, reporting missing recommended metadata:
   - `"type": "module"` (TPKG001)
   - Node.js entry point in `"main"` (TPKG002)

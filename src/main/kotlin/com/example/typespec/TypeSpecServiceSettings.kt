@@ -6,6 +6,7 @@ import com.intellij.lang.typescript.lsp.LspServerPackageDescriptor
 import com.intellij.lang.typescript.lsp.PackageVersion
 import com.intellij.lang.typescript.lsp.createPackage
 import com.intellij.lang.typescript.lsp.defaultPackageKey
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SimplePersistentStateComponent
@@ -14,19 +15,19 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.lsp.api.LspServerManager
 
-@Suppress("UnstableApiUsage")
-object TypeSpecLspServerLoader : LspServerLoader(TypeSpecLspServerPackageDescriptor) {
-    override fun getSelectedPackage(project: Project): NodePackage {
-        return TypeSpecServiceSettings.getInstance(project).lspServerPackage
-    }
-}
-
-private const val TYPESPEC_COMPILER_PACKAGE_NAME = "@typespec/compiler"
+internal const val TYPESPEC_COMPILER_PACKAGE_NAME = "@typespec/compiler"
 private const val TYPESPEC_SERVER_SCRIPT_PATH = "/cmd/tsp-server.js"
 
 @Suppress("UnstableApiUsage")
-private object TypeSpecLspServerPackageDescriptor : LspServerPackageDescriptor(
+object TypeSpecLspServerLoader : LspServerLoader(TypeSpecLspServerPackageDescriptor) {
+    override fun getSelectedPackage(project: Project): NodePackage =
+        TypeSpecServiceSettings.getInstance(project).lspServerPackage
+}
+
+@Suppress("UnstableApiUsage")
+internal object TypeSpecLspServerPackageDescriptor : LspServerPackageDescriptor(
     TYPESPEC_COMPILER_PACKAGE_NAME,
     PackageVersion.downloadable("1.10.0"),
     TYPESPEC_SERVER_SCRIPT_PATH,
@@ -35,20 +36,52 @@ private object TypeSpecLspServerPackageDescriptor : LspServerPackageDescriptor(
         get() = ""
 }
 
+enum class TypeSpecServiceMode {
+    ENABLED,
+    DISABLED,
+}
+
 @Service(Service.Level.PROJECT)
 @State(name = "TypeSpecServiceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-class TypeSpecServiceSettings : SimplePersistentStateComponent<TypeSpecServiceState>(TypeSpecServiceState()) {
+class TypeSpecServiceSettings(
+    private val project: Project,
+) : SimplePersistentStateComponent<TypeSpecServiceState>(TypeSpecServiceState()) {
+    var serviceMode: TypeSpecServiceMode
+        get() = TypeSpecServiceMode.entries.find { it.name == state.serviceModeName } ?: TypeSpecServiceMode.ENABLED
+        set(value) {
+            val changed = state.serviceModeName != value.name
+            state.serviceModeName = value.name
+            if (changed) {
+                restartTypeSpecServerAsync(project)
+            }
+        }
+
     var lspServerPackage: NodePackage
         get() = createPackage(state.lspServerPackageName, TypeSpecLspServerLoader.packageDescriptor.serverPackage)
         set(value) {
-            state.lspServerPackageName = value.systemDependentPath
+            val path = value.systemDependentPath
+            val changed = state.lspServerPackageName != path
+            state.lspServerPackageName = path
+            if (changed) {
+                restartTypeSpecServerAsync(project)
+            }
         }
+
     companion object {
         fun getInstance(project: Project): TypeSpecServiceSettings = project.service()
     }
 }
 
-class TypeSpecServiceState: BaseState() {
+class TypeSpecServiceState : BaseState() {
+    var serviceModeName by string(TypeSpecServiceMode.ENABLED.name)
     var lspServerPackageName by string(defaultPackageKey)
 }
 
+internal fun restartTypeSpecServerAsync(project: Project) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+        return
+    }
+    ApplicationManager.getApplication().invokeLater({
+        LspServerManager.getInstance(project).stopAndRestartIfNeeded(TypeSpecLspServerSupportProvider::class.java)
+    }, project.disposed)
+}
