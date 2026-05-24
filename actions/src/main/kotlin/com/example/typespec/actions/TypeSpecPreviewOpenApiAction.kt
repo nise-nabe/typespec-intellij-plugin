@@ -26,12 +26,7 @@ class TypeSpecPreviewOpenApiAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        val project = event.project
-        val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
-        event.presentation.isEnabledAndVisible = project != null &&
-            file != null &&
-            file.extension == "tsp" &&
-            TypeSpecActionSupport.isServiceEnabled(project)
+        TypeSpecActionSupport.updateForTypeSpecContext(event)
     }
 
     override fun actionPerformed(event: AnActionEvent) {
@@ -50,6 +45,7 @@ class TypeSpecPreviewOpenApiAction : AnAction(
 
         val output = TypeSpecOutputService.getInstance(project)
         output.show(project)
+        output.clear()
 
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.previewOpenApi.progress"), true) {
             override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
@@ -68,7 +64,7 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                             "@typespec/openapi3.emitter-output-dir=${tempDir.toAbsolutePath()}",
                         ),
                     ) ?: run {
-                        showCompilerMissing(project)
+                        TypeSpecActionSupport.showCompilerMissing(project, "action.previewOpenApi.title")
                         return
                     }
                     if (exitCode != 0) {
@@ -92,9 +88,8 @@ class TypeSpecPreviewOpenApiAction : AnAction(
                         }
                         return
                     }
-                    val specJson = Files.readString(openApiFile)
                     val previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
-                    Files.writeString(previewHtml, buildSwaggerHtml(specJson))
+                    Files.writeString(previewHtml, buildSwaggerHtml(openApiFile))
                     ApplicationManager.getApplication().invokeLater {
                         BrowserUtil.browse(previewHtml.toUri())
                     }
@@ -111,17 +106,6 @@ class TypeSpecPreviewOpenApiAction : AnAction(
         })
     }
 
-    private fun showCompilerMissing(project: com.intellij.openapi.project.Project) {
-        ApplicationManager.getApplication().invokeLater {
-            Messages.showErrorDialog(
-                project,
-                TypeSpecBundle.message("action.emit.compilerMissing"),
-                TypeSpecBundle.message("action.previewOpenApi.title"),
-            )
-            TypeSpecActionSupport.openSettings(project)
-        }
-    }
-
     private fun findOpenApiFile(directory: Path): Path? {
         Files.walk(directory).use { paths: Stream<Path> ->
             return paths
@@ -135,7 +119,8 @@ class TypeSpecPreviewOpenApiAction : AnAction(
         }
     }
 
-    private fun buildSwaggerHtml(specJson: String): String {
+    private fun buildSwaggerHtml(openApiFile: Path): String {
+        val specUrl = openApiFile.toUri().toString()
         return """
             <!DOCTYPE html>
             <html>
@@ -147,8 +132,7 @@ class TypeSpecPreviewOpenApiAction : AnAction(
               <div id="swagger-ui"></div>
               <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
               <script>
-                const spec = $specJson;
-                window.ui = SwaggerUIBundle({ spec: spec, dom_id: '#swagger-ui' });
+                window.ui = SwaggerUIBundle({ url: '$specUrl', dom_id: '#swagger-ui' });
               </script>
             </body>
             </html>

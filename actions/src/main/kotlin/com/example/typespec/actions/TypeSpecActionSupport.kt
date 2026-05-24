@@ -1,17 +1,18 @@
 package com.example.typespec.actions
 
+import com.example.typespec.TypeSpecBundle
 import com.example.typespec.TypeSpecFileType
-import com.example.typespec.TypeSpecLspServerActivationRule
 import com.example.typespec.TypeSpecLspServerLoader
 import com.example.typespec.TypeSpecServiceMode
 import com.example.typespec.TypeSpecServiceSettings
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
-import com.example.typespec.TypeSpecSettingsConfigurable
 
 internal object TypeSpecActionSupport {
     fun updateForTypeSpecContext(event: AnActionEvent, requireResolvableCompiler: Boolean = true) {
@@ -45,9 +46,17 @@ internal object TypeSpecActionSupport {
     }
 
     fun openSettings(project: Project) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, TypeSpecSettingsConfigurable::class.java)
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, "settings.typespec")
     }
 
-    fun isLspEligible(project: Project, file: VirtualFile): Boolean =
-        TypeSpecLspServerActivationRule.isEnabledAndAvailable(project, file)
+    fun showCompilerMissing(project: Project, titleKey: String) {
+        ApplicationManager.getApplication().invokeLater {
+            Messages.showErrorDialog(
+                project,
+                TypeSpecBundle.message("action.emit.compilerMissing"),
+                TypeSpecBundle.message(titleKey),
+            )
+            openSettings(project)
+        }
+    }
 }

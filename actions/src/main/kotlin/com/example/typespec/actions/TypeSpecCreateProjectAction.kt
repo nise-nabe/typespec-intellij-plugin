@@ -4,6 +4,7 @@ import com.example.typespec.TypeSpecBundle
 import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecCliRunner
 import com.example.typespec.workflow.TypeSpecOutputService
+import com.example.typespec.workflow.TypeSpecWorkflowGuards
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -33,29 +34,6 @@ class TypeSpecCreateProjectAction : AnAction(
             return
         }
         val targetPath = dialog.targetPath() ?: return
-        if (Files.exists(targetPath) && Files.list(targetPath).findAny().isPresent) {
-            val answer = Messages.showYesNoDialog(
-                project,
-                TypeSpecBundle.message("action.createProject.nonEmptyWarning"),
-                TypeSpecBundle.message("action.createProject.title"),
-                Messages.getWarningIcon(),
-            )
-            if (answer != Messages.YES) {
-                return
-            }
-        }
-        Files.createDirectories(targetPath)
-
-        val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath)
-        if (cli == null) {
-            Messages.showErrorDialog(
-                project,
-                TypeSpecBundle.message("action.emit.compilerMissing"),
-                TypeSpecBundle.message("action.createProject.title"),
-            )
-            TypeSpecActionSupport.openSettings(project)
-            return
-        }
 
         val template = dialog.selectedTemplate()
         val args = buildList {
@@ -72,6 +50,23 @@ class TypeSpecCreateProjectAction : AnAction(
 
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.createProject.progress"), true) {
             override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
+                if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
+                        project,
+                        targetPath,
+                        "action.createProject.nonEmptyWarning",
+                        "action.createProject.title",
+                    )
+                ) {
+                    return
+                }
+                Files.createDirectories(targetPath)
+
+                val cli = TypeSpecCliResolver.resolveTspCli(project, targetPath)
+                if (cli == null) {
+                    TypeSpecActionSupport.showCompilerMissing(project, "action.createProject.title")
+                    return
+                }
+
                 val exitCode = TypeSpecCliRunner(project).run(cli, args, TypeSpecBundle.message("action.createProject.progress"))
                 if (exitCode == 0) {
                     com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {

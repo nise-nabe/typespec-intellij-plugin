@@ -75,14 +75,7 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
                 val runner = TypeSpecCliRunner(project)
                 val exitCode = runner.compile(project, resolution.projectRoot, entrypoint, emitters)
                     ?: run {
-                        ApplicationManager.getApplication().invokeLater {
-                            Messages.showErrorDialog(
-                                project,
-                                TypeSpecBundle.message("action.emit.compilerMissing"),
-                                TypeSpecBundle.message("action.emit.title"),
-                            )
-                            TypeSpecActionSupport.openSettings(project)
-                        }
+                        TypeSpecActionSupport.showCompilerMissing(project, "action.emit.title")
                         return
                     }
                 if (exitCode != 0) {

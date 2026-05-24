@@ -4,6 +4,7 @@ import com.example.typespec.TypeSpecBundle
 import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecCliRunner
 import com.example.typespec.workflow.TypeSpecOutputService
+import com.example.typespec.workflow.TypeSpecWorkflowGuards
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -37,19 +38,6 @@ class TypeSpecImportFromOpenApiAction : AnAction(
         val targetFolder = FileChooser.chooseFile(folderDescriptor, project, null)?.path?.let { Paths.get(it) }
             ?: return
 
-        if (Files.exists(targetFolder) && Files.list(targetFolder).findAny().isPresent) {
-            val answer = Messages.showYesNoDialog(
-                project,
-                TypeSpecBundle.message("action.importOpenApi.nonEmptyWarning"),
-                TypeSpecBundle.message("action.importOpenApi.title"),
-                Messages.getWarningIcon(),
-            )
-            if (answer != Messages.YES) {
-                return
-            }
-        }
-        Files.createDirectories(targetFolder)
-
         val openApiDescriptor = FileChooserDescriptor(true, false, false, false, false, false)
             .withTitle(TypeSpecBundle.message("action.importOpenApi.sourceFile"))
             .withFileFilter { file ->
@@ -59,22 +47,35 @@ class TypeSpecImportFromOpenApiAction : AnAction(
         val sourceFile = FileChooser.chooseFile(openApiDescriptor, project, null)?.path
             ?: return
 
-        val npx = TypeSpecCliResolver.resolveNpxCli(targetFolder)
-        if (npx == null) {
-            Messages.showErrorDialog(
-                project,
-                TypeSpecBundle.message("action.importOpenApi.npxMissing"),
-                TypeSpecBundle.message("action.importOpenApi.title"),
-            )
-            return
-        }
-
         val output = TypeSpecOutputService.getInstance(project)
         output.show(project)
         output.clear()
 
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, TypeSpecBundle.message("action.importOpenApi.progress"), true) {
             override fun run(indicator: com.intellij.openapi.progress.ProgressIndicator) {
+                if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
+                        project,
+                        targetFolder,
+                        "action.importOpenApi.nonEmptyWarning",
+                        "action.importOpenApi.title",
+                    )
+                ) {
+                    return
+                }
+                Files.createDirectories(targetFolder)
+
+                val npx = TypeSpecCliResolver.resolveNpxCli(targetFolder)
+                if (npx == null) {
+                    com.intellij.openapi.application.ApplicationManager.getApplication().invokeLater {
+                        Messages.showErrorDialog(
+                            project,
+                            TypeSpecBundle.message("action.importOpenApi.npxMissing"),
+                            TypeSpecBundle.message("action.importOpenApi.title"),
+                        )
+                    }
+                    return
+                }
+
                 val args = listOf(
                     "tsp-openapi3",
                     sourceFile,
