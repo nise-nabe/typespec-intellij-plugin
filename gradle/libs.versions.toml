@@ -9,7 +9,9 @@ changelog = "2.5.0"
 foojay-resolver = "1.0.0"
 
 [libraries]
-
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+intellij-platform-gradle-plugin = { module = "org.jetbrains.intellij.platform:org.jetbrains.intellij.platform.gradle.plugin", version.ref = "intellij-platform" }
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+intellij-platform = { id = "org.jetbrains.intellij.platform", version.ref = "intellij-platform" }
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }

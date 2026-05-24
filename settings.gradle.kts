@@ -6,7 +6,13 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
     }
+    includeBuild("build-logic")
 }
+
+include("core")
+include("lsp")
+include("inspections")
+include("plugin")
 
 plugins {
     // Keep in sync with gradle/libs.versions.toml
