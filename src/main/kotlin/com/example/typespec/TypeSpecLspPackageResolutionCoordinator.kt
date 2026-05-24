@@ -99,11 +99,11 @@ internal object TypeSpecLspPackageResolutionCoordinator {
     ) {
         syncCompilerMissingNotification(project, snapshot.isResolvable)
         when (restartPolicy) {
-            RestartPolicy.Always -> restartTypeSpecServerAsync(project)
+            RestartPolicy.Always -> TypeSpecLspServerActivationRule.restartService(project)
             RestartPolicy.OnResolvableChange -> {
                 val wasResolvable = snapshot.wasResolvable
                 if (wasResolvable != null && wasResolvable != snapshot.isResolvable) {
-                    restartTypeSpecServerAsync(project)
+                    TypeSpecLspServerActivationRule.restartService(project)
                 }
             }
             RestartPolicy.Never -> Unit
