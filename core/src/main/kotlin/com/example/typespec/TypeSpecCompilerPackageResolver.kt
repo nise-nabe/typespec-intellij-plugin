@@ -12,6 +12,9 @@ object TypeSpecCompilerPackageResolver {
     fun isCompilerCliResolvable(project: Project): Boolean =
         TypeSpecPackageResolutionCache.getInstance(project).getOrCompute(project).compilerCliResolvable
 
+    fun isOpenApi3CliResolvable(project: Project): Boolean =
+        TypeSpecPackageResolutionCache.getInstance(project).getOrCompute(project).openApi3CliResolvable
+
     fun hasCompilerCli(packageDirectory: Path): Boolean {
         if (!Files.isDirectory(packageDirectory)) {
             return false

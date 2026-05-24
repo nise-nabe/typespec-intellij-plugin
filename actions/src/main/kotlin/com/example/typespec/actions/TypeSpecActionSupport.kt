@@ -1,10 +1,9 @@
 package com.example.typespec.actions
 
-import com.example.typespec.TypeSpecFileType
 import com.example.typespec.TypeSpecCompilerPackageResolver
+import com.example.typespec.TypeSpecFileType
 import com.example.typespec.TypeSpecServiceMode
 import com.example.typespec.TypeSpecServiceSettings
-import com.example.typespec.workflow.TypeSpecCliResolver
 import com.example.typespec.workflow.TypeSpecOutputService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -12,47 +11,34 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
+internal enum class CliRequirement {
+    None,
+    Compiler,
+    OpenApi3,
+}
+
+internal data class ActionVisibility(
+    val requireServiceEnabled: Boolean = true,
+    val requireVirtualFile: Boolean = false,
+    val requireTypeSpecContextWhenFilePresent: Boolean = false,
+    val requireTypeSpecContextWhenFileRequired: Boolean = false,
+    val cli: CliRequirement = CliRequirement.None,
+)
+
 internal object TypeSpecActionSupport {
-    fun updateForTypeSpecContext(event: AnActionEvent, requireResolvableCompiler: Boolean = true) {
-        val project = event.project
-        val file = event.getData(com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE)
-        val enabled = project != null &&
-            isServiceEnabled(project) &&
-            file != null &&
-            isTypeSpecContext(file) &&
-            (!requireResolvableCompiler || TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project))
-        event.presentation.isEnabledAndVisible = enabled
-    }
+    val projectOnly = ActionVisibility(requireServiceEnabled = false)
+    val projectWithCompilerCli = ActionVisibility(cli = CliRequirement.Compiler)
+    val projectWithOpenApi3Cli = ActionVisibility(cli = CliRequirement.OpenApi3)
+    val typeSpecFileWithCompilerCli = ActionVisibility(
+        requireVirtualFile = true,
+        requireTypeSpecContextWhenFileRequired = true,
+        cli = CliRequirement.Compiler,
+    )
+    val serviceEnabledOptionalFile = ActionVisibility(requireTypeSpecContextWhenFilePresent = true)
 
-    fun updateForProject(event: AnActionEvent) {
+    fun update(event: AnActionEvent, policy: ActionVisibility) {
         val project = event.project
-        event.presentation.isEnabledAndVisible = project != null
-    }
-
-    fun updateForProjectWithCompilerCli(event: AnActionEvent) {
-        val project = event.project
-        event.presentation.isEnabledAndVisible = project != null &&
-            isServiceEnabled(project) &&
-            TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project)
-    }
-
-    fun updateForProjectWithOpenApi3Cli(event: AnActionEvent) {
-        val project = event.project
-        event.presentation.isEnabledAndVisible = project != null &&
-            isServiceEnabled(project) &&
-            TypeSpecCliResolver.isOpenApi3CliResolvable(project)
-    }
-
-    fun updateWhenServiceEnabled(
-        event: AnActionEvent,
-        requireResolvableCompiler: Boolean = true,
-    ) {
-        val project = event.project
-        val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
-        val enabled = project != null &&
-            isServiceEnabled(project) &&
-            (file == null || isTypeSpecContext(file)) &&
-            (!requireResolvableCompiler || TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project))
+        val enabled = project != null && matchesPolicy(project, event, policy)
         event.presentation.isEnabledAndVisible = enabled
     }
 
@@ -70,4 +56,24 @@ internal object TypeSpecActionSupport {
         TypeSpecOutputService.getInstance(project).show(project)
     }
 
+    private fun matchesPolicy(project: Project, event: AnActionEvent, policy: ActionVisibility): Boolean {
+        if (policy.requireServiceEnabled && !isServiceEnabled(project)) {
+            return false
+        }
+        val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
+        if (policy.requireVirtualFile && file == null) {
+            return false
+        }
+        if (file != null && policy.requireTypeSpecContextWhenFilePresent && !isTypeSpecContext(file)) {
+            return false
+        }
+        if (policy.requireTypeSpecContextWhenFileRequired && (file == null || !isTypeSpecContext(file))) {
+            return false
+        }
+        return when (policy.cli) {
+            CliRequirement.None -> true
+            CliRequirement.Compiler -> TypeSpecCompilerPackageResolver.isCompilerCliResolvable(project)
+            CliRequirement.OpenApi3 -> TypeSpecCompilerPackageResolver.isOpenApi3CliResolvable(project)
+        }
+    }
 }

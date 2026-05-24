@@ -15,15 +15,16 @@ class TypeSpecPackageResolutionCache {
     data class Snapshot(
         val compilerCliResolvable: Boolean,
         val lspServerResolvable: Boolean,
+        val openApi3CliResolvable: Boolean,
     )
 
     fun getOrCompute(project: Project, nowMillis: Long = System.currentTimeMillis()): Snapshot {
         val selectedPackage = TypeSpecServiceSettings.getInstance(project).lspServerPackage
         return getOrCompute(
-            packageKey = selectedPackage.systemDependentPath,
+            packageKey = resolutionCacheKey(selectedPackage.systemDependentPath, project.basePath),
             nowMillis = nowMillis,
         ) {
-            computePackageResolutionSnapshot(Paths.get(selectedPackage.systemDependentPath))
+            computePackageResolutionSnapshot(project, Paths.get(selectedPackage.systemDependentPath))
         }
     }
 
@@ -58,11 +59,23 @@ class TypeSpecPackageResolutionCache {
         internal const val RESOLUTION_CACHE_TTL_MILLIS = 30_000L
 
         fun getInstance(project: Project): TypeSpecPackageResolutionCache = project.service()
+
+        internal fun resolutionCacheKey(compilerPackagePath: String, projectBasePath: String?): String =
+            "$compilerPackagePath|${projectBasePath.orEmpty()}"
     }
 }
 
-internal fun computePackageResolutionSnapshot(packageDirectory: Path): TypeSpecPackageResolutionCache.Snapshot =
-    TypeSpecPackageResolutionCache.Snapshot(
+internal fun computePackageResolutionSnapshot(
+    project: Project,
+    packageDirectory: Path,
+): TypeSpecPackageResolutionCache.Snapshot {
+    val probeDirectory = project.basePath?.let { Paths.get(it) } ?: packageDirectory.parent
+    val openApi3CliResolvable = probeDirectory?.let {
+        TypeSpecOpenApi3PackageResolver.isResolvable(it, packageDirectory)
+    } ?: false
+    return TypeSpecPackageResolutionCache.Snapshot(
         compilerCliResolvable = TypeSpecCompilerPackageResolver.hasCompilerCli(packageDirectory),
         lspServerResolvable = TypeSpecCompilerPackageResolver.hasLspServerScript(packageDirectory),
+        openApi3CliResolvable = openApi3CliResolvable,
     )
+}

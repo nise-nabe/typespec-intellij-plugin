@@ -14,7 +14,7 @@ class TypeSpecShowOutputAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.updateForProject(event)
+        TypeSpecActionSupport.update(event, TypeSpecActionSupport.projectOnly)
     }
 
     override fun actionPerformed(event: AnActionEvent) {

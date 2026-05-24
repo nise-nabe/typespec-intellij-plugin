@@ -21,40 +21,51 @@ internal object TypeSpecOpenApiPreviewWorkflow {
         ) { runner ->
             val workDir = Files.createTempDirectory("typespec-openapi-preview-")
             try {
-                when (
-                    val exitCode = runner.compile(
-                        projectRoot = resolution.projectRoot,
-                        entrypoint = entrypoint,
-                        emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
-                        extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(workDir),
-                    )
-                ) {
-                    null -> {
-                        TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
-                        null
-                    }
-                    0 -> if (openPreviewHtml(project, workDir)) 0 else 1
-                    else -> {
-                        TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
-                        exitCode
-                    }
+                when (val outcome = executePreview(runner, project, resolution, entrypoint, workDir)) {
+                    PreviewRunOutcome.MissingCompiler -> null
+                    is PreviewRunOutcome.CompileFailed -> outcome.exitCode
+                    PreviewRunOutcome.PreviewFailed -> 1
+                    PreviewRunOutcome.Ok -> 0
                 }
             } catch (e: Exception) {
-                TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
                 TypeSpecWorkflowOutcomes.presentErrorOnEdt(
                     project,
                     e.message ?: e.toString(),
                     "action.previewOpenApi.title",
                 )
                 -1
+            } finally {
+                TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
             }
+        }
+    }
+
+    private fun executePreview(
+        runner: TypeSpecCliRunner,
+        project: Project,
+        resolution: TypeSpecProjectResolution,
+        entrypoint: Path,
+        workDir: Path,
+    ): PreviewRunOutcome {
+        val exitCode = runner.compile(
+            projectRoot = resolution.projectRoot,
+            entrypoint = entrypoint,
+            emitters = listOf(TYPESPEC_OPENAPI3_EMITTER),
+            extraArgs = TypeSpecOpenApiPreview.openApiPreviewCompileExtraArgs(workDir),
+        ) ?: return PreviewRunOutcome.MissingCompiler
+        if (exitCode != 0) {
+            return PreviewRunOutcome.CompileFailed(exitCode)
+        }
+        return if (openPreviewHtml(project, workDir)) {
+            PreviewRunOutcome.Ok
+        } else {
+            PreviewRunOutcome.PreviewFailed
         }
     }
 
     private fun openPreviewHtml(project: Project, workDir: Path): Boolean {
         val openApiFile = TypeSpecOpenApiPreview.findOpenApiOutputFile(workDir)
         if (openApiFile == null) {
-            TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
             TypeSpecWorkflowOutcomes.presentErrorOnEdt(
                 project,
                 TypeSpecBundle.message("action.previewOpenApi.noOutput"),
@@ -69,13 +80,11 @@ internal object TypeSpecOpenApiPreviewWorkflow {
                 previewHtml,
                 TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(Files.readString(openApiFile)),
             )
-            TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
             ApplicationManager.getApplication().invokeLater {
                 BrowserUtil.browse(previewHtml.toUri())
             }
             true
         } catch (e: Exception) {
-            TypeSpecOpenApiPreview.deleteRecursivelyQuietly(workDir)
             TypeSpecWorkflowOutcomes.presentErrorOnEdt(
                 project,
                 e.message ?: e.toString(),
@@ -84,4 +93,14 @@ internal object TypeSpecOpenApiPreviewWorkflow {
             false
         }
     }
+}
+
+private sealed interface PreviewRunOutcome {
+    data object MissingCompiler : PreviewRunOutcome
+
+    data class CompileFailed(val exitCode: Int) : PreviewRunOutcome
+
+    data object PreviewFailed : PreviewRunOutcome
+
+    data object Ok : PreviewRunOutcome
 }

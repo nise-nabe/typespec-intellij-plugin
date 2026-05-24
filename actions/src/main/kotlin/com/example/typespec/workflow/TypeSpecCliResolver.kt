@@ -2,8 +2,8 @@ package com.example.typespec.workflow
 
 import com.example.typespec.TYPESPEC_COMPILER_CLI_SCRIPT
 import com.example.typespec.TYPESPEC_OPENAPI3_CLI_SCRIPT
-import com.example.typespec.TYPESPEC_OPENAPI3_PACKAGE_NAME
 import com.example.typespec.TypeSpecCompilerPackageResolver
+import com.example.typespec.TypeSpecOpenApi3PackageResolver
 import com.intellij.openapi.project.Project
 import java.nio.file.Files
 import java.nio.file.Path
@@ -16,36 +16,26 @@ internal object TypeSpecCliResolver {
         return resolveNodeScriptCli(
             script = packageDirectory.resolve(TYPESPEC_COMPILER_CLI_SCRIPT),
             workingDirectory = contextDirectory,
-            displayName = packageDirectory.resolve(TYPESPEC_COMPILER_CLI_SCRIPT).fileName.toString(),
+            displayName = TYPESPEC_COMPILER_CLI_SCRIPT.substringAfterLast('/'),
         )
     }
 
-    fun isOpenApi3CliResolvable(project: Project): Boolean {
-        val probeDirectory = project.basePath?.let { Paths.get(it) }
-            ?: Paths.get(TypeSpecCompilerPackageResolver.getSelectedPackage(project).systemDependentPath).parent
-            ?: return false
-        return resolveOpenApi3Cli(project, probeDirectory) != null
-    }
+    fun isOpenApi3CliResolvable(project: Project): Boolean =
+        TypeSpecCompilerPackageResolver.isOpenApi3CliResolvable(project)
 
     fun resolveOpenApi3Cli(project: Project, workingDirectory: Path): TypeSpecCliCommand? {
-        val packageDirectories = linkedSetOf(
-            workingDirectory.resolve("node_modules").resolve(TYPESPEC_OPENAPI3_PACKAGE_NAME),
-            Paths.get(TypeSpecCompilerPackageResolver.getSelectedPackage(project).systemDependentPath)
-                .parent
-                ?.resolve(TYPESPEC_OPENAPI3_PACKAGE_NAME),
-        ).filterNotNull()
-
-        for (packageDirectory in packageDirectories) {
-            val command = resolveNodeScriptCli(
-                script = packageDirectory.resolve(TYPESPEC_OPENAPI3_CLI_SCRIPT),
-                workingDirectory = workingDirectory,
-                displayName = "tsp-openapi3",
-            )
-            if (command != null) {
-                return command
-            }
-        }
-        return null
+        val compilerPackageDirectory = Paths.get(
+            TypeSpecCompilerPackageResolver.getSelectedPackage(project).systemDependentPath,
+        )
+        val packageDirectory = TypeSpecOpenApi3PackageResolver.findPackageDirectory(
+            probeDirectory = workingDirectory,
+            compilerPackageDirectory = compilerPackageDirectory,
+        ) ?: return null
+        return resolveNodeScriptCli(
+            script = packageDirectory.resolve(TYPESPEC_OPENAPI3_CLI_SCRIPT),
+            workingDirectory = workingDirectory,
+            displayName = "tsp-openapi3",
+        )
     }
 
     private fun resolveNodeScriptCli(

@@ -20,7 +20,7 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.updateForTypeSpecContext(event)
+        TypeSpecActionSupport.update(event, TypeSpecActionSupport.typeSpecFileWithCompilerCli)
     }
 
     override fun actionPerformed(event: AnActionEvent) {

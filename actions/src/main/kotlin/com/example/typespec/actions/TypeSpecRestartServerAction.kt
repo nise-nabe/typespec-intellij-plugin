@@ -16,7 +16,7 @@ class TypeSpecRestartServerAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.updateWhenServiceEnabled(event, requireResolvableCompiler = false)
+        TypeSpecActionSupport.update(event, TypeSpecActionSupport.serviceEnabledOptionalFile)
     }
 
     override fun actionPerformed(event: AnActionEvent) {

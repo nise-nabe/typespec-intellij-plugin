@@ -28,7 +28,7 @@ class TypeSpecImportFromOpenApiAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.updateForProjectWithOpenApi3Cli(event)
+        TypeSpecActionSupport.update(event, TypeSpecActionSupport.projectWithOpenApi3Cli)
     }
 
     override fun actionPerformed(event: AnActionEvent) {
@@ -63,7 +63,7 @@ class TypeSpecImportFromOpenApiAction : AnAction(
             TypeSpecCliJobSpec(
                 progressMessageKey = "action.importOpenApi.progress",
                 titleKey = "action.importOpenApi.title",
-                compilerMissingMessageKey = "action.importOpenApi.openapi3Missing",
+                cliUnavailableMessageKey = "action.importOpenApi.openapi3Missing",
                 failureMessageKey = "action.importOpenApi.failed",
             ),
             onExitCode = { exitCode ->

@@ -42,7 +42,7 @@ internal object TypeSpecCliWorkflow {
                 null -> TypeSpecWorkflowOutcomes.presentCompilerMissingOnEdt(
                     project,
                     spec.titleKey,
-                    spec.compilerMissingMessageKey,
+                    spec.cliUnavailableMessageKey,
                 )
                 else -> {
                     onExitCode?.invoke(exitCode)

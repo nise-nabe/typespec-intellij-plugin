@@ -35,7 +35,9 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
             return
         }
         val packageRoot = TypeSpecLspServerLoader.getSelectedPackage(project).systemDependentPath
-        if (!vfsEventAffectsPackageRoot(event, packageRoot)) {
+        if (!vfsEventAffectsPackageRoot(event, packageRoot) &&
+            !vfsEventAffectsOpenApi3Package(event.path, project.basePath)
+        ) {
             return
         }
         scheduleRecheck()
@@ -85,19 +87,6 @@ internal fun vfsEventAffectsPackageRoot(event: VirtualFileEvent, packageRoot: St
     val normalizedRoot = normalizePackageRoot(packageRoot) ?: return false
     return vfsPathIsUnderPackageRoot(event.path, normalizedRoot) ||
         vfsFileIsUnderPackageRoot(event.file, normalizedRoot)
-}
-
-internal fun vfsFileIsUnderPackageRoot(file: VirtualFile, normalizedPackageRoot: String): Boolean =
-    vfsPathIsUnderPackageRoot(file.path, normalizedPackageRoot)
-
-internal fun vfsPathIsUnderPackageRoot(path: String, normalizedPackageRoot: String): Boolean {
-    val normalizedPath = path.replace('\\', '/').trimEnd('/')
-    return normalizedPath == normalizedPackageRoot || normalizedPath.startsWith("$normalizedPackageRoot/")
-}
-
-internal fun normalizePackageRoot(packageRoot: String): String? {
-    val normalized = packageRoot.replace('\\', '/').trim().trimEnd('/')
-    return normalized.takeIf { it.isNotEmpty() }
 }
 
 internal class TypeSpecLspPackageResolutionCacheWatcherInitializer : ProjectActivity {
