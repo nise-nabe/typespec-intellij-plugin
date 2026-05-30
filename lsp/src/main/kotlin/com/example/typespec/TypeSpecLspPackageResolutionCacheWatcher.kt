@@ -6,10 +6,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileAdapter
-import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.util.concurrent.atomic.AtomicBoolean
@@ -19,18 +21,21 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
     private val project: Project,
 ) : Disposable {
     private val recheckScheduled = AtomicBoolean()
-    private val vfsListener = object : VirtualFileAdapter() {
-        override fun fileCreated(event: VirtualFileEvent) = onVfsEvent(event)
-        override fun fileDeleted(event: VirtualFileEvent) = onVfsEvent(event)
-        override fun contentsChanged(event: VirtualFileEvent) = onVfsEvent(event)
+    private val vfsListener = object : BulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+            for (event in events) {
+                when (event) {
+                    is VFileCreateEvent, is VFileDeleteEvent, is VFileContentChangeEvent -> onVfsEvent(event)
+                }
+            }
+        }
     }
 
     init {
-        @Suppress("DEPRECATION")
-        VirtualFileManager.getInstance().addVirtualFileListener(vfsListener, this)
+        project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, vfsListener)
     }
 
-    private fun onVfsEvent(event: VirtualFileEvent) {
+    private fun onVfsEvent(event: VFileEvent) {
         if (project.isDisposed) {
             return
         }
@@ -75,7 +80,7 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
     }
 
     override fun dispose() {
-        // Listener is removed automatically via parent disposable.
+        // Message bus connection is disposed automatically via parent disposable.
     }
 
     companion object {
@@ -83,10 +88,11 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
     }
 }
 
-internal fun vfsEventAffectsPackageRoot(event: VirtualFileEvent, packageRoot: String): Boolean {
+internal fun vfsEventAffectsPackageRoot(event: VFileEvent, packageRoot: String): Boolean {
     val normalizedRoot = normalizePackageRoot(packageRoot) ?: return false
+    val file = event.file
     return vfsPathIsUnderPackageRoot(event.path, normalizedRoot) ||
-        vfsFileIsUnderPackageRoot(event.file, normalizedRoot)
+        (file != null && vfsFileIsUnderPackageRoot(file, normalizedRoot))
 }
 
 internal class TypeSpecLspPackageResolutionCacheWatcherInitializer : ProjectActivity {
