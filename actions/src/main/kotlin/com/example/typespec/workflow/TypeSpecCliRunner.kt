@@ -1,7 +1,7 @@
 package com.example.typespec.workflow
 
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -29,7 +29,7 @@ internal class TypeSpecCliRunner(
         return try {
             val processHandler = OSProcessHandler(command.toGeneralCommandLine())
             var exitCode = -1
-            processHandler.addProcessListener(object : ProcessAdapter() {
+            processHandler.addProcessListener(object : ProcessListener {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                     event.text?.trimEnd()?.lines()?.forEach { line ->
                         if (line.isNotEmpty()) {
