@@ -15,13 +15,17 @@ testing {
                 implementation("junit:junit:${libs.versions.junit4.get()}")
                 runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
             }
+
+            targets {
+                all {
+                    testTask.configure {
+                        systemProperty(
+                            "robot.server.url",
+                            providers.gradleProperty("robot.server.url").orElse("http://127.0.0.1:8082"),
+                        )
+                    }
+                }
+            }
         }
     }
-}
-
-tasks.named<Test>("test") {
-    systemProperty(
-        "robot.server.url",
-        providers.gradleProperty("robot.server.url").orElse("http://127.0.0.1:8082"),
-    )
 }
