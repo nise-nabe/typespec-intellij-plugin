@@ -20,18 +20,5 @@ jobs:
           cache-provider: basic
       - name: Install xvfb
         run: sudo apt-get update && sudo apt-get install -y xvfb
-      - name: Prepare JetBrains consent
-        run: chmod +x scripts/*.sh && ./scripts/prepare-jetbrains-consent.sh
-      - name: Start IDE for UI tests
-        run: |
-          export DISPLAY=:99
-          Xvfb :99 -screen 0 1920x1080x24 &
-          ./gradlew :plugin:runIdeForUiTests --no-daemon &
-      - name: Wait for robot server
-        uses: jtalk/url-health-check-action@edb3d9eb4b329b7465c3c1dcef6a2a869f8b0f8f # v4
-        with:
-          url: http://127.0.0.1:8082
-          max-attempts: 30
-          retry-delay: 20s
       - name: Run UI tests
-        run: ./gradlew :ui-test:test --no-daemon -Probot.server.url=http://127.0.0.1:8082
+        run: chmod +x scripts/*.sh && ./scripts/run-ui-tests-ci.sh

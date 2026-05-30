@@ -34,7 +34,7 @@ Run module-scoped tests to narrow the failure:
 | Compile + unit tests | `./gradlew build` | Yes |
 | Headless Platform tests | Included in `build` | Yes |
 | Sandbox IDE startup | `scripts/run-ide-smoke.sh` | Yes (xvfb, slow first run) |
-| UI automation | `./gradlew :plugin:uiTest` (Remote Robot) | Yes (xvfb + `runIdeForUiTests`, manual/CI workflow) |
+| UI automation | `:plugin:runIdeForUiTests` + `./gradlew :ui-test:test` (Remote Robot) | Yes (xvfb + `runIdeForUiTests`, manual/CI workflow) |
 | Interactive LSP / browser preview | Local `:plugin:runIde` | No (needs desktop IDE + Node) |
 
 See [lsp-capabilities.md](lsp-capabilities.md) for a per-feature verification matrix.
@@ -66,7 +66,7 @@ Xvfb :99 -screen 0 1920x1080x24 &
 ./gradlew :ui-test:test -Drobot.server.url=http://127.0.0.1:8082
 ```
 
-Or use the **Run UI tests** workflow (`.github/workflows/run-ui-tests.yml`).
+Or run `./scripts/run-ui-tests-ci.sh` locally, or use the **Run UI tests** workflow (`.github/workflows/run-ui-tests.yml`).
 
 ## Local full manual check
 
