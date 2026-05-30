@@ -1,3 +1,5 @@
+import org.gradle.api.artifacts.VersionCatalogsExtension
+
 plugins {
     id("typespec.kotlin-conventions")
     id("org.jetbrains.intellij.platform.module")
@@ -5,8 +7,11 @@ plugins {
 
 dependencies {
     intellijPlatform {
-        intellijIdea(
-            providers.gradleProperty("typespec.intellij.idea").orElse("262.6653.22"),
-        )
+        val ideaVersion = rootProject.extensions.getByType<VersionCatalogsExtension>()
+            .named("libs")
+            .findVersion("intellij-idea")
+            .get()
+            .requiredVersion
+        intellijIdea(ideaVersion)
     }
 }
