@@ -11,7 +11,7 @@ STARTUP_TIMEOUT_SECONDS="${STARTUP_TIMEOUT_SECONDS:-900}"
 POLL_INTERVAL_SECONDS=5
 
 # IntelliJ Platform Gradle Plugin 2.x uses versioned dirs, e.g.
-# plugin/build/idea-sandbox/IC-262.6228.19/system/log/idea.log
+# plugin/build/idea-sandbox/IC-262.6653.22/system/log/idea.log
 find_idea_log() {
   find "${ROOT_DIR}/plugin/build/idea-sandbox" "${ROOT_DIR}/build/idea-sandbox" \
     -path '*/system/log/idea.log' -print -quit 2>/dev/null
