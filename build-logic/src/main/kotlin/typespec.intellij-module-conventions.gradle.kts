@@ -6,7 +6,7 @@ plugins {
 dependencies {
     intellijPlatform {
         intellijIdea(
-            providers.gradleProperty("typespec.intellij.idea").orElse("262.6228.19"),
+            providers.gradleProperty("typespec.intellij.idea").orElse("262.6653.22"),
         )
     }
 }
