@@ -3,13 +3,13 @@
 ## Verify plugin changes
 
 1. Ensure **JDK 25** is available (`java -version`).
-2. Run the standard gate (same as CI):
+2. Run the standard gate (same as CI). With Gradle **9.6+**, always pass **`--non-interactive`** on `./gradlew` in Cursor agent / Cloud runs so the build never blocks on console prompts (do not patch `gradlew`; it is Gradle-managed):
 
    ```bash
-   ./gradlew build
+   ./gradlew --non-interactive build
    ```
 
-3. On failure, run scoped tests (`./gradlew :lsp:test`, etc.). See [docs/cloud-verification.md](docs/cloud-verification.md).
+3. On failure, run scoped tests (`./gradlew --non-interactive :lsp:test`, etc.). See [docs/cloud-verification.md](docs/cloud-verification.md).
 
 4. Summarize results against the verification matrix in [docs/lsp-capabilities.md](docs/lsp-capabilities.md).
 
@@ -39,9 +39,9 @@ Target platform: IntelliJ IDEA **2026.2** (`262.x`), JDK **25**.
 
 | Goal | Command |
 |------|---------|
-| Lint / compile / unit + headless Platform tests | `./gradlew build` |
-| Distributable plugin ZIP | `./gradlew :plugin:buildPlugin` → `plugin/build/distributions/TypeSpecPlugin-*.zip` |
-| Sandbox IDE with plugin | `./gradlew :plugin:runIde` (needs `DISPLAY` + Xvfb on Linux) |
+| Lint / compile / unit + headless Platform tests | `./gradlew --non-interactive build` |
+| Distributable plugin ZIP | `./gradlew --non-interactive :plugin:buildPlugin` → `plugin/build/distributions/TypeSpecPlugin-*.zip` |
+| Sandbox IDE with plugin | `./gradlew --non-interactive :plugin:runIde` (needs `DISPLAY` + Xvfb on Linux) |
 | IDE startup smoke | `scripts/run-ide-smoke.sh` (default 900s timeout; first IDEA download can exceed this—raise `STARTUP_TIMEOUT_SECONDS` or confirm via log; see below) |
 
 ### Sandbox IDE logs (IntelliJ Platform Gradle Plugin 2.x)

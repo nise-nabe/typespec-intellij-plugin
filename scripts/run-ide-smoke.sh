@@ -68,7 +68,7 @@ fi
 
 clear_stale_idea_logs
 
-./gradlew :plugin:runIde &
+./gradlew --non-interactive :plugin:runIde &
 GRADLE_PID=$!
 
 cleanup() {

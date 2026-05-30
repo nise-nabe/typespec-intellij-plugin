@@ -37,7 +37,7 @@ fi
 if [[ -f "${RUN_IDE_PID_FILE}" ]] && kill -0 "$(cat "${RUN_IDE_PID_FILE}")" 2>/dev/null; then
   echo "runIdeForUiTests already running (pid $(cat "${RUN_IDE_PID_FILE}"))"
 else
-  setsid nohup ./gradlew :plugin:runIdeForUiTests >"${RUN_IDE_LOG}" 2>&1 &
+  setsid nohup ./gradlew --non-interactive :plugin:runIdeForUiTests >"${RUN_IDE_LOG}" 2>&1 &
   echo $! >"${RUN_IDE_PID_FILE}"
   echo "Started runIdeForUiTests (pid $(cat "${RUN_IDE_PID_FILE}"))"
 fi
@@ -58,4 +58,4 @@ if ! robot_server_up; then
   exit 1
 fi
 
-./gradlew :ui-test:test "-Drobot.server.url=${ROBOT_URL}"
+./gradlew --non-interactive :ui-test:test "-Drobot.server.url=${ROBOT_URL}"
