@@ -14,6 +14,7 @@ include("lsp")
 include("actions")
 include("inspections")
 include("plugin")
+include("ui-test")
 
 plugins {
     // Keep in sync with gradle/libs.versions.toml
