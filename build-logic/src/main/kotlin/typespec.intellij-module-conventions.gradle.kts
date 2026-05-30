@@ -7,10 +7,14 @@ plugins {
 
 dependencies {
     intellijPlatform {
-        val ideaVersion = rootProject.extensions.getByType<VersionCatalogsExtension>()
+        val ideaVersion = project.extensions.getByType<VersionCatalogsExtension>()
             .named("libs")
             .findVersion("intellij-idea")
-            .get()
+            .orElseThrow {
+                GradleException(
+                    "Version alias 'intellij-idea' is not defined in gradle/libs.versions.toml [versions].",
+                )
+            }
             .requiredVersion
         intellijIdea(ideaVersion)
     }
