@@ -10,7 +10,8 @@ Use the same command as [`.github/workflows/main.yml`](../.github/workflows/main
 # Requires JDK 25 on PATH (Temurin or JetBrains Runtime)
 java -version   # should report 25
 
-./gradlew build
+# Gradle 9.6+: avoid console prompts in headless / agent / CI runs
+./gradlew --non-interactive build
 ```
 
 This compiles all modules, runs unit and headless Platform tests (`BasePlatformTestCase`), and builds the distributable plugin.
@@ -20,18 +21,18 @@ This compiles all modules, runs unit and headless Platform tests (`BasePlatformT
 Run module-scoped tests to narrow the failure:
 
 ```bash
-./gradlew :core:test
-./gradlew :lsp:test
-./gradlew :actions:test
-./gradlew :inspections:test
-./gradlew :plugin:test
+./gradlew --non-interactive :core:test
+./gradlew --non-interactive :lsp:test
+./gradlew --non-interactive :actions:test
+./gradlew --non-interactive :inspections:test
+./gradlew --non-interactive :plugin:test
 ```
 
 ## What Cloud can and cannot verify
 
 | Layer | Command / approach | Cloud-friendly |
 |-------|------------------|----------------|
-| Compile + unit tests | `./gradlew build` | Yes |
+| Compile + unit tests | `./gradlew --non-interactive build` | Yes |
 | Headless Platform tests | Included in `build` | Yes |
 | Sandbox IDE startup | `scripts/run-ide-smoke.sh` | Yes (xvfb, slow first run) |
 | UI automation | `:plugin:runIdeForUiTests` + `./gradlew :ui-test:test` (Remote Robot) | Yes (xvfb + `runIdeForUiTests`, manual/CI workflow) |
@@ -60,10 +61,10 @@ UI tests live in the `ui-test` module. They require a running IDE with the robot
 export DISPLAY=:99
 Xvfb :99 -screen 0 1920x1080x24 &
 ./scripts/prepare-jetbrains-consent.sh
-./gradlew :plugin:runIdeForUiTests &
+./gradlew --non-interactive :plugin:runIdeForUiTests &
 
 # Wait until http://127.0.0.1:8082 responds, then:
-./gradlew :ui-test:test -Drobot.server.url=http://127.0.0.1:8082
+./gradlew --non-interactive :ui-test:test -Drobot.server.url=http://127.0.0.1:8082
 ```
 
 Or run `./scripts/run-ui-tests-ci.sh` locally, or use the **Run UI tests** workflow (`.github/workflows/run-ui-tests.yml`).
