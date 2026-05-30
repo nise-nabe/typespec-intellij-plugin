@@ -24,7 +24,7 @@ if ! pgrep -f "Xvfb :${DISPLAY_NUM}" >/dev/null 2>&1; then
 fi
 
 rm -f "${LOG_FILE}"
-./gradlew :plugin:runIde --no-daemon &
+./gradlew :plugin:runIde &
 GRADLE_PID=$!
 
 cleanup() {

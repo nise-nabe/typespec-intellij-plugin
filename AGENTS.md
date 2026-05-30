@@ -6,7 +6,7 @@
 2. Run the standard gate (same as CI):
 
    ```bash
-   ./gradlew build --no-daemon
+   ./gradlew build
    ```
 
 3. On failure, run scoped tests (`./gradlew :lsp:test`, etc.). See [docs/cloud-verification.md](docs/cloud-verification.md).

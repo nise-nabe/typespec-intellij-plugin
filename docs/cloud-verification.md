@@ -10,7 +10,7 @@ Use the same command as [`.github/workflows/main.yml`](../.github/workflows/main
 # Requires JDK 25 on PATH (Temurin or JetBrains Runtime)
 java -version   # should report 25
 
-./gradlew build --no-daemon
+./gradlew build
 ```
 
 This compiles all modules, runs unit and headless Platform tests (`BasePlatformTestCase`), and builds the distributable plugin.
@@ -20,11 +20,11 @@ This compiles all modules, runs unit and headless Platform tests (`BasePlatformT
 Run module-scoped tests to narrow the failure:
 
 ```bash
-./gradlew :core:test --no-daemon
-./gradlew :lsp:test --no-daemon
-./gradlew :actions:test --no-daemon
-./gradlew :inspections:test --no-daemon
-./gradlew :plugin:test --no-daemon
+./gradlew :core:test
+./gradlew :lsp:test
+./gradlew :actions:test
+./gradlew :inspections:test
+./gradlew :plugin:test
 ```
 
 ## What Cloud can and cannot verify
@@ -60,10 +60,10 @@ UI tests live in the `ui-test` module. They require a running IDE with the robot
 export DISPLAY=:99
 Xvfb :99 -screen 0 1920x1080x24 &
 ./scripts/prepare-jetbrains-consent.sh
-./gradlew :plugin:runIdeForUiTests --no-daemon &
+./gradlew :plugin:runIdeForUiTests &
 
 # Wait until http://127.0.0.1:8082 responds, then:
-./gradlew :ui-test:test --no-daemon -Drobot.server.url=http://127.0.0.1:8082
+./gradlew :ui-test:test -Drobot.server.url=http://127.0.0.1:8082
 ```
 
 Or use the **Run UI tests** workflow (`.github/workflows/run-ui-tests.yml`).
