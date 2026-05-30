@@ -26,3 +26,34 @@
 | Tools menu UI smoke | `.github/workflows/run-ui-tests.yml` or steps in [docs/cloud-verification.md](docs/cloud-verification.md) |
 
 Target platform: IntelliJ IDEA **2026.2** (`262.x`), JDK **25**.
+
+## Cursor Cloud specific instructions
+
+### System prerequisites (not in the Gradle update script)
+
+- **JDK 25** on `PATH` (`java -version` → 25). CI uses Eclipse Temurin; install via [Adoptium apt repo](https://adoptium.net/installation/linux/) (`temurin-25-jdk`) if the VM image only has JDK 21.
+- **Xvfb** for sandbox IDE / UI tests: `sudo apt-get install -y xvfb`. Export `XDG_RUNTIME_DIR` (e.g. `/tmp/runtime-cursor`, mode `700`) before Platform tests or `runIde` to avoid `XDG_RUNTIME_DIR is invalid` noise in test output.
+- **JetBrains consent** (headless IDE): run `scripts/prepare-jetbrains-consent.sh` before `runIde` or IDE smoke (same as `scripts/run-ide-smoke.sh`).
+
+### Standard commands
+
+| Goal | Command |
+|------|---------|
+| Lint / compile / unit + headless Platform tests | `./gradlew build` |
+| Distributable plugin ZIP | `./gradlew :plugin:buildPlugin` → `plugin/build/distributions/TypeSpecPlugin-*.zip` |
+| Sandbox IDE with plugin | `./gradlew :plugin:runIde` (needs `DISPLAY` + Xvfb on Linux) |
+| IDE startup smoke | `scripts/run-ide-smoke.sh` (default 900s timeout; first IDEA download can exceed this—raise `STARTUP_TIMEOUT_SECONDS` or confirm via log; see below) |
+
+### Sandbox IDE logs (IntelliJ Platform Gradle Plugin 2.x)
+
+`runIde` logs live under **`.intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log`**, not `plugin/build/idea-sandbox/...`. To confirm the plugin loaded after `runIde`:
+
+```bash
+grep -F "Loaded custom plugins: TypeSpec Support" .intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log
+```
+
+`scripts/run-ide-smoke.sh` greps older paths/messages (`Startup completed` / `IDE started`); on slow EAP startups the IDE may be healthy while the script times out—use the log line above as the source of truth.
+
+### What Cloud does not run by default
+
+Full TypeSpec LSP/CLI E2E needs **Node.js**, `npm install` in a sample project, and `@typespec/compiler`—see [docs/cloud-verification.md](docs/cloud-verification.md).
