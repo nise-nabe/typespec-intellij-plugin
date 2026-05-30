@@ -10,6 +10,8 @@ export DISPLAY=":${DISPLAY_NUM}"
 STARTUP_TIMEOUT_SECONDS="${STARTUP_TIMEOUT_SECONDS:-900}"
 POLL_INTERVAL_SECONDS=5
 
+# IntelliJ Platform Gradle Plugin 2.x uses versioned dirs, e.g.
+# plugin/build/idea-sandbox/IC-262.6228.19/system/log/idea.log
 find_idea_log() {
   find "${ROOT_DIR}/plugin/build/idea-sandbox" "${ROOT_DIR}/build/idea-sandbox" \
     -path '*/system/log/idea.log' -print -quit 2>/dev/null
@@ -38,19 +40,16 @@ cleanup() {
 }
 trap cleanup EXIT
 
-log_file=""
 elapsed=0
 while [[ "${elapsed}" -lt "${STARTUP_TIMEOUT_SECONDS}" ]]; do
-  if [[ -z "${log_file}" ]]; then
-    log_file="$(find_idea_log || true)"
-  fi
+  log_file="$(find_idea_log || true)"
   if [[ -n "${log_file}" && -f "${log_file}" ]] && grep -qE 'Startup completed|IDE started' "${log_file}"; then
     echo "IDE smoke OK: startup message found in ${log_file}"
     exit 0
   fi
   if ! kill -0 "${GRADLE_PID}" 2>/dev/null; then
     echo "IDE smoke FAILED: Gradle runIde exited before startup completed" >&2
-  log_file="$(find_idea_log || true)"
+    log_file="$(find_idea_log || true)"
     [[ -n "${log_file}" && -f "${log_file}" ]] && tail -n 80 "${log_file}" >&2 || true
     exit 1
   fi
