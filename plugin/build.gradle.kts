@@ -38,8 +38,8 @@ testing {
                 implementation(project(":core"))
                 implementation(project(":lsp"))
                 implementation(project(":inspections"))
-                implementation("junit:junit:${libs.versions.junit4.get()}")
-                runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
+                implementation(libs.junit.junit4)
+                runtimeOnly(libs.junit.vintage.engine)
             }
         }
     }

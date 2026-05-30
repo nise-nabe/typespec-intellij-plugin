@@ -11,9 +11,9 @@ testing {
             useJUnitJupiter(libs.versions.junit.get())
 
             dependencies {
-                implementation("com.intellij.remoterobot:remote-robot:${libs.versions.remote.robot.get()}")
-                implementation("junit:junit:${libs.versions.junit4.get()}")
-                runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
+                implementation(libs.remote.robot)
+                implementation(libs.junit.junit4)
+                runtimeOnly(libs.junit.vintage.engine)
             }
 
             targets {
