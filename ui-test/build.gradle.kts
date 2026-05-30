@@ -4,11 +4,6 @@ plugins {
     id("typespec.kotlin-conventions")
 }
 
-dependencies {
-    testImplementation("com.intellij.remoterobot:remote-robot:${libs.versions.remote.robot.get()}")
-    testImplementation("junit:junit:${libs.versions.junit4.get()}")
-}
-
 testing {
     suites {
         @Suppress("UnstableApiUsage")
@@ -16,6 +11,7 @@ testing {
             useJUnitJupiter(libs.versions.junit.get())
 
             dependencies {
+                implementation("com.intellij.remoterobot:remote-robot:${libs.versions.remote.robot.get()}")
                 implementation("junit:junit:${libs.versions.junit4.get()}")
                 runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
             }

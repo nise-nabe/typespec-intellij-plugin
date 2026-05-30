@@ -25,10 +25,6 @@ dependencies {
         pluginComposedModule(project(":actions"))
     }
 
-    testImplementation(project(":actions"))
-    testImplementation(project(":core"))
-    testImplementation(project(":lsp"))
-    testImplementation(project(":inspections"))
 }
 
 testing {
@@ -38,6 +34,10 @@ testing {
             useJUnitJupiter(libs.versions.junit.get())
 
             dependencies {
+                implementation(project(":actions"))
+                implementation(project(":core"))
+                implementation(project(":lsp"))
+                implementation(project(":inspections"))
                 implementation("junit:junit:${libs.versions.junit4.get()}")
                 runtimeOnly("org.junit.vintage:junit-vintage-engine:${libs.versions.junit.get()}")
             }
