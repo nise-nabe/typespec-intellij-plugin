@@ -48,14 +48,12 @@ Target platform: IntelliJ IDEA **2026.2** (`262.x`), JDK **25**.
 
 Pinned IDE build is **`262.6653.22`** (`gradle/libs.versions.toml` → `intellij-idea`). IPGP 2.x sandboxes use a **product-version directory** (e.g. `.intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log`), not the build number and not always `plugin/build/idea-sandbox/.../system/log/idea.log` (Platform Gradle Plugin 1.x layout).
 
-Discover the newest `idea.log` and confirm the plugin loaded:
+Discover the most recently modified `idea.log` and confirm the plugin loaded:
 
-```bash
-IDEA_LOG="$(find .intellijPlatform/sandbox/plugin plugin/build/idea-sandbox build/idea-sandbox \
-  \( -path '*/log/idea.log' -o -path '*/system/log/idea.log' \) \
-  -print -quit 2>/dev/null)"
-test -n "$IDEA_LOG" && grep -F "Loaded custom plugins: TypeSpec Support" "$IDEA_LOG"
-```
+    IDEA_LOG="$(find .intellijPlatform/sandbox/plugin plugin/build/idea-sandbox build/idea-sandbox \
+      -type f \( -path '*/log/idea.log' -o -path '*/system/log/idea.log' \) \
+      -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2-)"
+    test -n "$IDEA_LOG" && grep -F "Loaded custom plugins: TypeSpec Support" "$IDEA_LOG"
 
 `scripts/run-ide-smoke.sh` only searches `plugin/build/idea-sandbox/**/system/log/idea.log` and greps `Startup completed` / `IDE started`; on IPGP 2.x or slow EAP startups it may time out while the IDE is healthy—prefer the `find` + grep above.
 
