@@ -46,13 +46,18 @@ Target platform: IntelliJ IDEA **2026.2** (`262.x`), JDK **25**.
 
 ### Sandbox IDE logs (IntelliJ Platform Gradle Plugin 2.x)
 
-`runIde` logs live under **`.intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log`**, not `plugin/build/idea-sandbox/...`. To confirm the plugin loaded after `runIde`:
+Pinned IDE build is **`262.6653.22`** (`gradle/libs.versions.toml` → `intellij-idea`). IPGP 2.x sandboxes use a **product-version directory** (e.g. `.intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log`), not the build number and not always `plugin/build/idea-sandbox/.../system/log/idea.log` (Platform Gradle Plugin 1.x layout).
+
+Discover the newest `idea.log` and confirm the plugin loaded:
 
 ```bash
-grep -F "Loaded custom plugins: TypeSpec Support" .intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log
+IDEA_LOG="$(find .intellijPlatform/sandbox/plugin plugin/build/idea-sandbox build/idea-sandbox \
+  \( -path '*/log/idea.log' -o -path '*/system/log/idea.log' \) \
+  -print -quit 2>/dev/null)"
+test -n "$IDEA_LOG" && grep -F "Loaded custom plugins: TypeSpec Support" "$IDEA_LOG"
 ```
 
-`scripts/run-ide-smoke.sh` greps older paths/messages (`Startup completed` / `IDE started`); on slow EAP startups the IDE may be healthy while the script times out—use the log line above as the source of truth.
+`scripts/run-ide-smoke.sh` only searches `plugin/build/idea-sandbox/**/system/log/idea.log` and greps `Startup completed` / `IDE started`; on IPGP 2.x or slow EAP startups it may time out while the IDE is healthy—prefer the `find` + grep above.
 
 ### What Cloud does not run by default
 
