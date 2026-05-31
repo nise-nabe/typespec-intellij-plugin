@@ -1,6 +1,7 @@
 package com.example.typespec.workflow
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -61,5 +62,13 @@ class TypeSpecOpenApiPreviewTest {
 
         val specBlock = html.substringAfter("typespec-openapi-spec\">").substringBefore("</script>")
         assertTrue(specBlock.contains("""<\/script>"""))
+    }
+
+    @Test
+    fun buildSwaggerPreviewHtmlEscapesClosingScriptTagRegardlessOfCase() {
+        val html = TypeSpecOpenApiPreview.buildSwaggerPreviewHtml("""{"x":"</ScRiPt>"}""")
+
+        assertTrue(html.contains("""<\/ScRiPt>"""))
+        assertFalse(html.contains("""</ScRiPt>"""))
     }
 }
