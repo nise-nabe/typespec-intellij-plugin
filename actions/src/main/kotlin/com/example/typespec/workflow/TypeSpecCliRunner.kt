@@ -28,7 +28,6 @@ internal class TypeSpecCliRunner(
 
         return try {
             val processHandler = OSProcessHandler(command.toGeneralCommandLine())
-            var exitCode = -1
             processHandler.addProcessListener(object : ProcessListener {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                     event.text?.trimEnd()?.lines()?.forEach { line ->
@@ -40,7 +39,6 @@ internal class TypeSpecCliRunner(
 
                 override fun processTerminated(event: ProcessEvent) {
                     output.append("Process finished with exit code ${event.exitCode}")
-                    exitCode = event.exitCode
                 }
             })
             processHandler.startNotify()
@@ -53,7 +51,7 @@ internal class TypeSpecCliRunner(
                 Thread.sleep(50)
             }
             processHandler.waitFor()
-            TypeSpecCliProcessOutcome.Exited(exitCode)
+            TypeSpecCliProcessOutcome.Exited(processHandler.exitCode ?: -1)
         } catch (e: Exception) {
             output.append("Failed to start process: ${e.message}")
             TypeSpecCliProcessOutcome.FailedToStart(e.message ?: e.toString())
