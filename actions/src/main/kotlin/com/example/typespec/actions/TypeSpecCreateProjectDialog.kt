@@ -27,7 +27,7 @@ internal class TypeSpecCreateProjectDialog : DialogWrapper(true) {
         }
         row(TypeSpecBundle.message("action.createProject.template")) {
             comboBox(TEMPLATES.toList())
-                .onChanged { template = it?.toString() ?: DEFAULT_TEMPLATE }
+                .onChanged { combo -> template = combo.selectedItem as? String ?: DEFAULT_TEMPLATE }
                 .apply { component.selectedItem = template }
         }
     }
