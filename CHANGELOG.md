@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed plugin startup failure when opening `.tsp` files caused by duplicate `projectSettings` registration of `TypeSpecServiceSettings` (`configurationSchemaKey must be specified`)
+
 ### Changed
 
 - Target **IntelliJ IDEA 2026.2** (platform build 262.0 and later); the plugin build uses JDK 25 to match the JBR bundled with IDEA 2026.2
