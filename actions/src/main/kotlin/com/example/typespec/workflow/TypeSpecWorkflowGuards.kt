@@ -6,12 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal object TypeSpecWorkflowGuards {
     /**
-     * Must be called from a background thread. Scans [targetFolder] off EDT; shows the confirmation
-     * dialog on EDT when the directory already has entries.
+     * Must be called on the EDT before starting a background CLI job. Scans [targetFolder] and shows
+     * a confirmation dialog when the directory already has entries.
      */
     fun confirmWriteToNonEmptyDirectory(
         project: Project,
@@ -19,26 +18,13 @@ internal object TypeSpecWorkflowGuards {
         warningMessageKey: String,
         titleKey: String,
     ): Boolean {
+        check(ApplicationManager.getApplication().isDispatchThread) {
+            "confirmWriteToNonEmptyDirectory must be called on the EDT"
+        }
         if (!directoryHasEntries(targetFolder)) {
             return true
         }
-        return showConfirmDialogOnEdt(project, warningMessageKey, titleKey)
-    }
-
-    private fun showConfirmDialogOnEdt(
-        project: Project,
-        warningMessageKey: String,
-        titleKey: String,
-    ): Boolean {
-        val app = ApplicationManager.getApplication()
-        if (app.isDispatchThread) {
-            return showConfirmDialog(project, warningMessageKey, titleKey)
-        }
-        val confirmed = AtomicBoolean(false)
-        app.invokeAndWait {
-            confirmed.set(showConfirmDialog(project, warningMessageKey, titleKey))
-        }
-        return confirmed.get()
+        return showConfirmDialog(project, warningMessageKey, titleKey)
     }
 
     private fun showConfirmDialog(

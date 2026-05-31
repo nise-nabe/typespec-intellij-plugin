@@ -32,6 +32,15 @@ class TypeSpecCreateProjectAction : AnAction(
             return
         }
         val targetPath = dialog.targetPath() ?: return
+        if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
+                project,
+                targetPath,
+                "action.createProject.nonEmptyWarning",
+                "action.createProject.title",
+            )
+        ) {
+            return
+        }
 
         val template = dialog.selectedTemplate()
         val args = buildList {
@@ -59,15 +68,6 @@ class TypeSpecCreateProjectAction : AnAction(
                     .notify(project)
             },
         ) { runner, indicator ->
-            if (!TypeSpecWorkflowGuards.confirmWriteToNonEmptyDirectory(
-                    project,
-                    targetPath,
-                    "action.createProject.nonEmptyWarning",
-                    "action.createProject.title",
-                )
-            ) {
-                return@runCliJob TypeSpecCliJobResult.AbortedByUser
-            }
             val targetDirectory = TypeSpecWorkflowGuards.ensureTargetDirectory(targetPath)
             val cli = TypeSpecCliResolver.resolveTspCli(project, targetDirectory.path)
                 ?: return@runCliJob TypeSpecCliJobResult.CliUnavailable
