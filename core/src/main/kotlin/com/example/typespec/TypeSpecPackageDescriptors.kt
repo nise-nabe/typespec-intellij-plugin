@@ -7,7 +7,7 @@ import com.intellij.lang.typescript.lsp.PackageVersion
 object TypeSpecPackageDescriptors {
     val compilerCli: LspServerPackageDescriptor = object : LspServerPackageDescriptor(
         TYPESPEC_COMPILER_PACKAGE_NAME,
-        PackageVersion.downloadable("1.10.0"),
+        PackageVersion.downloadable("1.13.0"),
         "/$TYPESPEC_COMPILER_CLI_SCRIPT",
     ) {
         override val registryVersion: String
@@ -16,7 +16,7 @@ object TypeSpecPackageDescriptors {
 
     val lspServer: LspServerPackageDescriptor = object : LspServerPackageDescriptor(
         TYPESPEC_COMPILER_PACKAGE_NAME,
-        PackageVersion.downloadable("1.10.0"),
+        PackageVersion.downloadable("1.13.0"),
         "/$TYPESPEC_LSP_SERVER_SCRIPT",
     ) {
         override val registryVersion: String
