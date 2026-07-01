@@ -18,6 +18,7 @@ dependencies {
         bundledPlugin("JavaScript")
         bundledPlugin("NodeJS")
         bundledPlugin("com.intellij.modules.json")
+        testBundledPlugin("intellij.libraries.misc.plugin")
         testFramework(TestFrameworkType.Platform)
         pluginComposedModule(project(":core"))
         pluginComposedModule(project(":lsp"))

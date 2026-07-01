@@ -2,35 +2,35 @@ package com.example.typespec
 
 import com.intellij.icons.AllIcons
 import com.intellij.lang.typescript.compiler.languageService.TypeScriptLanguageServiceUtil
-import com.intellij.lang.typescript.lsp.JSNodeLspServerDescriptor
+import com.intellij.lang.typescript.lsp.JSNodeLspClientDescriptor
 import com.intellij.lang.typescript.lsp.LspServerActivationRule
 import com.intellij.lang.typescript.lsp.ServiceActivationHelper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerSupportProvider
-import com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
+import com.intellij.platform.lsp.api.LspClient
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspIntegrationProvider
+import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 
 @Suppress("UnstableApiUsage")
-class TypeSpecLspServerSupportProvider : LspServerSupportProvider {
+class TypeSpecLspIntegrationProvider : LspIntegrationProvider {
     override fun fileOpened(
         project: Project,
         file: VirtualFile,
-        serverStarter: LspServerSupportProvider.LspServerStarter,
+        clientStarter: LspIntegrationProvider.LspClientStarter,
     ) {
         TypeSpecLspNotifications.onTypeSpecFileOpened(project, file)
         if (TypeSpecLspServerActivationRule.isEnabledAndAvailable(project, file)) {
-            serverStarter.ensureServerStarted(TypeSpecLspServerDescriptor(project))
+            clientStarter.ensureClientStarted(TypeSpecLspClientDescriptor(project))
         }
     }
 
-    override fun createLspServerWidgetItem(
-        lspServer: LspServer,
+    override fun createWidgetItem(
+        lspClient: LspClient,
         currentFile: VirtualFile?,
-    ): LspServerWidgetItem = LspServerWidgetItem(
-        lspServer,
+    ): LspClientWidgetItem = LspClientWidgetItem(
+        lspClient,
         currentFile,
         AllIcons.FileTypes.Any_type,
         settingsPageClass = TypeSpecSettingsConfigurable::class.java,
@@ -71,13 +71,13 @@ object TypeSpecActivationHelper : ServiceActivationHelper {
 }
 
 @Suppress("UnstableApiUsage")
-class TypeSpecLspServerDescriptor(project: Project) : JSNodeLspServerDescriptor(project, TypeSpecLspServerActivationRule, "TypeSpec")
+class TypeSpecLspClientDescriptor(project: Project) : JSNodeLspClientDescriptor(project, TypeSpecLspServerActivationRule, "TypeSpec")
 
 fun restartTypeSpecServerAsync(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
         return
     }
     ApplicationManager.getApplication().invokeLater({
-        LspServerManager.getInstance(project).stopAndRestartIfNeeded(TypeSpecLspServerSupportProvider::class.java)
+        LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(TypeSpecLspIntegrationProvider::class.java)
     }, project.disposed)
 }
