@@ -35,7 +35,7 @@
                   language="TypeSpec"
                   extensions="tsp"/>
 
-        <platform.lsp.integrationProvider implementation="com.example.typespec.TypeSpecLspServerSupportProvider"/>
+        <platform.lsp.integrationProvider implementation="com.example.typespec.TypeSpecLspIntegrationProvider"/>
         <spellchecker.bundledDictionaryProvider implementation="com.example.typespec.TypeSpecBundledDictionaryProvider"/>
         <postStartupActivity implementation="com.example.typespec.TypeSpecLspPackageResolutionCacheWatcherInitializer"/>
 

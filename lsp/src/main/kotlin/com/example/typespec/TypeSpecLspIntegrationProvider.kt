@@ -14,7 +14,7 @@ import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 
 @Suppress("UnstableApiUsage")
-class TypeSpecLspServerSupportProvider : LspIntegrationProvider {
+class TypeSpecLspIntegrationProvider : LspIntegrationProvider {
     override fun fileOpened(
         project: Project,
         file: VirtualFile,
@@ -78,6 +78,6 @@ fun restartTypeSpecServerAsync(project: Project) {
         return
     }
     ApplicationManager.getApplication().invokeLater({
-        LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(TypeSpecLspServerSupportProvider::class.java)
+        LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(TypeSpecLspIntegrationProvider::class.java)
     }, project.disposed)
 }
