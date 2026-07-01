@@ -1,9 +1,9 @@
 [versions]
 jdk = "25"
 kotlin = "2.4.0"
-junit = "6.1.0"
+junit = "6.1.1"
 junit4 = "4.13.2"
-intellij-platform = "2.16.0"
+intellij-platform = "2.17.0"
 intellij-idea = "262.6653.22"
 changelog = "2.5.0"
 foojay-resolver = "1.0.0"
