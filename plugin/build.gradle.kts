@@ -15,17 +15,10 @@ version = "0.2.0-eap.1"
 dependencies {
     intellijPlatform {
         intellijIdea(libs.versions.intellij.idea.get())
-        bundledPlugin("intellij.libraries.misc.plugin")
         bundledPlugin("JavaScript")
         bundledPlugin("NodeJS")
         bundledPlugin("com.intellij.modules.json")
-        bundledModule("intellij.json.backend")
-        bundledModule("intellij.spellchecker")
         testBundledPlugin("intellij.libraries.misc.plugin")
-        testBundledPlugin("com.intellij.modules.json")
-        testBundledModule("intellij.json.backend")
-        testBundledModule("intellij.spellchecker")
-        testBundledModule("intellij.platform.smRunner")
         testFramework(TestFrameworkType.Platform)
         pluginComposedModule(project(":core"))
         pluginComposedModule(project(":lsp"))

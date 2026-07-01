@@ -9,16 +9,8 @@ plugins {
 dependencies {
     implementation(project(":core"))
     intellijPlatform {
-        bundledPlugin("intellij.libraries.misc.plugin")
         bundledPlugin("com.intellij.modules.json")
-        bundledModule("intellij.json.backend")
-        bundledPlugin("JavaScript")
-        bundledPlugin("NodeJS")
         testBundledPlugin("intellij.libraries.misc.plugin")
-        testBundledPlugin("com.intellij.modules.json")
-        testBundledModule("intellij.json.backend")
-        testBundledModule("intellij.spellchecker")
-        testBundledModule("intellij.platform.smRunner")
         testFramework(TestFrameworkType.Platform)
     }
 }
