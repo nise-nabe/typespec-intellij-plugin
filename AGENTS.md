@@ -1,5 +1,19 @@
 # Agent instructions (Cursor Cloud)
 
+IntelliJ Platform plugin for TypeSpec. Gradle multi-project build (`build-logic` + `core`, `lsp`, `actions`, `inspections`, `plugin`, `ui-test`).
+
+## MCP: Gradle Tooling API
+
+The `gradle` MCP server ([nise-nabe/gradle-tapi-mcp-server](https://github.com/nise-nabe/gradle-tapi-mcp-server) v0.3.1) is configured in `.cursor/mcp.json`. The install script downloads the release JAR to `~/.local/share/gradle-tapi-mcp-server/`, verifies its SHA-256, and exposes it via a stable `gradle-tapi-mcp-server.jar` symlink. `GRADLE_PROJECT_DIR` is set to the workspace root.
+
+Prefer token-efficient MCP workflows documented in `.cursor/skills/gradle-tapi-mcp/SKILL.md`:
+
+1. `gradle_get_build_environment` for resolved Gradle/Java versions
+2. `gradle_get_project_overview` for module hierarchy
+3. `gradle_run_tasks` with `[":plugin:compileKotlin"]` for fast compile checks
+
+For **`build` and `:plugin:test`**, prefer `./gradlew --non-interactive` in Cursor Cloud — IntelliJ tests are long-running and MCP clients often time out (~60s). Use `background: true` and poll `gradle_get_build_status` for MCP builds; never overlap concurrent MCP test runs. If MCP stops responding, read `.gradle/mcp-builds/<buildId>/mcp-result.json` and fall back to shell.
+
 ## Verify plugin changes
 
 1. Ensure **JDK 25** is available (`java -version`).
