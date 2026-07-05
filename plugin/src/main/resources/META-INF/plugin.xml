@@ -41,6 +41,10 @@
         <lang.syntaxHighlighterFactory language="TypeSpec"
                                        implementationClass="com.example.typespec.highlighting.TypeSpecSyntaxHighlighterFactory"/>
 
+        <defaultLiveTemplates file="liveTemplates/TypeSpec.xml"/>
+        <liveTemplateContext contextId="TYPESPEC"
+                             implementation="com.example.typespec.TypeSpecTemplateContextType"/>
+
         <platform.lsp.integrationProvider implementation="com.example.typespec.TypeSpecLspIntegrationProvider"/>
         <spellchecker.bundledDictionaryProvider implementation="com.example.typespec.TypeSpecBundledDictionaryProvider"/>
         <postStartupActivity implementation="com.example.typespec.TypeSpecLspPackageResolutionCacheWatcherInitializer"/>

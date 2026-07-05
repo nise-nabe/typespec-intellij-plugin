@@ -1,0 +1,22 @@
+<templateSet group="TypeSpec">
+  <template name="tspmodel" value="model $NAME$ {&#10;  $END$&#10;}" description="TypeSpec model" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="Example" alwaysStopAt="true"/>
+    <context>
+      <option name="TYPESPEC" value="true"/>
+    </context>
+  </template>
+  <template name="tspnamespace" value="namespace $NAME$;&#10;&#10;$END$" description="TypeSpec namespace" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="Example" alwaysStopAt="true"/>
+    <context>
+      <option name="TYPESPEC" value="true"/>
+    </context>
+  </template>
+  <template name="tspop" value="op $NAME$($PARAMS$): $RETURN$;&#10;$END$" description="TypeSpec operation" toReformat="true" toShortenFQNames="false">
+    <variable name="NAME" expression="" defaultValue="example" alwaysStopAt="true"/>
+    <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
+    <variable name="RETURN" expression="" defaultValue="void" alwaysStopAt="true"/>
+    <context>
+      <option name="TYPESPEC" value="true"/>
+    </context>
+  </template>
+</templateSet>
