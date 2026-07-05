@@ -31,6 +31,10 @@ class TypeSpecSettingsConfigurable(
                 text(compilerStatusLabel())
             }
 
+            row {
+                text(TypeSpecBundle.message("settings.typespec.contentRoots.help"))
+            }
+
             buttonsGroup {
                 row {
                     radioButton(
