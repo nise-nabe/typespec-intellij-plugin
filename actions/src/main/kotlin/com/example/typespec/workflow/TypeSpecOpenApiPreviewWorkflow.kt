@@ -83,12 +83,12 @@ internal object TypeSpecOpenApiPreviewWorkflow {
         return try {
             val previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
             previewHtml.toFile().deleteOnExit()
-            Files.writeString(
-                previewHtml,
-                TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(Files.readString(openApiFile)),
-            )
-            ApplicationManager.getApplication().invokeLater {
-                BrowserUtil.browse(previewHtml.toUri())
+            val html = TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(Files.readString(openApiFile))
+            Files.writeString(previewHtml, html)
+            if (!TypeSpecJcefPreviewSupport.showHtml(project, html)) {
+                ApplicationManager.getApplication().invokeLater {
+                    BrowserUtil.browse(previewHtml.toUri())
+                }
             }
             true
         } catch (e: Exception) {

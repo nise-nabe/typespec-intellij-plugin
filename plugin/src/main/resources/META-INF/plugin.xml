@@ -63,6 +63,13 @@
                     bundle="messages.TypeSpecBundle"
                     key="toolWindow.typespecOutput.title"/>
 
+        <toolWindow id="TypeSpec API Preview"
+                    anchor="right"
+                    factoryClass="com.example.typespec.workflow.TypeSpecApiPreviewToolWindowFactory"
+                    icon="AllIcons.FileTypes.Any_type"
+                    bundle="messages.TypeSpecBundle"
+                    key="toolWindow.typespecApiPreview.title"/>
+
         <projectService serviceImplementation="com.example.typespec.workflow.TypeSpecOutputService"/>
 
         <projectService serviceInterface="com.example.typespec.TypeSpecLanguageServerCommandExecutor"
