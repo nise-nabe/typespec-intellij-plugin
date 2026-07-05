@@ -4,6 +4,7 @@ import com.example.typespec.TypeSpecBundle
 import com.example.typespec.workflow.TypeSpecArtifactNavigator
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliWorkflow
+import com.example.typespec.workflow.TypeSpecEmitterDiffMonitor
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecTspConfigReader
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -62,6 +63,13 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
             }
         }
 
+        val outputDirectory = TypeSpecArtifactNavigator.resolveOutputDirectory(resolution.projectRoot)
+        val artifact = TypeSpecArtifactNavigator.findPrimaryArtifact(outputDirectory)
+        val projectKey = resolution.projectRoot.toString()
+        if (artifact != null) {
+            TypeSpecEmitterDiffMonitor.captureBefore(projectKey, artifact)
+        }
+
         TypeSpecCliWorkflow.runCliJob(
             project,
             TypeSpecCliJobSpec(
@@ -70,6 +78,9 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
                 failureMessageKey = "action.emit.failed",
             ),
             onSuccess = {
+                if (artifact != null) {
+                    TypeSpecEmitterDiffMonitor.showDiffIfChanged(project, projectKey, artifact)
+                }
                 TypeSpecArtifactNavigator.revealOutput(project, resolution.projectRoot)
             },
         ) { runner, indicator ->
