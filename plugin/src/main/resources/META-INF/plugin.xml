@@ -56,6 +56,15 @@
                          level="WARNING"
                          implementationClass="com.example.typespec.inspections.TypeSpecPackageJsonInspection"/>
 
+        <localInspection shortName="TypeSpecTspConfigInspection"
+                         bundle="messages.TypeSpecBundle"
+                         key="inspection.typeSpecTspConfig.displayName"
+                         groupPath="JavaScript and TypeScript,TypeSpec"
+                         groupKey="inspection.group.typeSpecTspConfig"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="com.example.typespec.inspections.TypeSpecTspConfigInspection"/>
+
         <toolWindow id="TypeSpec Output"
                     anchor="bottom"
                     factoryClass="com.example.typespec.workflow.TypeSpecToolWindowFactory"
