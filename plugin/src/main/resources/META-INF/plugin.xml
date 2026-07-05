@@ -38,6 +38,9 @@
         <lang.psiStructureViewFactory language="TypeSpec"
                                       implementationClass="com.example.typespec.TypeSpecStructureViewFactory"/>
 
+        <lang.syntaxHighlighterFactory language="TypeSpec"
+                                       implementationClass="com.example.typespec.highlighting.TypeSpecSyntaxHighlighterFactory"/>
+
         <platform.lsp.integrationProvider implementation="com.example.typespec.TypeSpecLspIntegrationProvider"/>
         <spellchecker.bundledDictionaryProvider implementation="com.example.typespec.TypeSpecBundledDictionaryProvider"/>
         <postStartupActivity implementation="com.example.typespec.TypeSpecLspPackageResolutionCacheWatcherInitializer"/>
