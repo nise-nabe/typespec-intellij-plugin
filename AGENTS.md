@@ -4,7 +4,7 @@ IntelliJ Platform plugin for TypeSpec. Gradle multi-project build (`build-logic`
 
 ## MCP: Gradle Tooling API
 
-The `gradle` MCP server ([nise-nabe/gradle-tapi-mcp-server](https://github.com/nise-nabe/gradle-tapi-mcp-server) v0.3.2) is configured in `.cursor/mcp.json`. The install script downloads the release JAR to `~/.local/share/gradle-tapi-mcp-server/`, verifies its SHA-256, and exposes it via a stable `gradle-tapi-mcp-server.jar` symlink. `GRADLE_PROJECT_DIR` is set to the workspace root.
+The `gradle` MCP server ([nise-nabe/gradle-tapi-mcp-server](https://github.com/nise-nabe/gradle-tapi-mcp-server) v0.3.3) is configured in `.cursor/mcp.json`. The install script downloads the release JAR to `~/.local/share/gradle-tapi-mcp-server/`, verifies its SHA-256, and exposes it via a stable `gradle-tapi-mcp-server.jar` symlink. `GRADLE_PROJECT_DIR` is set to the workspace root.
 
 Prefer token-efficient MCP workflows documented in `.cursor/skills/gradle-tapi-mcp/SKILL.md`:
 
