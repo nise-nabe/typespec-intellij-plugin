@@ -14,7 +14,7 @@ internal class TypeSpecLexer : LexerBase() {
         this.buffer = buffer
         this.endOffset = endOffset
         tokenStart = startOffset
-        advanceLexer()
+        advance()
     }
 
     override fun getState(): Int = 0
@@ -25,7 +25,7 @@ internal class TypeSpecLexer : LexerBase() {
 
     override fun getTokenEnd(): Int = tokenEnd
 
-    override fun advanceLexer() {
+    override fun advance() {
         tokenStart = tokenEnd
         if (tokenStart >= endOffset) {
             currentType = null

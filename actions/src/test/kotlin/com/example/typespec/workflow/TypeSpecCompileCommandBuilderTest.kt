@@ -22,6 +22,8 @@ class TypeSpecCompileCommandBuilderTest {
             listOf("--emit", "@typespec/openapi3", "--watch", "--option", "foo=bar"),
             args.drop(2),
         )
+    }
+
     @Test
     fun buildTspArgsIncludesExtendedCompilerOptions() {
         val request = TypeSpecCompileRequest(

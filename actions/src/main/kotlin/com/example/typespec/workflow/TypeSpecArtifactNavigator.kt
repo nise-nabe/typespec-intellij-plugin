@@ -3,6 +3,7 @@ package com.example.typespec.workflow
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.wm.ToolWindowManager
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -44,8 +45,7 @@ internal object TypeSpecArtifactNavigator {
         if (Files.isRegularFile(artifact)) {
             OpenFileDescriptor(project, virtualFile).navigate(true)
         } else {
-            com.intellij.openapi.wm.ex.ToolWindowManagerEx.getInstanceEx(project)
-                .activateToolWindow("Project", true, true)
+            ToolWindowManager.getInstance(project).getToolWindow("Project")?.activate(null)
         }
     }
 }

@@ -4,11 +4,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 internal object TypeSpecHttpClientGenerator {
-    private val pathPattern = Regex("""^\s*/([^:\s]+):""")
+    private val pathPattern = Regex("""^\s*(/[^\s:]+):""", RegexOption.MULTILINE)
 
     fun generateFromOpenApiFile(openApiFile: Path): String {
         val text = Files.readString(openApiFile)
-        val paths = pathPattern.findAll(text).map { it.groupValues[1] }.distinct().take(20)
+        val paths = pathPattern.findAll(text).map { it.groupValues[1] }.distinct().take(20).toList()
         val builder = StringBuilder()
         builder.appendLine("### Generated from ${openApiFile.fileName}")
         builder.appendLine("### Edit and run with IntelliJ HTTP Client")

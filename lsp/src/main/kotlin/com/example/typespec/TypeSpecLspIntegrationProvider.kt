@@ -2,6 +2,7 @@ package com.example.typespec
 
 import com.intellij.icons.AllIcons
 import com.intellij.lang.typescript.compiler.languageService.TypeScriptLanguageServiceUtil
+import com.intellij.lang.typescript.lsp.JSNodeLspClientDescriptor
 import com.intellij.lang.typescript.lsp.LspServerActivationRule
 import com.intellij.lang.typescript.lsp.ServiceActivationHelper
 import com.intellij.openapi.application.ApplicationManager
@@ -68,6 +69,9 @@ object TypeSpecActivationHelper : ServiceActivationHelper {
     internal fun isEnvironmentSupported(isUnitTestMode: Boolean): Boolean =
         !isUnitTestMode
 }
+
+@Suppress("UnstableApiUsage")
+class TypeSpecLspClientDescriptor(project: Project) : JSNodeLspClientDescriptor(project, TypeSpecLspServerActivationRule, "TypeSpec")
 
 fun restartTypeSpecServerAsync(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {

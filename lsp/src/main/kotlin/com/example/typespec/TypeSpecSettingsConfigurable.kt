@@ -64,10 +64,14 @@ class TypeSpecSettingsConfigurable(
 
     private fun compilerStatusLabel(): String {
         val snapshot = TypeSpecPackageResolutionCache.getInstance(project).getOrCompute(project)
-        return if (snapshot.compilerCliResolvable && snapshot.lspServerResolvable) {
-            TypeSpecBundle.message("settings.typespec.compilerStatus.ready")
-        } else {
-            TypeSpecBundle.message("settings.typespec.compilerStatus.missing")
+        val standalone = TypeSpecStandaloneTspResolver.isStandaloneTspAvailable()
+        return when {
+            snapshot.compilerCliResolvable && snapshot.lspServerResolvable ->
+                TypeSpecBundle.message("settings.typespec.compilerStatus.ready")
+            standalone ->
+                TypeSpecBundle.message("settings.typespec.compilerStatus.standaloneTsp")
+            else ->
+                TypeSpecBundle.message("settings.typespec.compilerStatus.missing")
         }
     }
 }

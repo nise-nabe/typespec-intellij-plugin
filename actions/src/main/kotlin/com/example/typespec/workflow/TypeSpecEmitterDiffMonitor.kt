@@ -32,8 +32,8 @@ internal object TypeSpecEmitterDiffMonitor {
             val factory = DiffContentFactory.getInstance()
             val request = SimpleDiffRequest(
                 "TypeSpec emitter output",
-                factory.create(before, artifact.fileName.toString()),
-                factory.create(after, artifact.fileName.toString()),
+                factory.create(project, before),
+                factory.create(project, after),
                 "Before compile",
                 "After compile",
             )
