@@ -43,13 +43,7 @@ class TypeSpecCreateProjectAction : AnAction(
         }
 
         val template = dialog.selectedTemplate()
-        val args = buildList {
-            add("init")
-            if (template != "default") {
-                add("--template")
-                add(template)
-            }
-        }
+        val args = dialog.buildInitArgs()
 
         TypeSpecCliWorkflow.runCliJob(
             project,

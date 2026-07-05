@@ -55,6 +55,11 @@ class TypeSpecCompileSettings {
             emitters = emitterList,
             extraArgs = extraArgList,
             watch = watch,
+            dryRun = dryRun,
+            noEmit = noEmit,
+            stats = stats,
+            trace = trace,
+            warnAsError = warnAsError,
         )
         return TypeSpecCompileCommandBuilder.buildCommandLine(project, request)
     }

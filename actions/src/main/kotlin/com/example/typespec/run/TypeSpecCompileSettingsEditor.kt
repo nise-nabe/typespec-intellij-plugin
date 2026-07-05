@@ -39,6 +39,25 @@ class TypeSpecCompileSettingsEditor(
             checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.watch"))
                 .bindSelected(::watch)
         }
+        row {
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.dryRun"))
+                .bindSelected(::dryRun)
+        }
+        row {
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.noEmit"))
+                .bindSelected(::noEmit)
+        }
+        row {
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.stats"))
+                .bindSelected(::stats)
+        }
+        row(TypeSpecBundle.message("runConfiguration.typespecCompile.trace")) {
+            textField().bindText(::trace)
+        }
+        row {
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.warnAsError"))
+                .bindSelected(::warnAsError)
+        }
     }
 
     override fun resetEditorFrom(configuration: TypeSpecCompileRunConfiguration) {
@@ -48,6 +67,11 @@ class TypeSpecCompileSettingsEditor(
         emitters = settings.emitters
         extraArgs = settings.extraArgs
         watch = settings.watch
+        dryRun = settings.dryRun
+        noEmit = settings.noEmit
+        stats = settings.stats
+        trace = settings.trace
+        warnAsError = settings.warnAsError
     }
 
     override fun applyEditorTo(configuration: TypeSpecCompileRunConfiguration) {
@@ -57,5 +81,10 @@ class TypeSpecCompileSettingsEditor(
         settings.emitters = emitters
         settings.extraArgs = extraArgs
         settings.watch = watch
+        settings.dryRun = dryRun
+        settings.noEmit = noEmit
+        settings.stats = stats
+        settings.trace = trace
+        settings.warnAsError = warnAsError
     }
 }
