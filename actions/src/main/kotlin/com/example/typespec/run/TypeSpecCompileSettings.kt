@@ -13,6 +13,11 @@ class TypeSpecCompileSettings {
     var emitters: String = ""
     var extraArgs: String = ""
     var watch: Boolean = false
+    var dryRun: Boolean = false
+    var noEmit: Boolean = false
+    var stats: Boolean = false
+    var trace: String = ""
+    var warnAsError: Boolean = false
 
     fun readExternal(element: Element) {
         entrypointPath = element.getAttributeValue("entrypoint") ?: ""
@@ -20,6 +25,11 @@ class TypeSpecCompileSettings {
         emitters = element.getAttributeValue("emitters") ?: ""
         extraArgs = element.getAttributeValue("extraArgs") ?: ""
         watch = element.getAttributeValue("watch")?.toBooleanStrictOrNull() ?: false
+        dryRun = element.getAttributeValue("dryRun")?.toBooleanStrictOrNull() ?: false
+        noEmit = element.getAttributeValue("noEmit")?.toBooleanStrictOrNull() ?: false
+        stats = element.getAttributeValue("stats")?.toBooleanStrictOrNull() ?: false
+        trace = element.getAttributeValue("trace") ?: ""
+        warnAsError = element.getAttributeValue("warnAsError")?.toBooleanStrictOrNull() ?: false
     }
 
     fun writeExternal(element: Element) {
@@ -28,6 +38,11 @@ class TypeSpecCompileSettings {
         element.setAttribute("emitters", emitters)
         element.setAttribute("extraArgs", extraArgs)
         element.setAttribute("watch", watch.toString())
+        element.setAttribute("dryRun", dryRun.toString())
+        element.setAttribute("noEmit", noEmit.toString())
+        element.setAttribute("stats", stats.toString())
+        element.setAttribute("trace", trace)
+        element.setAttribute("warnAsError", warnAsError.toString())
     }
 
     fun buildCommandLine(project: Project): GeneralCommandLine? {

@@ -16,6 +16,11 @@ class TypeSpecCompileSettingsEditor(
     private var emitters: String = ""
     private var extraArgs: String = ""
     private var watch: Boolean = false
+    private var dryRun: Boolean = false
+    private var noEmit: Boolean = false
+    private var stats: Boolean = false
+    private var trace: String = ""
+    private var warnAsError: Boolean = false
 
     override fun createEditor(): JComponent = panel {
         row(TypeSpecBundle.message("runConfiguration.typespecCompile.projectRoot")) {
