@@ -17,6 +17,8 @@ class TypeSpecPluginDescriptorTest {
             "TypeSpec.CreateProject",
             "TypeSpec.InstallDependencies",
             "TypeSpec.InstallGlobalCompiler",
+            "TypeSpec.Format",
+            "TypeSpec.FormatProject",
             "TypeSpec.ImportFromOpenApi",
             "TypeSpec.PreviewOpenApi",
         )
