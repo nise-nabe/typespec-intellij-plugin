@@ -88,6 +88,7 @@
             <action id="TypeSpec.InstallGlobalCompiler" class="com.example.typespec.actions.TypeSpecInstallGlobalCompilerAction"/>
             <action id="TypeSpec.Format" class="com.example.typespec.actions.TypeSpecFormatAction"/>
             <action id="TypeSpec.FormatProject" class="com.example.typespec.actions.TypeSpecFormatProjectAction"/>
+            <action id="TypeSpec.ShowCompilerInfo" class="com.example.typespec.actions.TypeSpecShowCompilerInfoAction"/>
             <action id="TypeSpec.ImportFromOpenApi" class="com.example.typespec.actions.TypeSpecImportFromOpenApiAction"/>
             <separator/>
             <action id="TypeSpec.PreviewOpenApi" class="com.example.typespec.actions.TypeSpecPreviewOpenApiAction"/>
