@@ -1,8 +1,8 @@
 package com.example.typespec.workflow
 
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -32,7 +32,11 @@ internal class TypeSpecCliRunner(
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                     event.text?.trimEnd()?.lines()?.forEach { line ->
                         if (line.isNotEmpty()) {
-                            output.append(line)
+                            if (line.startsWith("[trace]") || line.contains("trace:", ignoreCase = true)) {
+                                output.appendTrace(line)
+                            } else {
+                                output.append(line)
+                            }
                         }
                     }
                 }
