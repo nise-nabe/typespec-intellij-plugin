@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Target **IntelliJ IDEA 2026.2** (platform build 262.0 and later); the plugin build uses JDK 25 to match the JBR bundled with IDEA 2026.2
+- Bump pinned IntelliJ Platform Gradle Plugin to 2.18.1 and IDEA SDK to 2026.2 stable (`262.8665.258`)
 
 ### Added
 
