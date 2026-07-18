@@ -25,6 +25,7 @@
     <depends>NodeJS</depends>
     <depends>com.intellij.modules.spellchecker</depends>
     <depends>com.intellij.modules.json</depends>
+    <depends>org.jetbrains.plugins.yaml</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="TypeSpec Notifications" displayType="BALLOON"/>
@@ -56,8 +57,6 @@
                          level="WARNING"
                          implementationClass="com.example.typespec.inspections.TypeSpecPackageJsonInspection"/>
 
-        <jsonSchema.provider factory="com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory"/>
-
         <toolWindow id="TypeSpec Output"
                     anchor="bottom"
                     factoryClass="com.example.typespec.workflow.TypeSpecToolWindowFactory"
@@ -77,6 +76,10 @@
 
         <configurationType implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationType"/>
         <runConfigurationProducer implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationProducer"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="JavaScript">
+        <JsonSchema.ProviderFactory implementation="com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory"/>
     </extensions>
 
     <actions resource-bundle="messages.TypeSpecBundle">

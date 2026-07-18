@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":core"))
     intellijPlatform {
         bundledPlugin("com.intellij.modules.json")
+        bundledPlugin("org.jetbrains.plugins.yaml")
         testBundledPlugin("intellij.libraries.misc.plugin")
         testFramework(TestFrameworkType.Platform)
     }

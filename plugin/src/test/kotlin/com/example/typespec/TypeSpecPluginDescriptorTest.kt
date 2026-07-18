@@ -43,8 +43,12 @@ class TypeSpecPluginDescriptorTest {
         }.bufferedReader().use { it.readText() }
 
         assertTrue(
-            xml.contains("factory=\"com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory\""),
+            xml.contains("implementation=\"com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory\""),
             "plugin.xml should register tspconfig.yaml JSON Schema provider",
+        )
+        assertTrue(
+            xml.contains("<JsonSchema.ProviderFactory"),
+            "plugin.xml should declare JsonSchema.ProviderFactory extension",
         )
     }
 }

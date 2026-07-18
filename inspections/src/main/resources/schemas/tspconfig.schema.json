@@ -13,6 +13,30 @@
     "extends": {
       "type": "string"
     },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string"
+          }
+        },
+        "required": ["default"]
+      }
+    },
+    "environment-variables": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string"
+          }
+        },
+        "required": ["default"]
+      }
+    },
     "output-dir": {
       "type": "string"
     },
@@ -23,9 +47,6 @@
       }
     },
     "options": {
-      "type": "object"
-    },
-    "features": {
       "type": "object"
     },
     "trace": {
