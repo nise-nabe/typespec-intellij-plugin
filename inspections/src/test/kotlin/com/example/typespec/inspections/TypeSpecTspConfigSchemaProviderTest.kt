@@ -60,9 +60,10 @@ class TypeSpecTspConfigSchemaProviderTest : BasePlatformTestCase() {
         val root = (myFixture.file as JsonFile).allTopLevelValues.single() as JsonObject
         val properties = root.findProperty("properties")?.value as JsonObject
 
-        assertTrue(
+        assertEquals(
             "Schema should reject unknown top-level keys (match @typespec/compiler)",
-            root.findProperty("additionalProperties")?.value?.text?.contains("false") == true,
+            "false",
+            root.findProperty("additionalProperties")?.value?.text,
         )
         assertNull("dry-run is not loaded by @typespec/compiler config loader", properties.findProperty("dry-run"))
         assertNotNull("parameters should be documented in schema", properties.findProperty("parameters"))
@@ -105,7 +106,11 @@ class TypeSpecTspConfigSchemaProviderTest : BasePlatformTestCase() {
                 VfsRootAccess.allowRootAccess(testRootDisposable, jarPath)
             }
             resourcePath.startsWith("file:") -> {
-                VfsRootAccess.allowRootAccess(testRootDisposable, resourcePath.removePrefix("file:"))
+                val filePath = URLDecoder.decode(
+                    resourcePath.removePrefix("file:"),
+                    StandardCharsets.UTF_8,
+                )
+                VfsRootAccess.allowRootAccess(testRootDisposable, filePath)
             }
         }
     }
