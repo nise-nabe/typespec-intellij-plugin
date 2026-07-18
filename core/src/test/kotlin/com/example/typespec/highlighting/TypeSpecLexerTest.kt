@@ -357,6 +357,57 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun tokenizesBacktickEscapedKeywordAsIdentifier() {
+        val tokens = tokenize("model `enum` { }")
+        assertEquals("`enum`", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER }.text)
+        assertTrue(tokens.none { it.type == TypeSpecTokenTypes.KEYWORD && it.text == "enum" })
+    }
+
+    @Test
+    fun tokenizesBacktickEscapedIdentWithEscapeAndSpaces() {
+        val tokens = tokenize("model `foo\\`bar baz` { }")
+        assertEquals("`foo\\`bar baz`", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER }.text)
+    }
+
+    @Test
+    fun tokenizesDecoratorWithBacktickEscapedName() {
+        val tokens = tokenize("@`service` model Pet { }")
+        assertEquals("@`service`", tokens.first { it.type == TypeSpecTokenTypes.DECORATOR }.text)
+        assertTrue(tokens.none { it.type == TypeSpecTokenTypes.KEYWORD && it.text == "service" })
+    }
+
+    @Test
+    fun resumesEscapedIdentAcrossSegments() {
+        val lexer = TypeSpecLexer()
+        lexer.start("`enu", 0, 4, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.IDENTIFIER, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_ESCAPED_IDENT, lexer.state)
+
+        lexer.start("m` model", 0, 8, TypeSpecLexer.STATE_ESCAPED_IDENT)
+        assertEquals(TypeSpecTokenTypes.IDENTIFIER, lexer.tokenType)
+        assertEquals("m`", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+        lexer.advance()
+        assertEquals(TypeSpecTokenTypes.WHITESPACE, lexer.tokenType)
+        lexer.advance()
+        assertEquals(TypeSpecTokenTypes.KEYWORD, lexer.tokenType)
+        assertEquals("model", lexer.tokenText)
+    }
+
+    @Test
+    fun resumesDecoratorEscapedIdentAcrossSegments() {
+        val lexer = TypeSpecLexer()
+        lexer.start("@`serv", 0, 6, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.DECORATOR, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_DECORATOR_ESCAPED_IDENT, lexer.state)
+
+        lexer.start("ice` model", 0, 10, TypeSpecLexer.STATE_DECORATOR_ESCAPED_IDENT)
+        assertEquals(TypeSpecTokenTypes.DECORATOR, lexer.tokenType)
+        assertEquals("ice`", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+    }
+
+    @Test
     fun highlightsCompilerKeywordsNotSpuriousOnes() {
         val tokens = tokenize("const x = valueof int32; projection P { }; public struct S { }")
         assertEquals(
@@ -384,6 +435,9 @@ class TypeSpecLexerTest {
             TypeSpecLexer.STATE_STRING_AFTER_DOLLAR,
             TypeSpecLexer.STATE_TRIPLE_STRING_AFTER_DOLLAR,
             TypeSpecLexer.STATE_TRIPLE_STRING_AFTER_ESCAPE,
+            TypeSpecLexer.STATE_ESCAPED_IDENT,
+            TypeSpecLexer.STATE_ESCAPED_IDENT_AFTER_ESCAPE,
+            TypeSpecLexer.STATE_DECORATOR_ESCAPED_IDENT,
         )
         for (packed in simples) {
             assertEquals(packed, LexStatePacking.pack(LexStatePacking.unpack(packed)), "state $packed")
@@ -391,6 +445,31 @@ class TypeSpecLexerTest {
         val template = TypeSpecLexer.templateState(1, TypeSpecLexer.STATE_STRING)
         assertTrue(TypeSpecLexer.isTemplateState(template))
         assertEquals(template, LexStatePacking.pack(LexStatePacking.unpack(template)))
+    }
+
+    @Test
+    fun continueStackKeepsDeepestFramesOnOverflow() {
+        // Each Template→InString layer adds 2k-1 continue frames under the live template mode.
+        // Capacity is 9, so nest(6) needs 11 frames and must drop the outermost two.
+        val capacity = LexStatePacking.CONTINUE_FRAME_CAPACITY
+        assertEquals(9, capacity)
+
+        fun nest(layers: Int): LexState {
+            var state: LexState = LexState.InString(triple = false)
+            repeat(layers) {
+                state = LexState.Template(1, LexState.InString(triple = false, continueState = state))
+            }
+            return state
+        }
+
+        val overflowPacked = LexStatePacking.pack(nest(6))
+        val exactPacked = LexStatePacking.pack(nest(5)) // exactly 9 frames
+        assertEquals(
+            exactPacked ushr 5,
+            overflowPacked ushr 5,
+            "overflow must keep the same deepest continue payload as an exact-capacity nest",
+        )
+        assertTrue(TypeSpecLexer.isTemplateState(overflowPacked))
     }
 
     @Test
