@@ -20,7 +20,7 @@ When `@typespec/compiler` is installed in the project, the plugin starts `tsp-se
 | Emit from TypeSpec | Compile / emit via the TypeSpec CLI |
 | Create TypeSpec Project | Scaffold with `tsp init` |
 | Install TypeSpec Dependencies | Run `tsp install` |
-| Import from OpenAPI 3 | Generate TypeSpec from OpenAPI |
+| Import TypeSpec from OpenAPI 3 | Generate TypeSpec from OpenAPI |
 | Preview API Documentation | Open Swagger UI preview in the browser |
 
 Editor and project view context menus expose the same actions where relevant.
@@ -44,8 +44,7 @@ Editor and project view context menus expose the same actions where relevant.
 
 1. Install the plugin (build from source or install the distribution ZIP).
 2. Open a TypeSpec project with `tspconfig.yaml` and `.tsp` files.
-3. Configure the compiler package path if needed: **Settings | Languages | TypeSpec**.
-4. Ensure the TypeSpec Language Server is **enabled** in project settings.
+3. Optionally set the compiler package path under **Settings | Languages & Frameworks | TypeSpec** (the language server is enabled by default; disable it there if needed).
 
 ## Build from source
 
@@ -69,7 +68,7 @@ See [docs/lsp-capabilities.md](docs/lsp-capabilities.md) and [docs/cloud-verific
 
 | Module | Purpose |
 |--------|---------|
-| `core` | File type, settings, package resolution |
+| `core` | File type, settings state, package resolution |
 | `lsp` | Language server integration and settings UI |
 | `actions` | Tools actions, CLI workflows, run configurations |
 | `inspections` | `package.json` inspections and `tspconfig.yaml` JSON Schema |
