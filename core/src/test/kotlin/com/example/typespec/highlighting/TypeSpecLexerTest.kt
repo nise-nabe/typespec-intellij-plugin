@@ -161,6 +161,54 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun unterminatedDoubleQuotedStringStopsAtNewline() {
+        val tokens = tokenize("alias x = \"oops\nmodel Foo {}")
+        val stringToken = tokens.first { it.type == TypeSpecTokenTypes.STRING }
+        assertEquals("\"oops", stringToken.text)
+        assertEquals("model", tokens.first { it.type == TypeSpecTokenTypes.KEYWORD }.text)
+        assertEquals("Foo", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER }.text)
+    }
+
+    @Test
+    fun stringTemplateWithNestedQuotesResumesAfterInterpolation() {
+        // Source is: alias s = "a${"b"}c"
+        val source = "alias s = \"a\${\"b\"}c\""
+        val tokens = tokenize(source)
+        assertEquals("\"a\${", tokens.first { it.type == TypeSpecTokenTypes.STRING }.text)
+        assertEquals("\"b\"", tokens.filter { it.type == TypeSpecTokenTypes.STRING }[1].text)
+        assertEquals("}", tokens.first { it.type == TypeSpecTokenTypes.OPERATION_SIGN && it.text == "}" }.text)
+        assertEquals("c\"", tokens.filter { it.type == TypeSpecTokenTypes.STRING }[2].text)
+        assertTrue(tokens.none { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "b" })
+    }
+
+    @Test
+    fun resumesStringTemplateWhenDollarSplitAcrossSegments() {
+        val lexer = TypeSpecLexer()
+        lexer.start("\"a$", 0, 3, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_STRING_AFTER_DOLLAR, lexer.state)
+
+        lexer.start("{x}y\";", 0, 6, TypeSpecLexer.STATE_STRING_AFTER_DOLLAR)
+        assertEquals(TypeSpecTokenTypes.OPERATION_SIGN, lexer.tokenType)
+        assertEquals("{", lexer.tokenText)
+        assertEquals(TypeSpecLexer.templateState(1, TypeSpecLexer.STATE_STRING), lexer.state)
+        lexer.advance()
+        assertEquals("x", lexer.tokenText)
+        lexer.advance()
+        assertEquals("}", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_STRING, lexer.state)
+        lexer.advance()
+        assertEquals("y\"", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+    }
+
+    @Test
+    fun tokenizesDollarPrefixedIdentifier() {
+        val tokens = tokenize("model \$foo { }")
+        assertEquals("\$foo", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER }.text)
+    }
+
+    @Test
     fun tokenizesAugmentDecoratorAndDottedMemberAccess() {
         val tokens = tokenize("@@TypeSpec.service model Pet { id: int32 }")
         assertEquals("@@TypeSpec", tokens.first { it.type == TypeSpecTokenTypes.DECORATOR }.text)
