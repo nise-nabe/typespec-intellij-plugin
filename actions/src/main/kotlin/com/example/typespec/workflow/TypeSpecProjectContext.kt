@@ -1,12 +1,12 @@
 package com.example.typespec.workflow
 
+import com.example.typespec.TSP_CONFIG_FILE_NAME
 import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
 internal object TypeSpecProjectContext {
-    const val TSP_CONFIG_FILE_NAME = "tspconfig.yaml"
     private val DEFAULT_ENTRYPOINT_CANDIDATES = listOf("client.tsp", "entrypoint.tsp", "main.tsp")
 
     fun findProjectRoot(startDirectory: Path): Path? {

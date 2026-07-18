@@ -1,6 +1,7 @@
 package com.example.typespec.inspections
 
 import com.intellij.json.psi.JsonFile
+import com.intellij.json.psi.JsonObject
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.junit.Assert.assertFalse
@@ -48,7 +49,9 @@ class TypeSpecTspConfigSchemaProviderTest : BasePlatformTestCase() {
 
         myFixture.configureByText("tspconfig.schema.json", schemaText)
         val jsonFile = myFixture.file as JsonFile
-        assertTrue(jsonFile.text.isNotBlank())
+        val root = jsonFile.allTopLevelValues.singleOrNull()
+        assertNotNull("Schema should parse as a single JSON value", root)
+        assertTrue("Schema root should be a JSON object", root is JsonObject)
     }
 
     private fun allowResourceRootAccess(resourcePath: String) {

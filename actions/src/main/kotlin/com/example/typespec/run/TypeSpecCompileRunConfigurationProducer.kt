@@ -1,5 +1,6 @@
 package com.example.typespec.run
 
+import com.example.typespec.TSP_CONFIG_FILE_NAME
 import com.example.typespec.TypeSpecFileType
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecTspConfigReader
@@ -19,7 +20,7 @@ class TypeSpecCompileRunConfigurationProducer : LazyRunConfigurationProducer<Typ
         sourceElement: Ref<PsiElement>,
     ): Boolean {
         val virtualFile = context.location?.virtualFile ?: return false
-        if (virtualFile.fileType != TypeSpecFileType && virtualFile.name != TypeSpecProjectContext.TSP_CONFIG_FILE_NAME) {
+        if (virtualFile.fileType != TypeSpecFileType && virtualFile.name != TSP_CONFIG_FILE_NAME) {
             return false
         }
         val resolution = TypeSpecProjectContext.resolveFromVirtualFile(virtualFile) ?: return false

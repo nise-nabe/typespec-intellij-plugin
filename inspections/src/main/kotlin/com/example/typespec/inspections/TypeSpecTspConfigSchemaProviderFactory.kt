@@ -1,12 +1,14 @@
 package com.example.typespec.inspections
 
+import com.example.typespec.TSP_CONFIG_FILE_NAME
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
 
-class TypeSpecTspConfigSchemaProviderFactory : JsonSchemaProviderFactory {
+class TypeSpecTspConfigSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware {
     override fun getProviders(project: Project): MutableList<JsonSchemaFileProvider> =
         mutableListOf(TypeSpecTspConfigSchemaProvider())
 }
@@ -24,7 +26,6 @@ private class TypeSpecTspConfigSchemaProvider : JsonSchemaFileProvider {
     override fun isUserVisible(): Boolean = true
 
     companion object {
-        private const val TSP_CONFIG_FILE_NAME = "tspconfig.yaml"
         private const val SCHEMA_RESOURCE_PATH = "/schemas/tspconfig.schema.json"
     }
 }

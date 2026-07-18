@@ -47,6 +47,7 @@ Emit/import/preview use the resolved `@typespec/compiler` CLI (`cmd/tsp.js`) and
 | Feature | Verification |
 |---------|--------------|
 | `package.json` inspection and quick fixes | Automated — `TypeSpecPackageJsonFixTest`, `TypeSpecPackageRulesTest` |
+| `tspconfig.yaml` JSON Schema validation and completion | Automated — `TypeSpecTspConfigSchemaProviderTest`, `TypeSpecPluginDescriptorTest` |
 | TypeSpec project settings service | Automated — `TypeSpecActivationHelperSettingsTest` |
 
 ## UI and tool window

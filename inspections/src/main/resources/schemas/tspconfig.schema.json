@@ -2,6 +2,19 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "TypeSpec Project Configuration",
   "type": "object",
+  "definitions": {
+    "parameterValue": {
+      "type": "object",
+      "properties": {
+        "default": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/definitions/parameterValue"
+      }
+    }
+  },
   "properties": {
     "kind": {
       "type": "string",
@@ -13,28 +26,22 @@
     "extends": {
       "type": "string"
     },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "parameters": {
       "type": "object",
       "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "default": {
-            "type": "string"
-          }
-        },
-        "required": ["default"]
+        "$ref": "#/definitions/parameterValue"
       }
     },
     "environment-variables": {
       "type": "object",
       "additionalProperties": {
-        "type": "object",
-        "properties": {
-          "default": {
-            "type": "string"
-          }
-        },
-        "required": ["default"]
+        "$ref": "#/definitions/parameterValue"
       }
     },
     "output-dir": {
@@ -71,7 +78,47 @@
       }
     },
     "linter": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "extends": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enable": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "boolean" },
+              { "type": "object" }
+            ]
+          }
+        },
+        "disable": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          { "required": ["entrypoint"] },
+          { "required": ["features"] }
+        ]
+      },
+      "then": {
+        "properties": {
+          "kind": { "const": "project" }
+        },
+        "required": ["kind"]
+      }
+    }
+  ]
 }
