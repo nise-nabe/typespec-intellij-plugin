@@ -15,6 +15,7 @@ class TypeSpecPluginDescriptorTest {
             "TypeSpec.ShowOutput",
             "TypeSpec.EmitFromTypeSpec",
             "TypeSpec.CreateProject",
+            "TypeSpec.InstallDependencies",
             "TypeSpec.ImportFromOpenApi",
             "TypeSpec.PreviewOpenApi",
         )
