@@ -1,6 +1,6 @@
 <idea-plugin>
     <id>com.example.typespec</id>
-    <name>TypeSpec Language</name>
+    <name>TypeSpec Support</name>
     <vendor>nise_nabe</vendor>
 
     <description><![CDATA[
