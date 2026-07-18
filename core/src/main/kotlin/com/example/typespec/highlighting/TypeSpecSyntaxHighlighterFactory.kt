@@ -30,12 +30,41 @@ internal class TypeSpecSyntaxHighlighter : SyntaxHighlighterBase() {
         }
 
     companion object {
-        private val KEYWORD_KEYS = arrayOf(DefaultLanguageHighlighterColors.KEYWORD)
-        private val DECORATOR_KEYS = arrayOf(DefaultLanguageHighlighterColors.METADATA)
-        private val STRING_KEYS = arrayOf(DefaultLanguageHighlighterColors.STRING)
-        private val LINE_COMMENT_KEYS = arrayOf(DefaultLanguageHighlighterColors.LINE_COMMENT)
-        private val BLOCK_COMMENT_KEYS = arrayOf(DefaultLanguageHighlighterColors.BLOCK_COMMENT)
-        private val NUMBER_KEYS = arrayOf(DefaultLanguageHighlighterColors.NUMBER)
-        private val OPERATION_SIGN_KEYS = arrayOf(DefaultLanguageHighlighterColors.OPERATION_SIGN)
+        val KEYWORD = TextAttributesKey.createTextAttributesKey(
+            "TYPESPEC_KEYWORD",
+            DefaultLanguageHighlighterColors.KEYWORD,
+        )
+        val DECORATOR = TextAttributesKey.createTextAttributesKey(
+            "TYPESPEC_DECORATOR",
+            DefaultLanguageHighlighterColors.METADATA,
+        )
+        val STRING = TextAttributesKey.createTextAttributesKey(
+            "TYPESPEC_STRING",
+            DefaultLanguageHighlighterColors.STRING,
+        )
+        val LINE_COMMENT = TextAttributesKey.createTextAttributesKey(
+            "TYPESPEC_LINE_COMMENT",
+            DefaultLanguageHighlighterColors.LINE_COMMENT,
+        )
+        val BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey(
+            "TYPESPEC_BLOCK_COMMENT",
+            DefaultLanguageHighlighterColors.BLOCK_COMMENT,
+        )
+        val NUMBER = TextAttributesKey.createTextAttributesKey(
+            "TYPESPEC_NUMBER",
+            DefaultLanguageHighlighterColors.NUMBER,
+        )
+        val OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(
+            "TYPESPEC_OPERATION_SIGN",
+            DefaultLanguageHighlighterColors.OPERATION_SIGN,
+        )
+
+        private val KEYWORD_KEYS = arrayOf(KEYWORD)
+        private val DECORATOR_KEYS = arrayOf(DECORATOR)
+        private val STRING_KEYS = arrayOf(STRING)
+        private val LINE_COMMENT_KEYS = arrayOf(LINE_COMMENT)
+        private val BLOCK_COMMENT_KEYS = arrayOf(BLOCK_COMMENT)
+        private val NUMBER_KEYS = arrayOf(NUMBER)
+        private val OPERATION_SIGN_KEYS = arrayOf(OPERATION_SIGN)
     }
 }

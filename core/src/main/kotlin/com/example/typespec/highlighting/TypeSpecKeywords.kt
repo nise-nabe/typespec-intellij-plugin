@@ -1,11 +1,19 @@
 package com.example.typespec.highlighting
 
+/**
+ * TypeSpec keyword set aligned with `@typespec/compiler` `Keywords` in
+ * `packages/compiler/src/core/scanner.ts` (including reserved keywords the
+ * compiler still tokenizes as keywords).
+ */
 internal object TypeSpecKeywords {
     val KEYWORDS = setOf(
-        "namespace", "model", "interface", "enum", "union", "alias", "op", "using",
-        "import", "extends", "is", "scalar", "void", "never", "unknown", "true", "false",
-        "dec", "fn", "extern", "project", "function",
+        "import", "model", "scalar", "namespace", "interface", "union",
+        "if", "else", "projection", "using", "op", "extends", "is", "enum",
+        "alias", "dec", "fn", "valueof", "typeof", "const", "init",
+        "true", "false", "return", "void", "never", "unknown", "extern",
+        "auto", "internal",
+        // Reserved keywords (compiler still highlights/tokenizes them)
+        "statemachine", "macro", "package", "metadata", "env", "arg",
+        "declare", "array",
     )
-
-    operator fun contains(word: String): Boolean = KEYWORDS.contains(word)
 }
