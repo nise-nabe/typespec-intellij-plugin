@@ -227,8 +227,9 @@ class TypeSpecLexerTest {
 
     @Test
     fun deepTemplateBracesWithNestedStringResumeInSingleBuffer() {
-        // Live template depth can exceed packed frame depth; same-buffer scan stays exact.
-        val source = "alias s = \"a\${{{{{{{ \"inner\" }}}}}}b\""
+        // Live template depth can exceed packed frame depth (5); same-buffer scan stays exact.
+        // `${` + five `{` → depth 6; six `}` return to the outer string.
+        val source = "alias s = \"a\${{{{{{ \"inner\" }}}}}}b\""
         val tokens = tokenize(source)
         val strings = tokens.filter { it.type == TypeSpecTokenTypes.STRING }.map { it.text }
         assertEquals(listOf("\"a\${", "\"inner\"", "b\""), strings)
