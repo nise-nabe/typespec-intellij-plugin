@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory
 import com.jetbrains.jsonSchema.extension.SchemaType
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
 
 class TypeSpecTspConfigSchemaProviderFactory : JsonSchemaProviderFactory, DumbAware {
     override fun getProviders(project: Project): MutableList<JsonSchemaFileProvider> =
@@ -22,6 +23,8 @@ private class TypeSpecTspConfigSchemaProvider : JsonSchemaFileProvider {
         JsonSchemaProviderFactory.getResourceFile(javaClass, SCHEMA_RESOURCE_PATH)
 
     override fun getSchemaType(): SchemaType = SchemaType.embeddedSchema
+
+    override fun getSchemaVersion(): JsonSchemaVersion = JsonSchemaVersion.SCHEMA_7
 
     override fun isUserVisible(): Boolean = true
 

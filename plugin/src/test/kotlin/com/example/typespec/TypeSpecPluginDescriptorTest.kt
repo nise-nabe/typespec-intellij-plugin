@@ -47,12 +47,12 @@ class TypeSpecPluginDescriptorTest {
             "plugin.xml should register tspconfig.yaml JSON Schema provider",
         )
         assertTrue(
-            xml.contains("<JsonSchema.ProviderFactory"),
-            "plugin.xml should declare JsonSchema.ProviderFactory extension",
+            xml.contains("<ProviderFactory"),
+            "plugin.xml should declare JsonSchema ProviderFactory extension",
         )
         assertTrue(
-            xml.contains("defaultExtensionNs=\"JavaScript\""),
-            "plugin.xml should register JSON Schema provider under JavaScript extension namespace",
+            xml.contains("defaultExtensionNs=\"JavaScript.JsonSchema\""),
+            "plugin.xml should register JSON Schema provider under JavaScript.JsonSchema extension namespace",
         )
         assertTrue(
             xml.contains("<depends>org.jetbrains.plugins.yaml</depends>"),

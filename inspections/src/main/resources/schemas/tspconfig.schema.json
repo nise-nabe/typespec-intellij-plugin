@@ -1,20 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Aligned with @typespec/compiler packages/compiler/src/config/config-schema.ts (TypeSpecConfigJsonSchema)",
   "title": "TypeSpec Project Configuration",
   "type": "object",
-  "definitions": {
-    "parameterValue": {
-      "type": "object",
-      "properties": {
-        "default": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {
-        "$ref": "#/definitions/parameterValue"
-      }
-    }
-  },
+  "additionalProperties": false,
   "properties": {
     "kind": {
       "type": "string",
@@ -35,13 +24,27 @@
     "parameters": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/parameterValue"
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string"
+          }
+        },
+        "required": ["default"],
+        "additionalProperties": false
       }
     },
     "environment-variables": {
       "type": "object",
       "additionalProperties": {
-        "$ref": "#/definitions/parameterValue"
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string"
+          }
+        },
+        "required": ["default"],
+        "additionalProperties": false
       }
     },
     "output-dir": {
@@ -54,7 +57,16 @@
       }
     },
     "options": {
-      "type": "object"
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "emitter-output-dir": {
+            "type": "string"
+          }
+        }
+      }
     },
     "trace": {
       "oneOf": [
@@ -66,9 +78,6 @@
       ]
     },
     "warn-as-error": {
-      "type": "boolean"
-    },
-    "dry-run": {
       "type": "boolean"
     },
     "imports": {

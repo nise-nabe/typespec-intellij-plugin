@@ -4,6 +4,8 @@ import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -37,6 +39,44 @@ class TypeSpecTspConfigSchemaProviderTest : BasePlatformTestCase() {
         val schemaFile = provider.getSchemaFile()
         assertNotNull(schemaFile)
         assertTrue(schemaFile!!.isValid)
+    }
+
+    @Test
+    fun providerUsesDraft7SchemaVersion() {
+        val provider = TypeSpecTspConfigSchemaProviderFactory().getProviders(project).single()
+        assertEquals(JsonSchemaVersion.SCHEMA_7, provider.schemaVersion)
+    }
+
+    @Test
+    fun embeddedSchemaAlignsWithTypeSpecCompilerSchema() {
+        val schemaText = requireNotNull(
+            javaClass.getResourceAsStream("/schemas/tspconfig.schema.json"),
+        ) {
+            "tspconfig.schema.json should be on the test classpath"
+        }.bufferedReader().use { it.readText() }
+
+        myFixture.configureByText("tspconfig.schema.json", schemaText)
+        val root = (myFixture.file as JsonFile).allTopLevelValues.single() as JsonObject
+        val properties = root.findProperty("properties")?.value as JsonObject
+
+        assertTrue(
+            "Schema should reject unknown top-level keys (match @typespec/compiler)",
+            root.findProperty("additionalProperties")?.value?.text?.contains("false") == true,
+        )
+        assertNull("dry-run is not loaded by @typespec/compiler config loader", properties.findProperty("dry-run"))
+        assertNotNull("parameters should be documented in schema", properties.findProperty("parameters"))
+        assertNotNull(
+            "environment-variables should be documented in schema",
+            properties.findProperty("environment-variables"),
+        )
+
+        val parametersSchema = properties.findProperty("parameters")?.value as JsonObject
+        val parameterValueSchema = parametersSchema.findProperty("additionalProperties")?.value as JsonObject
+        val parameterRequired = parameterValueSchema.findProperty("required")?.value?.text.orEmpty()
+        assertTrue(
+            "parameter entries should require default (match @typespec/compiler)",
+            parameterRequired.contains("default"),
+        )
     }
 
     @Test
