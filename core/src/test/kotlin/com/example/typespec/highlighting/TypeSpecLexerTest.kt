@@ -165,8 +165,9 @@ class TypeSpecLexerTest {
         val tokens = tokenize("alias x = \"oops\nmodel Foo {}")
         val stringToken = tokens.first { it.type == TypeSpecTokenTypes.STRING }
         assertEquals("\"oops", stringToken.text)
-        assertEquals("model", tokens.first { it.type == TypeSpecTokenTypes.KEYWORD }.text)
-        assertEquals("Foo", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER }.text)
+        assertEquals("model", tokens.first { it.text == "model" }.text)
+        assertEquals(TypeSpecTokenTypes.KEYWORD, tokens.first { it.text == "model" }.type)
+        assertEquals("Foo", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "Foo" }.text)
     }
 
     @Test
