@@ -37,6 +37,28 @@ class TypeSpecPluginDescriptorTest {
     }
 
     @Test
+    fun pluginXmlRegistersSyntaxHighlighterFactory() {
+        val xml = requireNotNull(javaClass.classLoader.getResourceAsStream("META-INF/plugin.xml")) {
+            "plugin.xml should be on the test classpath"
+        }.bufferedReader().use { it.readText() }
+
+        assertTrue(
+            xml.contains("<lang.syntaxHighlighterFactory"),
+            "plugin.xml should declare lang.syntaxHighlighterFactory",
+        )
+        assertTrue(
+            xml.contains("language=\"TypeSpec\""),
+            "plugin.xml syntax highlighter should target TypeSpec language",
+        )
+        assertTrue(
+            xml.contains(
+                "implementationClass=\"com.example.typespec.highlighting.TypeSpecSyntaxHighlighterFactory\"",
+            ),
+            "plugin.xml should wire TypeSpecSyntaxHighlighterFactory",
+        )
+    }
+
+    @Test
     fun pluginXmlRegistersTspConfigJsonSchemaProvider() {
         val xml = requireNotNull(javaClass.classLoader.getResourceAsStream("META-INF/plugin.xml")) {
             "plugin.xml should be on the test classpath"

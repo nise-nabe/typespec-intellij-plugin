@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added lexer-based syntax highlighting for TypeSpec keywords, decorators, strings, comments, and numbers in `.tsp` files
 - Added VS Code parity workflow actions: restart TypeSpec server, show output, emit from TypeSpec, create project (`tsp init`), import from OpenAPI 3, and preview API documentation (Swagger UI in browser)
 - Added TypeSpec compile run configuration with context-menu producer for `.tsp` files
 - Added TypeSpec output tool window for CLI and workflow logs
