@@ -35,4 +35,28 @@ class TypeSpecPluginDescriptorTest {
         assertTrue(xml.contains("class=\"com.example.typespec.actions.TypeSpecShowOutputAction\""))
         assertTrue(xml.contains("class=\"com.example.typespec.actions.TypeSpecEmitFromTypeSpecAction\""))
     }
+
+    @Test
+    fun pluginXmlRegistersTspConfigJsonSchemaProvider() {
+        val xml = requireNotNull(javaClass.classLoader.getResourceAsStream("META-INF/plugin.xml")) {
+            "plugin.xml should be on the test classpath"
+        }.bufferedReader().use { it.readText() }
+
+        assertTrue(
+            xml.contains("implementation=\"com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory\""),
+            "plugin.xml should register tspconfig.yaml JSON Schema provider",
+        )
+        assertTrue(
+            xml.contains("<ProviderFactory"),
+            "plugin.xml should declare JsonSchema ProviderFactory extension",
+        )
+        assertTrue(
+            xml.contains("defaultExtensionNs=\"JavaScript.JsonSchema\""),
+            "plugin.xml should register JSON Schema provider under JavaScript.JsonSchema extension namespace",
+        )
+        assertTrue(
+            xml.contains("<depends>org.jetbrains.plugins.yaml</depends>"),
+            "plugin.xml should declare YAML plugin dependency for tspconfig.yaml validation",
+        )
+    }
 }

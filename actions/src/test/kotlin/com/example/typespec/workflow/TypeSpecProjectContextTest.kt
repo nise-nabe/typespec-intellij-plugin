@@ -1,5 +1,6 @@
 package com.example.typespec.workflow
 
+import com.example.typespec.TSP_CONFIG_FILE_NAME
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
@@ -10,7 +11,7 @@ class TypeSpecProjectContextTest {
     fun findProjectRootFindsNearestTspConfig() {
         val root = Files.createTempDirectory("typespec-root-test")
         val nested = Files.createDirectories(root.resolve("nested"))
-        Files.writeString(root.resolve(TypeSpecProjectContext.TSP_CONFIG_FILE_NAME), "emit:\n  - \"@typespec/openapi3\"\n")
+        Files.writeString(root.resolve(TSP_CONFIG_FILE_NAME), "emit:\n  - \"@typespec/openapi3\"\n")
 
         assertEquals(root, TypeSpecProjectContext.findProjectRoot(nested))
     }

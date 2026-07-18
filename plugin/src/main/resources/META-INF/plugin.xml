@@ -14,6 +14,7 @@
             <li>LSP-based editing support for TypeSpec projects</li>
             <li>Project settings to configure the TypeSpec Language Server package path and enable or disable the service</li>
             <li>Inspections and quick fixes for TypeSpec extension package <code>package.json</code> metadata</li>
+            <li>JSON Schema validation and completion for <code>tspconfig.yaml</code> project configuration</li>
             <li>VS Code parity commands: restart server, show output, emit, create project, OpenAPI import, API documentation preview</li>
         </ul>
     ]]></description>
@@ -25,6 +26,7 @@
     <depends>NodeJS</depends>
     <depends>com.intellij.modules.spellchecker</depends>
     <depends>com.intellij.modules.json</depends>
+    <depends>org.jetbrains.plugins.yaml</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="TypeSpec Notifications" displayType="BALLOON"/>
@@ -75,6 +77,10 @@
 
         <configurationType implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationType"/>
         <runConfigurationProducer implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationProducer"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="JavaScript.JsonSchema">
+        <ProviderFactory implementation="com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory"/>
     </extensions>
 
     <actions resource-bundle="messages.TypeSpecBundle">

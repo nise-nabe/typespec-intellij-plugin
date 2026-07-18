@@ -1,5 +1,6 @@
 package com.example.typespec.actions
 
+import com.example.typespec.TSP_CONFIG_FILE_NAME
 import com.example.typespec.TypeSpecCompilerPackageResolver
 import com.example.typespec.TypeSpecFileType
 import com.example.typespec.TypeSpecServiceMode
@@ -54,7 +55,7 @@ internal object TypeSpecActionSupport {
 
     fun isTypeSpecContext(file: VirtualFile): Boolean =
         file.fileType == TypeSpecFileType ||
-            file.name == "tspconfig.yaml" ||
+            file.name == TSP_CONFIG_FILE_NAME ||
             file.extension == "tsp"
 
     fun openOutput(project: Project) {

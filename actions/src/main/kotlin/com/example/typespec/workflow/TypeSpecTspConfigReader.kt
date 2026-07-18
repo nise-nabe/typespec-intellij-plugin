@@ -1,11 +1,12 @@
 package com.example.typespec.workflow
 
+import com.example.typespec.TSP_CONFIG_FILE_NAME
 import java.nio.file.Files
 import java.nio.file.Path
 
 internal object TypeSpecTspConfigReader {
     fun readEmitters(projectRoot: Path): List<String> {
-        val configFile = projectRoot.resolve(TypeSpecProjectContext.TSP_CONFIG_FILE_NAME)
+        val configFile = projectRoot.resolve(TSP_CONFIG_FILE_NAME)
         if (!Files.isRegularFile(configFile)) {
             return emptyList()
         }

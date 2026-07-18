@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "Aligned with @typespec/compiler packages/compiler/src/config/config-schema.ts (TypeSpecConfigJsonSchema)",
+  "title": "TypeSpec Project Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["project"]
+    },
+    "entrypoint": {
+      "type": "string"
+    },
+    "extends": {
+      "type": "string"
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string"
+          }
+        },
+        "required": ["default"],
+        "additionalProperties": false
+      }
+    },
+    "environment-variables": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "default": {
+            "type": "string"
+          }
+        },
+        "required": ["default"],
+        "additionalProperties": false
+      }
+    },
+    "output-dir": {
+      "type": "string"
+    },
+    "emit": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "emitter-output-dir": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "trace": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ]
+    },
+    "warn-as-error": {
+      "type": "boolean"
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "linter": {
+      "type": "object",
+      "properties": {
+        "extends": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enable": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "boolean" },
+              { "type": "object" }
+            ]
+          }
+        },
+        "disable": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          { "required": ["entrypoint"] },
+          { "required": ["features"] }
+        ]
+      },
+      "then": {
+        "properties": {
+          "kind": { "const": "project" }
+        },
+        "required": ["kind"]
+      }
+    }
+  ]
+}
