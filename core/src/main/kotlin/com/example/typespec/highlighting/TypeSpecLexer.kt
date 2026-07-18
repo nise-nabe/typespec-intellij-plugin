@@ -419,6 +419,8 @@ internal class TypeSpecLexer : LexerBase() {
             LexStatePacking.pack(LexState.EscapedIdent(afterEscape = true))
         val STATE_DECORATOR_ESCAPED_IDENT: Int =
             LexStatePacking.pack(LexState.EscapedIdent(asDecorator = true))
+        val STATE_DECORATOR_ESCAPED_IDENT_AFTER_ESCAPE: Int =
+            LexStatePacking.pack(LexState.EscapedIdent(afterEscape = true, asDecorator = true))
 
         fun isTemplateState(state: Int): Boolean = LexStatePacking.unpack(state) is LexState.Template
 

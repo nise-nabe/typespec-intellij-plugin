@@ -438,6 +438,7 @@ class TypeSpecLexerTest {
             TypeSpecLexer.STATE_ESCAPED_IDENT,
             TypeSpecLexer.STATE_ESCAPED_IDENT_AFTER_ESCAPE,
             TypeSpecLexer.STATE_DECORATOR_ESCAPED_IDENT,
+            TypeSpecLexer.STATE_DECORATOR_ESCAPED_IDENT_AFTER_ESCAPE,
         )
         for (packed in simples) {
             assertEquals(packed, LexStatePacking.pack(LexStatePacking.unpack(packed)), "state $packed")
@@ -448,28 +449,67 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun packUnpackPreservesDeepTemplateContinueDepth() {
+        // Template-as-continue used to clamp depth to 5; depths 5–15 must round-trip.
+        for (depth in listOf(5, 6, 15)) {
+            val nested = LexState.InString(
+                triple = true,
+                continueState = LexState.Template(depth, LexState.InString(triple = false)),
+            )
+            val roundTripped = LexStatePacking.unpack(LexStatePacking.pack(nested)) as LexState.InString
+            val cont = roundTripped.continueState as LexState.Template
+            assertEquals(depth, cont.depth, "continue Template depth $depth")
+            assertTrue(cont.resume is LexState.InString)
+        }
+    }
+
+    @Test
+    fun deepTemplateBraceContinuePreservesDepthAcrossSegments() {
+        // String opened inside brace-depth 6 must resume with full depth after a segment split.
+        // Source: "a${{{{{{ """hi""" }}}}}}b"
+        val lexer = TypeSpecLexer()
+        val part1 = "\"a\${{{{{{ \"\"\"hi"
+        lexer.start(part1, 0, part1.length, TypeSpecLexer.STATE_DEFAULT)
+        while (lexer.tokenType != null) {
+            lexer.advance()
+        }
+        val packed = lexer.state
+
+        val part2 = "\"\"\" }}}}}}b\""
+        lexer.start(part2, 0, part2.length, packed)
+        val texts = mutableListOf<String>()
+        while (lexer.tokenType != null) {
+            texts += lexer.tokenText
+            lexer.advance()
+        }
+        assertEquals(6, texts.count { it == "}" }, texts.toString())
+        assertTrue(texts.contains("b\""), texts.toString())
+        assertTrue(texts.none { it == "}b\"" }, texts.toString())
+    }
+
+    @Test
     fun continueStackKeepsDeepestFramesOnOverflow() {
-        // Each Template→InString layer adds 2k-1 continue frames under the live template mode.
-        // Capacity is 9, so nest(6) needs 11 frames and must drop the outermost two.
+        // Live Template + alternating InString/Template continues: nest(5) → 9 shallow frames;
+        // nest(6) → 11 and must drop the outermost two (keep deepest).
         val capacity = LexStatePacking.CONTINUE_FRAME_CAPACITY
         assertEquals(9, capacity)
 
         fun nest(layers: Int): LexState {
+            require(layers >= 1)
             var state: LexState = LexState.InString(triple = false)
-            repeat(layers) {
-                state = LexState.Template(1, LexState.InString(triple = false, continueState = state))
+            repeat(layers - 1) {
+                state = LexState.InString(
+                    triple = false,
+                    continueState = LexState.Template(1, state),
+                )
             }
-            return state
+            return LexState.Template(1, state)
         }
 
-        val overflowPacked = LexStatePacking.pack(nest(6))
-        val exactPacked = LexStatePacking.pack(nest(5)) // exactly 9 frames
-        assertEquals(
-            exactPacked ushr 5,
-            overflowPacked ushr 5,
-            "overflow must keep the same deepest continue payload as an exact-capacity nest",
-        )
-        assertTrue(TypeSpecLexer.isTemplateState(overflowPacked))
+        val overflow = LexStatePacking.unpack(LexStatePacking.pack(nest(6))) as LexState.Template
+        val exact = LexStatePacking.unpack(LexStatePacking.pack(nest(5))) as LexState.Template
+        assertEquals(exact.resume, overflow.resume, "overflow must keep the same deepest resume chain")
+        assertEquals(1, overflow.depth)
     }
 
     @Test

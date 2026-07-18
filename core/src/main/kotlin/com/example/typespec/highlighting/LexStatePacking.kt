@@ -9,29 +9,37 @@ package com.example.typespec.highlighting
  * - bit 4: template interpolation marker
  * - bits 5–31: continue stack (compact frames)
  *
- * Each continue frame is 3 bits (LSB = next frame to apply):
+ * Continue frames (LSB = next frame to apply):
  * - 0: end
- * - 1: resume double-quoted string
- * - 2: resume triple-quoted string
- * - 3–7: template with brace depth (frame - 2), depths 1–5
+ * - 1: resume double-quoted string (3 bits)
+ * - 2: resume triple-quoted string (3 bits)
+ * - 3–6: template with brace depth (frame - 2), depths 1–4 (3 bits)
+ * - 7: extended template — next 4 bits are depth 1–15, then the rest stack (7 bits total)
  *
- * 27 payload bits fit nine 3-bit frames. Deeper stacks keep the deepest frames.
+ * Shallow templates stay 3-bit frames so nested-string capacity stays high; depths 5–15
+ * use the extended form so a string/comment opened inside deep braces survives pack.
+ * 27 payload bits fit nine 3-bit frames (or fewer once extended templates appear).
+ * Deeper stacks keep the deepest frames.
  */
 internal object LexStatePacking {
     private const val MODE_MASK = 0x0F
     private const val TEMPLATE_BIT = 1 shl 4
     private const val PAYLOAD_SHIFT = 5
     private const val PAYLOAD_BITS = Int.SIZE_BITS - PAYLOAD_SHIFT
-    private const val PAYLOAD_MASK = (1 shl PAYLOAD_BITS) - 1
     private const val TEMPLATE_MAX_DEPTH = MODE_MASK
     private const val FRAME_BITS = 3
     private const val FRAME_MASK = (1 shl FRAME_BITS) - 1
     private const val FRAME_RESUME_STRING = 1
     private const val FRAME_RESUME_TRIPLE = 2
     private const val FRAME_TEMPLATE_BASE = 3
-    private const val FRAME_TEMPLATE_MAX_DEPTH = FRAME_MASK - FRAME_TEMPLATE_BASE + 1
+    /** Depths 1–4 fit in a single 3-bit frame (values 3–6). */
+    private const val FRAME_TEMPLATE_SINGLE_MAX_DEPTH = 4
+    private const val FRAME_TEMPLATE_EXTENDED = 7
+    private const val EXTENDED_DEPTH_BITS = 4
+    private const val EXTENDED_DEPTH_MASK = (1 shl EXTENDED_DEPTH_BITS) - 1
+    private const val EXTENDED_TEMPLATE_BITS = FRAME_BITS + EXTENDED_DEPTH_BITS
 
-    /** Maximum continue frames that fit in the Int payload (for tests). */
+    /** Maximum shallow (3-bit) continue frames that fit in the Int payload (for tests). */
     const val CONTINUE_FRAME_CAPACITY = PAYLOAD_BITS / FRAME_BITS
 
     private const val MODE_DEFAULT = 0
@@ -118,19 +126,13 @@ internal object LexStatePacking {
 
     private fun encodeContinue(continueState: LexState): Int {
         if (continueState == LexState.Default) return 0
-        val frame: Int
-        val restState: LexState
         when (continueState) {
-            is LexState.Template -> {
-                val depth = continueState.depth.coerceIn(1, FRAME_TEMPLATE_MAX_DEPTH)
-                frame = FRAME_TEMPLATE_BASE + depth - 1
-                restState = continueState.resume
-            }
+            is LexState.Template -> return encodeTemplateContinue(continueState)
             is LexState.InString -> {
-                frame = if (continueState.triple) FRAME_RESUME_TRIPLE else FRAME_RESUME_STRING
+                val frame = if (continueState.triple) FRAME_RESUME_TRIPLE else FRAME_RESUME_STRING
                 // Fine-grained InString modes (quotes/escape/dollar) collapse when nested
                 // in the continue stack — only the live mode nibble preserves them.
-                restState = continueState.continueState
+                return appendFrame(frame, encodeContinue(continueState.continueState))
             }
             is LexState.BlockComment -> {
                 // Block comments are not pushed as continue frames; recover to Default.
@@ -142,7 +144,24 @@ internal object LexStatePacking {
             }
             LexState.Default -> return 0
         }
-        val rest = encodeContinue(restState)
+    }
+
+    private fun encodeTemplateContinue(template: LexState.Template): Int {
+        val depth = template.depth.coerceIn(1, TEMPLATE_MAX_DEPTH)
+        val rest = encodeContinue(template.resume)
+        if (depth <= FRAME_TEMPLATE_SINGLE_MAX_DEPTH) {
+            return appendFrame(FRAME_TEMPLATE_BASE + depth - 1, rest)
+        }
+        // Depths 5–15: 3-bit extended marker + 4-bit depth, then the rest stack.
+        if ((rest ushr (PAYLOAD_BITS - EXTENDED_TEMPLATE_BITS)) != 0) {
+            return rest
+        }
+        return FRAME_TEMPLATE_EXTENDED or
+            (depth shl FRAME_BITS) or
+            (rest shl EXTENDED_TEMPLATE_BITS)
+    }
+
+    private fun appendFrame(frame: Int, rest: Int): Int {
         // Capacity is finite: drop outermost frames so the deepest resume targets survive.
         if ((rest ushr (PAYLOAD_BITS - FRAME_BITS)) != 0) {
             return rest
@@ -153,15 +172,21 @@ internal object LexStatePacking {
     private fun decodeContinue(enc: Int): LexState {
         if (enc == 0) return LexState.Default
         val frame = enc and FRAME_MASK
-        val rest = decodeContinue(enc ushr FRAME_BITS)
         return when (frame) {
-            FRAME_RESUME_STRING -> LexState.InString(triple = false, continueState = rest)
-            FRAME_RESUME_TRIPLE -> LexState.InString(triple = true, continueState = rest)
-            in FRAME_TEMPLATE_BASE..FRAME_MASK -> {
-                val depth = frame - FRAME_TEMPLATE_BASE + 1
-                LexState.Template(depth, rest)
+            FRAME_RESUME_STRING ->
+                LexState.InString(triple = false, continueState = decodeContinue(enc ushr FRAME_BITS))
+            FRAME_RESUME_TRIPLE ->
+                LexState.InString(triple = true, continueState = decodeContinue(enc ushr FRAME_BITS))
+            FRAME_TEMPLATE_EXTENDED -> {
+                val depth = (enc ushr FRAME_BITS) and EXTENDED_DEPTH_MASK
+                val rest = decodeContinue(enc ushr EXTENDED_TEMPLATE_BITS)
+                if (depth == 0) rest else LexState.Template(depth, rest)
             }
-            else -> rest
+            in FRAME_TEMPLATE_BASE until FRAME_TEMPLATE_EXTENDED -> {
+                val depth = frame - FRAME_TEMPLATE_BASE + 1
+                LexState.Template(depth, decodeContinue(enc ushr FRAME_BITS))
+            }
+            else -> decodeContinue(enc ushr FRAME_BITS)
         }
     }
 }
