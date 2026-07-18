@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TypeSpec Project Configuration",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "type": "string",
+      "enum": ["project"]
+    },
+    "entrypoint": {
+      "type": "string"
+    },
+    "extends": {
+      "type": "string"
+    },
+    "output-dir": {
+      "type": "string"
+    },
+    "emit": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "options": {
+      "type": "object"
+    },
+    "features": {
+      "type": "object"
+    },
+    "trace": {
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ]
+    },
+    "warn-as-error": {
+      "type": "boolean"
+    },
+    "dry-run": {
+      "type": "boolean"
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "linter": {
+      "type": "object"
+    }
+  }
+}

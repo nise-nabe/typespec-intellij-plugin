@@ -56,6 +56,8 @@
                          level="WARNING"
                          implementationClass="com.example.typespec.inspections.TypeSpecPackageJsonInspection"/>
 
+        <jsonSchema.provider factory="com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory"/>
+
         <toolWindow id="TypeSpec Output"
                     anchor="bottom"
                     factoryClass="com.example.typespec.workflow.TypeSpecToolWindowFactory"

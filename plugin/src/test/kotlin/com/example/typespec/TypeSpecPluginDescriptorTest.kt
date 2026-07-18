@@ -35,4 +35,16 @@ class TypeSpecPluginDescriptorTest {
         assertTrue(xml.contains("class=\"com.example.typespec.actions.TypeSpecShowOutputAction\""))
         assertTrue(xml.contains("class=\"com.example.typespec.actions.TypeSpecEmitFromTypeSpecAction\""))
     }
+
+    @Test
+    fun pluginXmlRegistersTspConfigJsonSchemaProvider() {
+        val xml = requireNotNull(javaClass.classLoader.getResourceAsStream("META-INF/plugin.xml")) {
+            "plugin.xml should be on the test classpath"
+        }.bufferedReader().use { it.readText() }
+
+        assertTrue(
+            xml.contains("factory=\"com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory\""),
+            "plugin.xml should register tspconfig.yaml JSON Schema provider",
+        )
+    }
 }
