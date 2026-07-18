@@ -63,6 +63,39 @@ class TypeSpecActionVisibilityPlatformTest : BasePlatformTestCase() {
         assertFalse(event.presentation.isEnabledAndVisible)
     }
 
+    fun testEmitHiddenWhenServiceDisabled() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.DISABLED
+        val action = TypeSpecEmitFromTypeSpecAction()
+        val tspFile = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
+        val event = testEvent(action, tspFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testInstallDependenciesHiddenWhenCompilerCliNotResolvable() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.DISABLED
+        val action = TypeSpecInstallDependenciesAction()
+        val tspFile = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
+        val event = testEvent(action, tspFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testInstallDependenciesHiddenForNonTypeSpecFile() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        val action = TypeSpecInstallDependenciesAction()
+        val jsonFile = myFixture.configureByText("sample.json", "{}").virtualFile
+        val event = testEvent(action, jsonFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
     private fun testEvent(action: AnAction, file: VirtualFile? = null) =
         TestActionEvent.createTestEvent(action, dataContext(file))
 

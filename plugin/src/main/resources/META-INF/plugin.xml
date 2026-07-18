@@ -94,6 +94,7 @@
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
             <separator/>
             <reference ref="TypeSpec.EmitFromTypeSpec"/>
+            <reference ref="TypeSpec.InstallDependencies"/>
             <reference ref="TypeSpec.PreviewOpenApi"/>
             <reference ref="TypeSpec.RestartServer"/>
             <reference ref="TypeSpec.ShowOutput"/>
