@@ -1,6 +1,6 @@
 [versions]
 jdk = "25"
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 junit = "6.1.2"
 junit4 = "4.13.2"
 intellij-platform = "2.18.1"
