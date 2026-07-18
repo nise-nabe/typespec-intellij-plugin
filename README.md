@@ -1,6 +1,6 @@
 # TypeSpec Support for IntelliJ Platform
 
-IntelliJ Platform plugin for [TypeSpec](https://typespec.io/) (`.tsp`) development. Targets **IntelliJ IDEA 2026.2** (`262.x`) with **JDK 25**.
+IntelliJ Platform plugin for [TypeSpec](https://typespec.io/) (`.tsp`) development. Targets **IntelliJ IDEA 2026.2** (`262.x`). Build with **JDK 25**.
 
 ## Features
 
@@ -27,7 +27,7 @@ Editor and project view context menus expose the same actions where relevant.
 
 ### Run configuration
 
-**TypeSpec Compile** run configuration with a context-menu producer for `.tsp` files.
+**TypeSpec Compile** run configuration with a context-menu producer for `.tsp` files and `tspconfig.yaml`.
 
 ### Inspections and configuration
 
