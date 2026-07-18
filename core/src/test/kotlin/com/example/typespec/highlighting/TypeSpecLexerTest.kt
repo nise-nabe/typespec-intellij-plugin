@@ -194,6 +194,21 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun nestedStringTemplatesFiveDeepResumeCorrectly() {
+        // Source is: alias s = "a${"b${"c${"d${"e${x}f"}g"}h"}i"}j"
+        // Five nested templates need nine continue frames; payload fits exactly nine.
+        val source = "alias s = \"a\${\"b\${\"c\${\"d\${\"e\${x}f\"}g\"}h\"}i\"}j\""
+        val tokens = tokenize(source)
+        val strings = tokens.filter { it.type == TypeSpecTokenTypes.STRING }.map { it.text }
+        assertEquals(
+            listOf("\"a\${", "\"b\${", "\"c\${", "\"d\${", "\"e\${", "f\"", "g\"", "h\"", "i\"", "j\""),
+            strings,
+        )
+        assertEquals("x", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "x" }.text)
+        assertTrue(tokens.none { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "j" })
+    }
+
+    @Test
     fun resumesThreeDeepNestedTemplatesAcrossSegments() {
         // Split after opening the innermost template: "a${"b${"c${
         val lexer = TypeSpecLexer()
@@ -319,6 +334,71 @@ class TypeSpecLexerTest {
         assertTrue("async" in TypeSpecKeywords.KEYWORDS)
         assertTrue("function" !in TypeSpecKeywords.KEYWORDS)
         assertTrue("project" !in TypeSpecKeywords.KEYWORDS)
+    }
+
+    @Test
+    fun continuePackingRoundTripsNestedTemplatesUpToCapacity() {
+        // Build the same continue stack the lexer uses at five-deep `${` nesting:
+        // template → string → template → … → string (nine frames).
+        var resume = TypeSpecLexer.STATE_DEFAULT
+        repeat(5) {
+            resume = TypeSpecLexer.withContinue(TypeSpecLexer.STATE_STRING, resume)
+            if (it < 4) {
+                resume = TypeSpecLexer.templateState(1, resume)
+            }
+        }
+        val packed = TypeSpecLexer.templateState(1, resume)
+        assertTrue(TypeSpecLexer.isTemplateState(packed))
+        assertEquals(1, TypeSpecLexer.templateDepthOrZero(packed))
+        assertEquals(TypeSpecLexer.MAX_CONTINUE_FRAMES, TypeSpecLexer.continueFrameCount(packed))
+
+        // Unwind: each `}` returns to a string whose continue is the outer template.
+        var state = packed
+        repeat(5) { depth ->
+            assertTrue(TypeSpecLexer.isTemplateState(state), "depth $depth")
+            state = TypeSpecLexer.resumeStringState(state)
+            assertEquals(TypeSpecLexer.STATE_STRING, TypeSpecLexer.modeOf(state))
+            if (depth < 4) {
+                state = TypeSpecLexer.continueOf(state)
+            }
+        }
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, TypeSpecLexer.continueOf(state))
+    }
+
+    @Test
+    fun continuePackingDropsOutermostFramesBeyondCapacity() {
+        // Six nested string templates need 11 frames; payload keeps the deepest nine.
+        var resume = TypeSpecLexer.STATE_DEFAULT
+        repeat(6) {
+            resume = TypeSpecLexer.withContinue(TypeSpecLexer.STATE_STRING, resume)
+            if (it < 5) {
+                resume = TypeSpecLexer.templateState(1, resume)
+            }
+        }
+        val packed = TypeSpecLexer.templateState(1, resume)
+        assertEquals(TypeSpecLexer.MAX_CONTINUE_FRAMES, TypeSpecLexer.continueFrameCount(packed))
+
+        // Deepest five template→string resumes still round-trip; the outermost is lost.
+        var state = packed
+        repeat(5) { depth ->
+            assertTrue(TypeSpecLexer.isTemplateState(state), "depth $depth")
+            state = TypeSpecLexer.resumeStringState(state)
+            assertEquals(TypeSpecLexer.STATE_STRING, TypeSpecLexer.modeOf(state))
+            state = TypeSpecLexer.continueOf(state)
+        }
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, state)
+    }
+
+    @Test
+    fun templateBraceDepthAboveFrameMaxStillResumesString() {
+        // Live template depth can exceed FRAME_TEMPLATE_MAX_DEPTH (5); packing a
+        // nested string clamps the continue frame depth but must still resume.
+        val deep = TypeSpecLexer.templateState(7, TypeSpecLexer.STATE_STRING)
+        val withInnerString = TypeSpecLexer.withContinue(TypeSpecLexer.STATE_STRING, deep)
+        val resumed = TypeSpecLexer.continueOf(withInnerString)
+        assertTrue(TypeSpecLexer.isTemplateState(resumed))
+        assertEquals(5, TypeSpecLexer.templateDepthOrZero(resumed))
+        assertEquals(TypeSpecLexer.STATE_STRING, TypeSpecLexer.modeOf(TypeSpecLexer.resumeStringState(resumed)))
     }
 
     private data class Token(val type: IElementType, val text: String)

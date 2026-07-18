@@ -58,75 +58,30 @@ internal class TypeSpecLexer : LexerBase() {
                     TypeSpecTokenTypes.BLOCK_COMMENT,
                     scanBlockComment(tokenStart, afterStar = true, continueState = continueOf(state)),
                 )
-                STATE_STRING -> emit(
-                    TypeSpecTokenTypes.STRING,
-                    scanQuoted(
-                        tokenStart,
-                        triple = false,
-                        pendingQuotes = 0,
-                        afterEscape = false,
-                        continueState = continueOf(state),
-                    ),
-                )
-                STATE_STRING_AFTER_ESCAPE -> emit(
-                    TypeSpecTokenTypes.STRING,
-                    scanQuoted(
-                        tokenStart,
-                        triple = false,
-                        pendingQuotes = 0,
-                        afterEscape = true,
-                        continueState = continueOf(state),
-                    ),
-                )
                 STATE_STRING_AFTER_DOLLAR ->
                     advanceAfterDollar(resumeStringMode = STATE_STRING, continueState = continueOf(state))
-                STATE_TRIPLE_STRING -> emit(
-                    TypeSpecTokenTypes.STRING,
-                    scanQuoted(
-                        tokenStart,
-                        triple = true,
-                        pendingQuotes = 0,
-                        afterEscape = false,
-                        continueState = continueOf(state),
-                    ),
-                )
-                STATE_TRIPLE_STRING_QUOTE1 -> emit(
-                    TypeSpecTokenTypes.STRING,
-                    scanQuoted(
-                        tokenStart,
-                        triple = true,
-                        pendingQuotes = 1,
-                        afterEscape = false,
-                        continueState = continueOf(state),
-                    ),
-                )
-                STATE_TRIPLE_STRING_QUOTE2 -> emit(
-                    TypeSpecTokenTypes.STRING,
-                    scanQuoted(
-                        tokenStart,
-                        triple = true,
-                        pendingQuotes = 2,
-                        afterEscape = false,
-                        continueState = continueOf(state),
-                    ),
-                )
-                STATE_TRIPLE_STRING_AFTER_ESCAPE -> emit(
-                    TypeSpecTokenTypes.STRING,
-                    scanQuoted(
-                        tokenStart,
-                        triple = true,
-                        pendingQuotes = 0,
-                        afterEscape = true,
-                        continueState = continueOf(state),
-                    ),
-                )
                 STATE_TRIPLE_STRING_AFTER_DOLLAR ->
                     advanceAfterDollar(resumeStringMode = STATE_TRIPLE_STRING, continueState = continueOf(state))
-                STATE_DEFAULT -> advanceDefault()
                 else -> {
-                    // Unknown resume state: recover rather than mis-color forever.
-                    state = STATE_DEFAULT
-                    advanceDefault()
+                    val quoted = quotedResume(mode)
+                    if (quoted != null) {
+                        emit(
+                            TypeSpecTokenTypes.STRING,
+                            scanQuoted(
+                                tokenStart,
+                                triple = quoted.triple,
+                                pendingQuotes = quoted.pendingQuotes,
+                                afterEscape = quoted.afterEscape,
+                                continueState = continueOf(state),
+                            ),
+                        )
+                    } else if (mode == STATE_DEFAULT) {
+                        advanceDefault()
+                    } else {
+                        // Unknown resume state: recover rather than mis-color forever.
+                        state = STATE_DEFAULT
+                        advanceDefault()
+                    }
                 }
             }
         }
@@ -387,6 +342,8 @@ internal class TypeSpecLexer : LexerBase() {
     private data class Scan(val end: Int, val nextState: Int)
 
     companion object {
+        private data class QuotedResume(val triple: Boolean, val pendingQuotes: Int, val afterEscape: Boolean)
+
         const val STATE_DEFAULT = 0
         const val STATE_BLOCK_COMMENT = 1
         const val STATE_BLOCK_COMMENT_AFTER_STAR = 2
@@ -401,9 +358,9 @@ internal class TypeSpecLexer : LexerBase() {
 
         /**
          * Packed layout:
-         * - bits 0–7: mode (or template brace depth when [TEMPLATE_BIT] is set)
-         * - bit 8: template interpolation marker
-         * - bits 9–31: continue stack (compact frames, not nested full states)
+         * - bits 0–3: mode (or template brace depth when [TEMPLATE_BIT] is set)
+         * - bit 4: template interpolation marker
+         * - bits 5–31: continue stack (compact frames, not nested full states)
          *
          * Each continue frame is [FRAME_BITS] bits (LSB = next frame to apply):
          * - 0: end
@@ -411,20 +368,23 @@ internal class TypeSpecLexer : LexerBase() {
          * - 2: resume triple-quoted string
          * - 3–7: template with brace depth (frame - 2), depths 1–5
          *
-         * This fits several string-template nestings in the 23-bit payload; beyond
-         * that the deepest outer continues are dropped (lossy at extreme depth).
+         * 27 payload bits fit nine 3-bit frames (five nested string templates).
+         * Deeper stacks keep the deepest frames and drop the outermost ones.
          */
-        private const val MODE_MASK = 0xFF
-        private const val TEMPLATE_BIT = 1 shl 8
-        private const val PAYLOAD_SHIFT = 9
+        private const val MODE_MASK = 0x0F
+        private const val TEMPLATE_BIT = 1 shl 4
+        private const val PAYLOAD_SHIFT = 5
         private const val PAYLOAD_BITS = Int.SIZE_BITS - PAYLOAD_SHIFT
-        private const val TEMPLATE_MAX_DEPTH = 32
+        private const val PAYLOAD_MASK = (1 shl PAYLOAD_BITS) - 1
+        private const val TEMPLATE_MAX_DEPTH = MODE_MASK
         private const val FRAME_BITS = 3
         private const val FRAME_MASK = (1 shl FRAME_BITS) - 1
         private const val FRAME_RESUME_STRING = 1
         private const val FRAME_RESUME_TRIPLE = 2
         private const val FRAME_TEMPLATE_BASE = 3
         private const val FRAME_TEMPLATE_MAX_DEPTH = FRAME_MASK - FRAME_TEMPLATE_BASE + 1
+        /** Max continue frames that fit in the payload (five nested `"…${…}"` levels). */
+        const val MAX_CONTINUE_FRAMES = PAYLOAD_BITS / FRAME_BITS
 
         fun modeOf(state: Int): Int = state and MODE_MASK
 
@@ -455,6 +415,35 @@ internal class TypeSpecLexer : LexerBase() {
         fun resumeStringState(templateState: Int): Int =
             if (isTemplateState(templateState)) continueOf(templateState) else STATE_STRING
 
+        /**
+         * Maps a resume mode to [scanQuoted] parameters. Null for non-string modes
+         * (default, comments, after-dollar, unknown).
+         */
+        private fun quotedResume(mode: Int): QuotedResume? = when (mode) {
+            STATE_STRING -> QuotedResume(triple = false, pendingQuotes = 0, afterEscape = false)
+            STATE_STRING_AFTER_ESCAPE -> QuotedResume(triple = false, pendingQuotes = 0, afterEscape = true)
+            STATE_TRIPLE_STRING -> QuotedResume(triple = true, pendingQuotes = 0, afterEscape = false)
+            STATE_TRIPLE_STRING_QUOTE1 -> QuotedResume(triple = true, pendingQuotes = 1, afterEscape = false)
+            STATE_TRIPLE_STRING_QUOTE2 -> QuotedResume(triple = true, pendingQuotes = 2, afterEscape = false)
+            STATE_TRIPLE_STRING_AFTER_ESCAPE -> QuotedResume(triple = true, pendingQuotes = 0, afterEscape = true)
+            else -> null
+        }
+
+        /**
+         * Number of continue frames packed into [state]'s payload (0 when none).
+         * Exposed for packing round-trip tests.
+         */
+        fun continueFrameCount(state: Int): Int {
+            var enc = state ushr PAYLOAD_SHIFT
+            if (enc == 0) return 0
+            var count = 0
+            while (enc != 0 && count < MAX_CONTINUE_FRAMES + 1) {
+                count++
+                enc = enc ushr FRAME_BITS
+            }
+            return count
+        }
+
         private fun encodeContinue(continueState: Int): Int {
             if (continueState == STATE_DEFAULT) return 0
             val frame: Int
@@ -473,10 +462,9 @@ internal class TypeSpecLexer : LexerBase() {
                 restState = continueOf(continueState)
             }
             val rest = encodeContinue(restState)
-            val packed = frame or (rest shl FRAME_BITS)
-            // Payload is 23 bits; drop the outermost continue if we run out of room.
-            if (packed ushr PAYLOAD_BITS != 0) return frame
-            return packed
+            // Keep deepest frames (low bits); drop outermost if the stack exceeds
+            // the 27-bit payload (nine frames / five nested string templates).
+            return (frame or (rest shl FRAME_BITS)) and PAYLOAD_MASK
         }
 
         private fun decodeContinue(enc: Int): Int {
