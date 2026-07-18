@@ -36,12 +36,7 @@ internal object TypeSpecActionSupport {
         requireTypeSpecContextWhenFileRequired = true,
         cli = CliRequirement.Compiler,
     )
-    val typeSpecProjectWithCompilerCli = ActionVisibility(
-        requireServiceEnabled = false,
-        requireVirtualFile = true,
-        requireTypeSpecContextWhenFileRequired = true,
-        cli = CliRequirement.Compiler,
-    )
+    val typeSpecProjectWithCompilerCli = typeSpecFileWithCompilerCli.copy(requireServiceEnabled = false)
     val serviceEnabledOptionalFile = ActionVisibility(requireTypeSpecContextWhenFilePresent = true)
 
     fun update(event: AnActionEvent, policy: ActionVisibility) {
