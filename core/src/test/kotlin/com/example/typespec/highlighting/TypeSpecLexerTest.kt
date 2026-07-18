@@ -183,6 +183,57 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun nestedStringTemplatesResumeOuterInterpolation() {
+        // Source is: alias s = "a${"b${c}d"}e"
+        val source = "alias s = \"a\${\"b\${c}d\"}e\""
+        val tokens = tokenize(source)
+        val strings = tokens.filter { it.type == TypeSpecTokenTypes.STRING }.map { it.text }
+        assertEquals(listOf("\"a\${", "\"b\${", "d\"", "e\""), strings)
+        assertEquals("c", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "c" }.text)
+        // Outer `}` after the inner string must stay an operation (template), not get absorbed.
+        assertTrue(tokens.any { it.type == TypeSpecTokenTypes.OPERATION_SIGN && it.text == "}" })
+        assertTrue(tokens.none { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "e" })
+    }
+
+    @Test
+    fun tripleQuotedStringRespectsEscapedQuotes() {
+        // Compiler: backslash skips the next char, so \""" does not close the literal.
+        val source = "alias s = \"\"\"foo\\\"\"\"bar\"\"\";"
+        val tokens = tokenize(source)
+        val stringToken = tokens.first { it.type == TypeSpecTokenTypes.STRING }
+        assertEquals("\"\"\"foo\\\"\"\"bar\"\"\"", stringToken.text)
+        assertTrue(tokens.none { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "bar" })
+        assertEquals(";", tokens.last { it.type == TypeSpecTokenTypes.OPERATION_SIGN }.text)
+    }
+
+    @Test
+    fun resumesStringWhenDollarThenNewlineAcrossSegmentsWithoutEmptyToken() {
+        val lexer = TypeSpecLexer()
+        lexer.start("\"a$", 0, 3, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_STRING_AFTER_DOLLAR, lexer.state)
+
+        lexer.start("\nmodel", 0, 6, TypeSpecLexer.STATE_STRING_AFTER_DOLLAR)
+        assertEquals(TypeSpecTokenTypes.WHITESPACE, lexer.tokenType)
+        assertEquals("\n", lexer.tokenText)
+        assertTrue(lexer.tokenEnd > lexer.tokenStart, "must not emit a zero-length token")
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+        lexer.advance()
+        assertEquals(TypeSpecTokenTypes.KEYWORD, lexer.tokenType)
+        assertEquals("model", lexer.tokenText)
+    }
+
+    @Test
+    fun tripleQuotedStringTemplateResumesAfterInterpolation() {
+        val triple = "\"\"\""
+        val source = "alias s = $triple" + "a\${x}b$triple"
+        val tokens = tokenize(source)
+        val strings = tokens.filter { it.type == TypeSpecTokenTypes.STRING }.map { it.text }
+        assertEquals(listOf("${triple}a\${", "b$triple"), strings)
+        assertEquals("x", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "x" }.text)
+    }
+
+    @Test
     fun resumesStringTemplateWhenDollarSplitAcrossSegments() {
         val lexer = TypeSpecLexer()
         lexer.start("\"a$", 0, 3, TypeSpecLexer.STATE_DEFAULT)

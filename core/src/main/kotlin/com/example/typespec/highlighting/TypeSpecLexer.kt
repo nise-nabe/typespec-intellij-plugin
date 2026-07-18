@@ -4,13 +4,15 @@ import com.intellij.lexer.LexerBase
 import com.intellij.psi.tree.IElementType
 
 /**
- * Highlighting lexer for TypeSpec. Tracks a small integer state so incremental
+ * Highlighting lexer for TypeSpec. Tracks a packed integer state so incremental
  * re-lex can resume inside block comments and (triple-quoted) strings, including
  * when a delimiter or escape is split across a buffer boundary.
  *
  * Double-quoted (non-triple) strings end at a newline, matching the compiler.
  * `${` in a string opens a brace-tracked interpolation so nested quotes inside
  * the expression highlight correctly; the string resumes after the matching `}`.
+ * String/comment resume states pack a continue target so nested templates and
+ * strings opened inside interpolations return to the correct outer state.
  */
 internal class TypeSpecLexer : LexerBase() {
     private var buffer: CharSequence = ""
@@ -44,22 +46,48 @@ internal class TypeSpecLexer : LexerBase() {
             return
         }
 
-        when (val current = state) {
-            STATE_BLOCK_COMMENT -> emit(TypeSpecTokenTypes.BLOCK_COMMENT, scanBlockComment(tokenStart, afterStar = false))
-            STATE_BLOCK_COMMENT_AFTER_STAR -> emit(TypeSpecTokenTypes.BLOCK_COMMENT, scanBlockComment(tokenStart, afterStar = true))
-            STATE_STRING -> emit(TypeSpecTokenTypes.STRING, scanString(tokenStart, afterEscape = false))
-            STATE_STRING_AFTER_ESCAPE -> emit(TypeSpecTokenTypes.STRING, scanString(tokenStart, afterEscape = true))
-            STATE_STRING_AFTER_DOLLAR -> advanceAfterDollar(resumeStringState = STATE_STRING)
-            STATE_TRIPLE_STRING -> emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart, pendingQuotes = 0))
-            STATE_TRIPLE_STRING_QUOTE1 -> emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart, pendingQuotes = 1))
-            STATE_TRIPLE_STRING_QUOTE2 -> emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart, pendingQuotes = 2))
-            STATE_TRIPLE_STRING_AFTER_DOLLAR -> advanceAfterDollar(resumeStringState = STATE_TRIPLE_STRING)
-            STATE_DEFAULT -> advanceDefault()
-            else -> {
-                val templateDepth = templateDepthOrZero(current)
-                if (templateDepth > 0) {
-                    advanceTemplate(templateDepth, resumeStringState(current))
-                } else {
+        when {
+            isTemplateState(state) ->
+                advanceTemplate(templateDepthOrZero(state), resumeStringState(state))
+            else -> when (val mode = modeOf(state)) {
+                STATE_BLOCK_COMMENT -> emit(
+                    TypeSpecTokenTypes.BLOCK_COMMENT,
+                    scanBlockComment(tokenStart, afterStar = false, continueState = continueOf(state)),
+                )
+                STATE_BLOCK_COMMENT_AFTER_STAR -> emit(
+                    TypeSpecTokenTypes.BLOCK_COMMENT,
+                    scanBlockComment(tokenStart, afterStar = true, continueState = continueOf(state)),
+                )
+                STATE_STRING -> emit(
+                    TypeSpecTokenTypes.STRING,
+                    scanString(tokenStart, afterEscape = false, continueState = continueOf(state)),
+                )
+                STATE_STRING_AFTER_ESCAPE -> emit(
+                    TypeSpecTokenTypes.STRING,
+                    scanString(tokenStart, afterEscape = true, continueState = continueOf(state)),
+                )
+                STATE_STRING_AFTER_DOLLAR ->
+                    advanceAfterDollar(resumeStringMode = STATE_STRING, continueState = continueOf(state))
+                STATE_TRIPLE_STRING -> emit(
+                    TypeSpecTokenTypes.STRING,
+                    scanTripleQuotedString(tokenStart, pendingQuotes = 0, afterEscape = false, continueState = continueOf(state)),
+                )
+                STATE_TRIPLE_STRING_QUOTE1 -> emit(
+                    TypeSpecTokenTypes.STRING,
+                    scanTripleQuotedString(tokenStart, pendingQuotes = 1, afterEscape = false, continueState = continueOf(state)),
+                )
+                STATE_TRIPLE_STRING_QUOTE2 -> emit(
+                    TypeSpecTokenTypes.STRING,
+                    scanTripleQuotedString(tokenStart, pendingQuotes = 2, afterEscape = false, continueState = continueOf(state)),
+                )
+                STATE_TRIPLE_STRING_AFTER_ESCAPE -> emit(
+                    TypeSpecTokenTypes.STRING,
+                    scanTripleQuotedString(tokenStart, pendingQuotes = 0, afterEscape = true, continueState = continueOf(state)),
+                )
+                STATE_TRIPLE_STRING_AFTER_DOLLAR ->
+                    advanceAfterDollar(resumeStringMode = STATE_TRIPLE_STRING, continueState = continueOf(state))
+                STATE_DEFAULT -> advanceDefault()
+                else -> {
                     // Unknown resume state: recover rather than mis-color forever.
                     state = STATE_DEFAULT
                     advanceDefault()
@@ -87,7 +115,12 @@ internal class TypeSpecLexer : LexerBase() {
             current == '"' && isTripleQuoteAt(tokenStart) -> {
                 emit(
                     TypeSpecTokenTypes.STRING,
-                    scanTripleQuotedString(tokenStart + 3, pendingQuotes = 0, continueState = continueState),
+                    scanTripleQuotedString(
+                        tokenStart + 3,
+                        pendingQuotes = 0,
+                        afterEscape = false,
+                        continueState = continueState,
+                    ),
                 )
             }
             current == '"' -> {
@@ -138,16 +171,27 @@ internal class TypeSpecLexer : LexerBase() {
         }
     }
 
-    private fun advanceAfterDollar(resumeStringState: Int) {
+    private fun advanceAfterDollar(resumeStringMode: Int, continueState: Int) {
         if (buffer[tokenStart] == '{') {
             emit(
                 TypeSpecTokenTypes.OPERATION_SIGN,
-                Scan(tokenStart + 1, templateState(1, resumeStringState)),
+                Scan(tokenStart + 1, templateState(1, withContinue(resumeStringMode, continueState))),
             )
-        } else if (resumeStringState == STATE_TRIPLE_STRING) {
-            emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart, pendingQuotes = 0))
+        } else if (resumeStringMode == STATE_TRIPLE_STRING) {
+            emit(
+                TypeSpecTokenTypes.STRING,
+                scanTripleQuotedString(
+                    tokenStart,
+                    pendingQuotes = 0,
+                    afterEscape = false,
+                    continueState = continueState,
+                ),
+            )
         } else {
-            emit(TypeSpecTokenTypes.STRING, scanString(tokenStart, afterEscape = false))
+            emit(
+                TypeSpecTokenTypes.STRING,
+                scanString(tokenStart, afterEscape = false, continueState = continueState),
+            )
         }
     }
 
@@ -171,6 +215,14 @@ internal class TypeSpecLexer : LexerBase() {
     }
 
     private fun emit(type: IElementType, scan: Scan) {
+        // LexerBase requires positive-length tokens. A resume state can land on a
+        // terminator that must be re-lexed in the continue state (e.g. `$` split
+        // across buffers, then a newline ending a double-quoted string).
+        if (scan.end == tokenStart) {
+            state = scan.nextState
+            advance()
+            return
+        }
         tokenEnd = scan.end
         currentType = type
         state = scan.nextState
@@ -210,7 +262,8 @@ internal class TypeSpecLexer : LexerBase() {
                 }
             }
         }
-        return Scan(endOffset, if (sawStar) STATE_BLOCK_COMMENT_AFTER_STAR else STATE_BLOCK_COMMENT)
+        val mode = if (sawStar) STATE_BLOCK_COMMENT_AFTER_STAR else STATE_BLOCK_COMMENT
+        return Scan(endOffset, withContinue(mode, continueState))
     }
 
     private fun scanString(
@@ -232,13 +285,13 @@ internal class TypeSpecLexer : LexerBase() {
                     index++
                 }
                 ch == '$' -> {
-                    if (index + 1 < endOffset && buffer[index + 1] == '{') {
-                        // Include `${` in the string span (template head), then lex the expression.
-                        return Scan(index + 2, templateState(1, STATE_STRING))
-                    }
-                    if (index + 1 >= endOffset) {
-                        return Scan(endOffset, STATE_STRING_AFTER_DOLLAR)
-                    }
+                    val dollar = scanDollarInString(
+                        index,
+                        stringMode = STATE_STRING,
+                        afterDollarMode = STATE_STRING_AFTER_DOLLAR,
+                        continueState = continueState,
+                    )
+                    if (dollar != null) return dollar
                     index++
                 }
                 ch == '"' -> return Scan(index + 1, continueState)
@@ -246,27 +299,41 @@ internal class TypeSpecLexer : LexerBase() {
                 else -> index++
             }
         }
-        return Scan(endOffset, if (escape) STATE_STRING_AFTER_ESCAPE else STATE_STRING)
+        val mode = if (escape) STATE_STRING_AFTER_ESCAPE else STATE_STRING
+        return Scan(endOffset, withContinue(mode, continueState))
     }
 
     private fun scanTripleQuotedString(
         start: Int,
         pendingQuotes: Int,
+        afterEscape: Boolean,
         continueState: Int = STATE_DEFAULT,
     ): Scan {
         var index = start
         var quotes = pendingQuotes
+        var escape = afterEscape
         while (index < endOffset) {
             val ch = buffer[index]
             when {
+                escape -> {
+                    escape = false
+                    quotes = 0
+                    index++
+                }
+                ch == '\\' -> {
+                    escape = true
+                    quotes = 0
+                    index++
+                }
                 ch == '$' -> {
                     quotes = 0
-                    if (index + 1 < endOffset && buffer[index + 1] == '{') {
-                        return Scan(index + 2, templateState(1, STATE_TRIPLE_STRING))
-                    }
-                    if (index + 1 >= endOffset) {
-                        return Scan(endOffset, STATE_TRIPLE_STRING_AFTER_DOLLAR)
-                    }
+                    val dollar = scanDollarInString(
+                        index,
+                        stringMode = STATE_TRIPLE_STRING,
+                        afterDollarMode = STATE_TRIPLE_STRING_AFTER_DOLLAR,
+                        continueState = continueState,
+                    )
+                    if (dollar != null) return dollar
                     index++
                 }
                 ch == '"' -> {
@@ -282,14 +349,32 @@ internal class TypeSpecLexer : LexerBase() {
                 }
             }
         }
-        return Scan(
-            endOffset,
-            when (quotes) {
-                1 -> STATE_TRIPLE_STRING_QUOTE1
-                2 -> STATE_TRIPLE_STRING_QUOTE2
-                else -> STATE_TRIPLE_STRING
-            },
-        )
+        val mode = when {
+            escape -> STATE_TRIPLE_STRING_AFTER_ESCAPE
+            quotes == 1 -> STATE_TRIPLE_STRING_QUOTE1
+            quotes == 2 -> STATE_TRIPLE_STRING_QUOTE2
+            else -> STATE_TRIPLE_STRING
+        }
+        return Scan(endOffset, withContinue(mode, continueState))
+    }
+
+    /**
+     * Handles `$` / `${` / `$` at buffer end inside a string. Returns null when `$`
+     * is ordinary string content (caller should advance past it).
+     */
+    private fun scanDollarInString(
+        index: Int,
+        stringMode: Int,
+        afterDollarMode: Int,
+        continueState: Int,
+    ): Scan? {
+        if (index + 1 < endOffset && buffer[index + 1] == '{') {
+            return Scan(index + 2, templateState(1, withContinue(stringMode, continueState)))
+        }
+        if (index + 1 >= endOffset) {
+            return Scan(endOffset, withContinue(afterDollarMode, continueState))
+        }
+        return null
     }
 
     private data class Scan(val end: Int, val nextState: Int)
@@ -305,33 +390,66 @@ internal class TypeSpecLexer : LexerBase() {
         const val STATE_TRIPLE_STRING_QUOTE2 = 7
         const val STATE_STRING_AFTER_DOLLAR = 8
         const val STATE_TRIPLE_STRING_AFTER_DOLLAR = 9
+        const val STATE_TRIPLE_STRING_AFTER_ESCAPE = 10
 
-        /** Template interpolation states: 10–17 resume double-quoted, 18–25 resume triple-quoted. */
-        private const val TEMPLATE_STRING_BASE = 10
-        private const val TEMPLATE_TRIPLE_BASE = 18
+        /**
+         * Packed layout:
+         * - bits 0–7: mode (or template brace depth when [TEMPLATE_BIT] is set)
+         * - bit 8: template interpolation marker
+         * - bits 9+: continue / resume payload (nested packed state)
+         */
+        private const val MODE_MASK = 0xFF
+        private const val TEMPLATE_BIT = 1 shl 8
+        private const val PAYLOAD_SHIFT = 9
         private const val TEMPLATE_MAX_DEPTH = 8
+
+        fun modeOf(state: Int): Int = state and MODE_MASK
+
+        fun continueOf(state: Int): Int {
+            val cont = state ushr PAYLOAD_SHIFT
+            return if (cont == 0) STATE_DEFAULT else cont
+        }
+
+        /**
+         * Pack [mode] with a continue target so unfinished scans inside template
+         * expressions resume to that template (or nested continue) when closed.
+         * Deep continue chains that exceed the payload width are flattened.
+         */
+        fun withContinue(mode: Int, continueState: Int): Int {
+            if (continueState == STATE_DEFAULT) return mode and MODE_MASK
+            return (mode and MODE_MASK) or (packContinue(continueState) shl PAYLOAD_SHIFT)
+        }
+
+        fun isTemplateState(state: Int): Boolean = (state and TEMPLATE_BIT) != 0
 
         fun templateState(depth: Int, resumeStringState: Int): Int {
             val clamped = depth.coerceIn(1, TEMPLATE_MAX_DEPTH)
-            return when (resumeStringState) {
-                STATE_TRIPLE_STRING, STATE_TRIPLE_STRING_QUOTE1, STATE_TRIPLE_STRING_QUOTE2,
-                STATE_TRIPLE_STRING_AFTER_DOLLAR,
-                -> TEMPLATE_TRIPLE_BASE + clamped - 1
-                else -> TEMPLATE_STRING_BASE + clamped - 1
+            return TEMPLATE_BIT or clamped or (packContinue(resumeStringState) shl PAYLOAD_SHIFT)
+        }
+
+        fun templateDepthOrZero(state: Int): Int =
+            if (isTemplateState(state)) state and MODE_MASK else 0
+
+        fun resumeStringState(templateState: Int): Int =
+            if (isTemplateState(templateState)) continueOf(templateState) else STATE_STRING
+
+        private fun packContinue(continueState: Int): Int {
+            if (continueState == STATE_DEFAULT) return 0
+            // Payload lives in bits 9–31 of the parent (23 bits).
+            if (continueState ushr (Int.SIZE_BITS - PAYLOAD_SHIFT) == 0) return continueState
+            val depth = templateDepthOrZero(continueState)
+            if (depth > 0) {
+                val resumeMode = modeOf(resumeStringState(continueState)).let { mode ->
+                    when (mode) {
+                        STATE_TRIPLE_STRING, STATE_TRIPLE_STRING_QUOTE1, STATE_TRIPLE_STRING_QUOTE2,
+                        STATE_TRIPLE_STRING_AFTER_DOLLAR, STATE_TRIPLE_STRING_AFTER_ESCAPE,
+                        -> STATE_TRIPLE_STRING
+                        else -> STATE_STRING
+                    }
+                }
+                return templateState(depth, resumeMode)
             }
-        }
-
-        fun templateDepthOrZero(state: Int): Int = when (state) {
-            in TEMPLATE_STRING_BASE until TEMPLATE_STRING_BASE + TEMPLATE_MAX_DEPTH ->
-                state - TEMPLATE_STRING_BASE + 1
-            in TEMPLATE_TRIPLE_BASE until TEMPLATE_TRIPLE_BASE + TEMPLATE_MAX_DEPTH ->
-                state - TEMPLATE_TRIPLE_BASE + 1
-            else -> 0
-        }
-
-        fun resumeStringState(templateState: Int): Int = when (templateState) {
-            in TEMPLATE_TRIPLE_BASE until TEMPLATE_TRIPLE_BASE + TEMPLATE_MAX_DEPTH -> STATE_TRIPLE_STRING
-            else -> STATE_STRING
+            return modeOf(continueState)
         }
     }
 }
