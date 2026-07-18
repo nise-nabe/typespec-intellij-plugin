@@ -183,6 +183,44 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun nestedStringTemplatesThreeDeepResumeCorrectly() {
+        // Source is: alias s = "a${"b${"c${d}e"}f"}g"
+        val source = "alias s = \"a\${\"b\${\"c\${d}e\"}f\"}g\""
+        val tokens = tokenize(source)
+        val strings = tokens.filter { it.type == TypeSpecTokenTypes.STRING }.map { it.text }
+        assertEquals(listOf("\"a\${", "\"b\${", "\"c\${", "e\"", "f\"", "g\""), strings)
+        assertEquals("d", tokens.first { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "d" }.text)
+        assertTrue(tokens.none { it.type == TypeSpecTokenTypes.IDENTIFIER && it.text == "g" })
+    }
+
+    @Test
+    fun resumesThreeDeepNestedTemplatesAcrossSegments() {
+        // Split after opening the innermost template: "a${"b${"c${
+        val lexer = TypeSpecLexer()
+        lexer.start("\"a\${\"b\${\"c\${", 0, 12, TypeSpecLexer.STATE_DEFAULT)
+        while (lexer.tokenType != null) {
+            lexer.advance()
+        }
+        assertTrue(TypeSpecLexer.isTemplateState(lexer.state), "expected template state, got ${lexer.state}")
+        val templateState = lexer.state
+
+        lexer.start("d}e\"}f\"}g\"", 0, 10, templateState)
+        val texts = mutableListOf<String>()
+        while (lexer.tokenType != null) {
+            texts += lexer.tokenText
+            lexer.advance()
+        }
+        assertEquals(listOf("d", "}", "e\"", "}", "f\"", "}", "g\""), texts)
+    }
+
+    @Test
+    fun lineCommentStopsAtCarriageReturn() {
+        val tokens = tokenize("// oops\rmodel Foo")
+        assertEquals("// oops", tokens.first { it.type == TypeSpecTokenTypes.LINE_COMMENT }.text)
+        assertEquals(TypeSpecTokenTypes.KEYWORD, tokens.first { it.text == "model" }.type)
+    }
+
+    @Test
     fun nestedStringTemplatesResumeOuterInterpolation() {
         // Source is: alias s = "a${"b${c}d"}e"
         val source = "alias s = \"a\${\"b\${c}d\"}e\""
