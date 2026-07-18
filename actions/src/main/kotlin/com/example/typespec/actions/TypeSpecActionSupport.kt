@@ -19,6 +19,7 @@ internal enum class CliRequirement {
 internal data class ActionVisibility(
     val requireServiceEnabled: Boolean = true,
     val requireVirtualFile: Boolean = false,
+    val requireLocalVirtualFile: Boolean = false,
     val requireTypeSpecContextWhenFilePresent: Boolean = false,
     val requireTypeSpecContextWhenFileRequired: Boolean = false,
     val cli: CliRequirement = CliRequirement.None,
@@ -33,6 +34,7 @@ internal object TypeSpecActionSupport {
     )
     val typeSpecFileWithCompilerCli = ActionVisibility(
         requireVirtualFile = true,
+        requireLocalVirtualFile = true,
         requireTypeSpecContextWhenFileRequired = true,
         cli = CliRequirement.Compiler,
     )
@@ -65,6 +67,9 @@ internal object TypeSpecActionSupport {
         }
         val file = event.getData(CommonDataKeys.VIRTUAL_FILE)
         if (policy.requireVirtualFile && file == null) {
+            return false
+        }
+        if (policy.requireLocalVirtualFile && (file == null || !file.isInLocalFileSystem)) {
             return false
         }
         if (file != null && policy.requireTypeSpecContextWhenFilePresent && !isTypeSpecContext(file)) {

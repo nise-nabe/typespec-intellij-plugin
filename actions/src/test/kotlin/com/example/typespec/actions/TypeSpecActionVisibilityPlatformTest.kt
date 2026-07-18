@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vfs.VirtualFile
+import com.example.typespec.TypeSpecFileType
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.nio.file.Files
@@ -129,6 +131,23 @@ class TypeSpecActionVisibilityPlatformTest : BasePlatformTestCase() {
         val action = TypeSpecInstallDependenciesAction()
         val jsonFile = myFixture.configureByText("sample.json", "{}").virtualFile
         val event = testEvent(action, jsonFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testInstallDependenciesHiddenForNonLocalVirtualFile() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        Files.createDirectories(packageDirectory.resolve("cmd"))
+        Files.writeString(packageDirectory.resolve("cmd/tsp.js"), "// compiler")
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecInstallDependenciesAction()
+        val scratchFile = LightVirtualFile("main.tsp", TypeSpecFileType, "namespace Demo {}")
+        val event = testEvent(action, scratchFile)
 
         action.update(event)
 
