@@ -4,6 +4,10 @@ IntelliJ Platform plugin for [TypeSpec](https://typespec.io/) (`.tsp`) developme
 
 ## Features
 
+### Editor
+
+- Lexer-based syntax highlighting for TypeSpec keywords, decorators, strings, comments, and numbers
+
 ### Language Server (LSP)
 
 When `@typespec/compiler` is installed in the project, the plugin starts `tsp-server.js` and delegates to the Platform LSP integration:
