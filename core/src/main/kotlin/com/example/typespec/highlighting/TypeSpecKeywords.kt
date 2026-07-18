@@ -14,6 +14,10 @@ internal object TypeSpecKeywords {
         "auto", "internal",
         // Reserved keywords (compiler still highlights/tokenizes them)
         "statemachine", "macro", "package", "metadata", "env", "arg",
-        "declare", "array",
+        "declare", "array", "struct", "record", "module", "mod", "sym",
+        "context", "prop", "property", "scenario", "pub", "sub", "typeref",
+        "trait", "this", "self", "super", "keyof", "with", "implements",
+        "impl", "satisfies", "flag", "partial", "private", "public",
+        "protected", "sealed", "local", "async",
     )
 }

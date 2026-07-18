@@ -5,7 +5,8 @@ import com.intellij.psi.tree.IElementType
 
 /**
  * Highlighting lexer for TypeSpec. Tracks a small integer state so incremental
- * re-lex can resume inside block comments and (triple-quoted) strings.
+ * re-lex can resume inside block comments and (triple-quoted) strings, including
+ * when a delimiter or escape is split across a buffer boundary.
  */
 internal class TypeSpecLexer : LexerBase() {
     private var buffer: CharSequence = ""
@@ -40,34 +41,19 @@ internal class TypeSpecLexer : LexerBase() {
         }
 
         when (state) {
-            STATE_BLOCK_COMMENT -> {
-                tokenEnd = findBlockCommentEnd(tokenStart)
-                currentType = TypeSpecTokenTypes.BLOCK_COMMENT
-                state = if (endsWithBlockCommentClose(tokenStart, tokenEnd)) {
-                    STATE_DEFAULT
-                } else {
-                    STATE_BLOCK_COMMENT
-                }
+            STATE_BLOCK_COMMENT -> emit(TypeSpecTokenTypes.BLOCK_COMMENT, scanBlockComment(tokenStart, afterStar = false))
+            STATE_BLOCK_COMMENT_AFTER_STAR -> emit(TypeSpecTokenTypes.BLOCK_COMMENT, scanBlockComment(tokenStart, afterStar = true))
+            STATE_STRING -> emit(TypeSpecTokenTypes.STRING, scanString(tokenStart, afterEscape = false))
+            STATE_STRING_AFTER_ESCAPE -> emit(TypeSpecTokenTypes.STRING, scanString(tokenStart, afterEscape = true))
+            STATE_TRIPLE_STRING -> emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart, pendingQuotes = 0))
+            STATE_TRIPLE_STRING_QUOTE1 -> emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart, pendingQuotes = 1))
+            STATE_TRIPLE_STRING_QUOTE2 -> emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart, pendingQuotes = 2))
+            STATE_DEFAULT -> advanceDefault()
+            else -> {
+                // Unknown resume state: recover rather than mis-color forever.
+                state = STATE_DEFAULT
+                advanceDefault()
             }
-            STATE_STRING -> {
-                tokenEnd = findStringEnd(tokenStart)
-                currentType = TypeSpecTokenTypes.STRING
-                state = if (endsWithUnescapedQuote(tokenStart, tokenEnd)) {
-                    STATE_DEFAULT
-                } else {
-                    STATE_STRING
-                }
-            }
-            STATE_TRIPLE_STRING -> {
-                tokenEnd = findTripleQuotedStringEnd(tokenStart)
-                currentType = TypeSpecTokenTypes.STRING
-                state = if (endsWithTripleQuote(tokenStart, tokenEnd)) {
-                    STATE_DEFAULT
-                } else {
-                    STATE_TRIPLE_STRING
-                }
-            }
-            else -> advanceDefault()
         }
     }
 
@@ -79,84 +65,63 @@ internal class TypeSpecLexer : LexerBase() {
         val current = buffer[tokenStart]
         when {
             current == '/' && tokenStart + 1 < endOffset && buffer[tokenStart + 1] == '/' -> {
-                tokenEnd = findLineEnd(tokenStart + 2)
-                currentType = TypeSpecTokenTypes.LINE_COMMENT
-                state = STATE_DEFAULT
+                emit(TypeSpecTokenTypes.LINE_COMMENT, Scan(findLineEnd(tokenStart + 2), STATE_DEFAULT))
             }
             current == '/' && tokenStart + 1 < endOffset && buffer[tokenStart + 1] == '*' -> {
-                tokenEnd = findBlockCommentEnd(tokenStart + 2)
-                currentType = TypeSpecTokenTypes.BLOCK_COMMENT
-                state = if (endsWithBlockCommentClose(tokenStart, tokenEnd)) {
-                    STATE_DEFAULT
-                } else {
-                    STATE_BLOCK_COMMENT
-                }
+                emit(TypeSpecTokenTypes.BLOCK_COMMENT, scanBlockComment(tokenStart + 2, afterStar = false))
             }
             current == '"' && isTripleQuoteAt(tokenStart) -> {
-                tokenEnd = findTripleQuotedStringEnd(tokenStart + 3)
-                currentType = TypeSpecTokenTypes.STRING
-                state = if (endsWithTripleQuote(tokenStart, tokenEnd)) {
-                    STATE_DEFAULT
-                } else {
-                    STATE_TRIPLE_STRING
-                }
+                emit(TypeSpecTokenTypes.STRING, scanTripleQuotedString(tokenStart + 3, pendingQuotes = 0))
             }
             current == '"' -> {
-                tokenEnd = findStringEnd(tokenStart + 1)
-                currentType = TypeSpecTokenTypes.STRING
-                state = if (endsWithUnescapedQuote(tokenStart, tokenEnd)) {
-                    STATE_DEFAULT
-                } else {
-                    STATE_STRING
-                }
+                emit(TypeSpecTokenTypes.STRING, scanString(tokenStart + 1, afterEscape = false))
             }
             current.isWhitespace() -> {
-                tokenEnd = tokenStart + 1
-                while (tokenEnd < endOffset && buffer[tokenEnd].isWhitespace()) {
-                    tokenEnd++
+                var end = tokenStart + 1
+                while (end < endOffset && buffer[end].isWhitespace()) {
+                    end++
                 }
-                currentType = TypeSpecTokenTypes.WHITESPACE
-                state = STATE_DEFAULT
+                emit(TypeSpecTokenTypes.WHITESPACE, Scan(end, STATE_DEFAULT))
             }
             current == '@' -> {
                 // Highlight `@name` / `@@name` as one decorator token for editor UX.
-                tokenEnd = tokenStart + 1
-                if (tokenEnd < endOffset && buffer[tokenEnd] == '@') {
-                    tokenEnd++
+                var end = tokenStart + 1
+                if (end < endOffset && buffer[end] == '@') {
+                    end++
                 }
-                while (tokenEnd < endOffset && isIdentifierPart(buffer[tokenEnd])) {
-                    tokenEnd++
+                while (end < endOffset && isIdentifierPart(buffer[end])) {
+                    end++
                 }
-                currentType = TypeSpecTokenTypes.DECORATOR
-                state = STATE_DEFAULT
+                emit(TypeSpecTokenTypes.DECORATOR, Scan(end, STATE_DEFAULT))
             }
             current.isLetter() || current == '_' -> {
-                tokenEnd = tokenStart + 1
-                while (tokenEnd < endOffset && isIdentifierPart(buffer[tokenEnd])) {
-                    tokenEnd++
+                var end = tokenStart + 1
+                while (end < endOffset && isIdentifierPart(buffer[end])) {
+                    end++
                 }
-                val word = buffer.subSequence(tokenStart, tokenEnd).toString()
-                currentType = if (word in TypeSpecKeywords.KEYWORDS) {
+                val word = buffer.subSequence(tokenStart, end).toString()
+                val type = if (word in TypeSpecKeywords.KEYWORDS) {
                     TypeSpecTokenTypes.KEYWORD
                 } else {
                     TypeSpecTokenTypes.IDENTIFIER
                 }
-                state = STATE_DEFAULT
+                emit(type, Scan(end, STATE_DEFAULT))
             }
             current.isDigit() -> {
-                tokenEnd = tokenStart + 1
-                while (tokenEnd < endOffset && (buffer[tokenEnd].isDigit() || buffer[tokenEnd] == '.')) {
-                    tokenEnd++
+                var end = tokenStart + 1
+                while (end < endOffset && (buffer[end].isDigit() || buffer[end] == '.')) {
+                    end++
                 }
-                currentType = TypeSpecTokenTypes.NUMBER
-                state = STATE_DEFAULT
+                emit(TypeSpecTokenTypes.NUMBER, Scan(end, STATE_DEFAULT))
             }
-            else -> {
-                tokenEnd = tokenStart + 1
-                currentType = TypeSpecTokenTypes.OPERATION_SIGN
-                state = STATE_DEFAULT
-            }
+            else -> emit(TypeSpecTokenTypes.OPERATION_SIGN, Scan(tokenStart + 1, STATE_DEFAULT))
         }
+    }
+
+    private fun emit(type: IElementType, scan: Scan) {
+        tokenEnd = scan.end
+        currentType = type
+        state = scan.nextState
     }
 
     private fun isIdentifierPart(ch: Char): Boolean =
@@ -176,66 +141,82 @@ internal class TypeSpecLexer : LexerBase() {
         return index
     }
 
-    private fun findBlockCommentEnd(start: Int): Int {
+    private fun scanBlockComment(start: Int, afterStar: Boolean): Scan {
         var index = start
-        while (index + 1 < endOffset) {
-            if (buffer[index] == '*' && buffer[index + 1] == '/') {
-                return index + 2
+        var sawStar = afterStar
+        while (index < endOffset) {
+            val ch = buffer[index]
+            when {
+                sawStar && ch == '/' -> return Scan(index + 1, STATE_DEFAULT)
+                ch == '*' -> {
+                    sawStar = true
+                    index++
+                }
+                else -> {
+                    sawStar = false
+                    index++
+                }
             }
-            index++
         }
-        return endOffset
+        return Scan(endOffset, if (sawStar) STATE_BLOCK_COMMENT_AFTER_STAR else STATE_BLOCK_COMMENT)
     }
 
-    private fun findStringEnd(start: Int): Int {
+    private fun scanString(start: Int, afterEscape: Boolean): Scan {
         var index = start
+        var escape = afterEscape
         while (index < endOffset) {
+            val ch = buffer[index]
             when {
-                buffer[index] == '\\' -> index = (index + 2).coerceAtMost(endOffset)
-                buffer[index] == '"' -> return index + 1
+                escape -> {
+                    escape = false
+                    index++
+                }
+                ch == '\\' -> {
+                    escape = true
+                    index++
+                }
+                ch == '"' -> return Scan(index + 1, STATE_DEFAULT)
                 else -> index++
             }
         }
-        return endOffset
+        return Scan(endOffset, if (escape) STATE_STRING_AFTER_ESCAPE else STATE_STRING)
     }
 
-    private fun findTripleQuotedStringEnd(start: Int): Int {
+    private fun scanTripleQuotedString(start: Int, pendingQuotes: Int): Scan {
         var index = start
-        while (index + 2 < endOffset) {
-            if (buffer[index] == '"' && buffer[index + 1] == '"' && buffer[index + 2] == '"') {
-                return index + 3
+        var quotes = pendingQuotes
+        while (index < endOffset) {
+            if (buffer[index] == '"') {
+                quotes++
+                index++
+                if (quotes == 3) {
+                    return Scan(index, STATE_DEFAULT)
+                }
+            } else {
+                quotes = 0
+                index++
             }
-            index++
         }
-        return endOffset
+        return Scan(
+            endOffset,
+            when (quotes) {
+                1 -> STATE_TRIPLE_STRING_QUOTE1
+                2 -> STATE_TRIPLE_STRING_QUOTE2
+                else -> STATE_TRIPLE_STRING
+            },
+        )
     }
 
-    private fun endsWithBlockCommentClose(start: Int, end: Int): Boolean =
-        end - start >= 2 && buffer[end - 2] == '*' && buffer[end - 1] == '/'
-
-    private fun endsWithUnescapedQuote(start: Int, end: Int): Boolean {
-        if (end <= start || buffer[end - 1] != '"') {
-            return false
-        }
-        var backslashes = 0
-        var index = end - 2
-        while (index >= start && buffer[index] == '\\') {
-            backslashes++
-            index--
-        }
-        return backslashes % 2 == 0
-    }
-
-    private fun endsWithTripleQuote(start: Int, end: Int): Boolean =
-        end - start >= 3 &&
-            buffer[end - 3] == '"' &&
-            buffer[end - 2] == '"' &&
-            buffer[end - 1] == '"'
+    private data class Scan(val end: Int, val nextState: Int)
 
     companion object {
         const val STATE_DEFAULT = 0
         const val STATE_BLOCK_COMMENT = 1
-        const val STATE_STRING = 2
-        const val STATE_TRIPLE_STRING = 3
+        const val STATE_BLOCK_COMMENT_AFTER_STAR = 2
+        const val STATE_STRING = 3
+        const val STATE_STRING_AFTER_ESCAPE = 4
+        const val STATE_TRIPLE_STRING = 5
+        const val STATE_TRIPLE_STRING_QUOTE1 = 6
+        const val STATE_TRIPLE_STRING_QUOTE2 = 7
     }
 }

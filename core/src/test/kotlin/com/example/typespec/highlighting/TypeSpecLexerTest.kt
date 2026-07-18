@@ -19,15 +19,6 @@ class TypeSpecLexerTest {
 
         val tokens = tokenize(source)
 
-        assertContainsType(tokens, TypeSpecTokenTypes.LINE_COMMENT)
-        assertContainsType(tokens, TypeSpecTokenTypes.BLOCK_COMMENT)
-        assertContainsType(tokens, TypeSpecTokenTypes.DECORATOR)
-        assertContainsType(tokens, TypeSpecTokenTypes.KEYWORD)
-        assertContainsType(tokens, TypeSpecTokenTypes.IDENTIFIER)
-        assertContainsType(tokens, TypeSpecTokenTypes.NUMBER)
-        assertContainsType(tokens, TypeSpecTokenTypes.STRING)
-        assertContainsType(tokens, TypeSpecTokenTypes.OPERATION_SIGN)
-
         assertEquals(
             listOf(
                 TypeSpecTokenTypes.LINE_COMMENT,
@@ -44,6 +35,8 @@ class TypeSpecLexerTest {
         assertEquals("namespace", tokens.first { it.type == TypeSpecTokenTypes.KEYWORD }.text)
         assertEquals("42", tokens.first { it.type == TypeSpecTokenTypes.NUMBER }.text)
         assertEquals("\"Rex\"", tokens.first { it.type == TypeSpecTokenTypes.STRING }.text)
+        assertTrue(tokens.any { it.type == TypeSpecTokenTypes.IDENTIFIER })
+        assertTrue(tokens.any { it.type == TypeSpecTokenTypes.OPERATION_SIGN })
     }
 
     @Test
@@ -91,6 +84,53 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun resumesBlockCommentWhenStarSlashSplitAcrossSegments() {
+        val lexer = TypeSpecLexer()
+        lexer.start("/* body*", 0, 8, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.BLOCK_COMMENT, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_BLOCK_COMMENT_AFTER_STAR, lexer.state)
+
+        lexer.start("/ after", 0, 7, TypeSpecLexer.STATE_BLOCK_COMMENT_AFTER_STAR)
+        assertEquals(TypeSpecTokenTypes.BLOCK_COMMENT, lexer.tokenType)
+        assertEquals("/", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+        lexer.advance()
+        assertEquals(TypeSpecTokenTypes.WHITESPACE, lexer.tokenType)
+        lexer.advance()
+        assertEquals("after", lexer.tokenText)
+    }
+
+    @Test
+    fun resumesStringAcrossSegments() {
+        val lexer = TypeSpecLexer()
+        lexer.start("\"hello", 0, 6, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_STRING, lexer.state)
+
+        lexer.start(" world\";", 0, 8, TypeSpecLexer.STATE_STRING)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals(" world\"", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+        lexer.advance()
+        assertEquals(";", lexer.tokenText)
+    }
+
+    @Test
+    fun resumesStringWhenEscapeSplitAcrossSegments() {
+        val lexer = TypeSpecLexer()
+        lexer.start("\"say \\", 0, 6, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_STRING_AFTER_ESCAPE, lexer.state)
+
+        lexer.start("\"hi\";", 0, 5, TypeSpecLexer.STATE_STRING_AFTER_ESCAPE)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals("\"hi\"", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+        lexer.advance()
+        assertEquals(";", lexer.tokenText)
+    }
+
+    @Test
     fun resumesTripleQuotedStringAcrossSegments() {
         val lexer = TypeSpecLexer()
         lexer.start("\"\"\"hello", 0, 8, TypeSpecLexer.STATE_DEFAULT)
@@ -106,24 +146,41 @@ class TypeSpecLexerTest {
     }
 
     @Test
+    fun resumesTripleQuotedStringWhenClosingQuotesSplitAcrossSegments() {
+        val lexer = TypeSpecLexer()
+        lexer.start("\"\"\"body\"\"", 0, 9, TypeSpecLexer.STATE_DEFAULT)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals(TypeSpecLexer.STATE_TRIPLE_STRING_QUOTE2, lexer.state)
+
+        lexer.start("\";", 0, 2, TypeSpecLexer.STATE_TRIPLE_STRING_QUOTE2)
+        assertEquals(TypeSpecTokenTypes.STRING, lexer.tokenType)
+        assertEquals("\"", lexer.tokenText)
+        assertEquals(TypeSpecLexer.STATE_DEFAULT, lexer.state)
+        lexer.advance()
+        assertEquals(";", lexer.tokenText)
+    }
+
+    @Test
     fun tokenizesAugmentDecoratorAndDottedMemberAccess() {
         val tokens = tokenize("@@TypeSpec.service model Pet { id: int32 }")
         assertEquals("@@TypeSpec", tokens.first { it.type == TypeSpecTokenTypes.DECORATOR }.text)
         assertEquals(".", tokens.first { it.type == TypeSpecTokenTypes.OPERATION_SIGN }.text)
         assertEquals("service", tokens.first { it.text == "service" }.text)
         assertEquals(TypeSpecTokenTypes.IDENTIFIER, tokens.first { it.text == "service" }.type)
-        assertTrue("projection" in TypeSpecKeywords.KEYWORDS)
-        assertTrue("function" !in TypeSpecKeywords.KEYWORDS)
-        assertTrue("project" !in TypeSpecKeywords.KEYWORDS)
     }
 
     @Test
     fun highlightsCompilerKeywordsNotSpuriousOnes() {
-        val tokens = tokenize("const x = valueof int32; projection P { }")
+        val tokens = tokenize("const x = valueof int32; projection P { }; public struct S { }")
         assertEquals(
-            listOf("const", "valueof", "projection"),
+            listOf("const", "valueof", "projection", "public", "struct"),
             tokens.filter { it.type == TypeSpecTokenTypes.KEYWORD }.map { it.text },
         )
+        assertTrue("projection" in TypeSpecKeywords.KEYWORDS)
+        assertTrue("struct" in TypeSpecKeywords.KEYWORDS)
+        assertTrue("async" in TypeSpecKeywords.KEYWORDS)
+        assertTrue("function" !in TypeSpecKeywords.KEYWORDS)
+        assertTrue("project" !in TypeSpecKeywords.KEYWORDS)
     }
 
     private data class Token(val type: IElementType, val text: String)
@@ -137,13 +194,5 @@ class TypeSpecLexerTest {
             lexer.advance()
         }
         return tokens
-    }
-
-    private fun assertContainsType(tokens: List<Token>, type: IElementType) {
-        assertEquals(
-            true,
-            tokens.any { it.type == type },
-            "Expected token type $type in ${tokens.map { "${it.type}=${it.text}" }}",
-        )
     }
 }
