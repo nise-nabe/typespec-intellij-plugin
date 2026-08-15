@@ -1,15 +1,40 @@
 package com.example.typespec
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class TypeSpecLspServerActivationRuleTest : BasePlatformTestCase() {
+    private var previousTspFileType: FileType? = null
+
     override fun setUp() {
         super.setUp()
+        val manager = FileTypeManager.getInstance()
+        val extension = TypeSpecFileType.defaultExtension
+        previousTspFileType = manager.getFileTypeByExtension(extension)
         runWriteAction {
-            FileTypeManager.getInstance().associateExtension(TypeSpecFileType, "tsp")
+            manager.associateExtension(TypeSpecFileType, extension)
+        }
+    }
+
+    override fun tearDown() {
+        try {
+            val previous = previousTspFileType
+            if (previous != null) {
+                val manager = FileTypeManager.getInstance()
+                val extension = TypeSpecFileType.defaultExtension
+                runWriteAction {
+                    manager.removeAssociatedExtension(TypeSpecFileType, extension)
+                    if (previous !== FileTypes.UNKNOWN) {
+                        manager.associateExtension(previous, extension)
+                    }
+                }
+            }
+        } finally {
+            super.tearDown()
         }
     }
 
