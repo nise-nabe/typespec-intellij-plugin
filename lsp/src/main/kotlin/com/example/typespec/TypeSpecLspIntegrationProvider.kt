@@ -1,7 +1,6 @@
 package com.example.typespec
 
 import com.intellij.icons.AllIcons
-import com.intellij.lang.typescript.compiler.languageService.TypeScriptLanguageServiceUtil
 import com.intellij.lang.typescript.lsp.JSNodeLspClientDescriptor
 import com.intellij.lang.typescript.lsp.LspServerActivationRule
 import com.intellij.lang.typescript.lsp.ServiceActivationHelper
@@ -40,7 +39,9 @@ class TypeSpecLspIntegrationProvider : LspIntegrationProvider {
 @Suppress("UnstableApiUsage")
 object TypeSpecLspServerActivationRule : LspServerActivationRule(TypeSpecLspServerLoader, TypeSpecActivationHelper) {
     override fun isFileAcceptable(file: VirtualFile): Boolean {
-        if (!TypeScriptLanguageServiceUtil.IS_VALID_FILE_FOR_SERVICE.value(file)) {
+        // Do not call TypeScriptLanguageServiceUtil.IS_VALID_FILE_FOR_SERVICE: it is a private
+        // field in the JavaScript plugin and throws IllegalAccessError across plugin classloaders.
+        if (!file.isValid || file.isDirectory || !file.isInLocalFileSystem) {
             return false
         }
 
