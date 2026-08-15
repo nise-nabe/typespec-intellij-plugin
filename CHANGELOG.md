@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-15
+
 ### Fixed
 
 - Fixed plugin startup failure when opening `.tsp` files caused by duplicate `projectSettings` registration of `TypeSpecServiceSettings` (`configurationSchemaKey must be specified`)
+- Fixed a crash (`IllegalAccessError`) when opening `.tsp` files that activated the TypeSpec Language Server
 
 ### Changed
 
@@ -16,7 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added lexer-based syntax highlighting for TypeSpec keywords, decorators, strings, comments, and numbers in `.tsp` files
-- Added VS Code parity workflow actions: restart TypeSpec server, show output, emit from TypeSpec, create project (`tsp init`), import from OpenAPI 3, and preview API documentation (Swagger UI in browser)
+- Added VS Code parity workflow actions: restart TypeSpec server, show output, emit from TypeSpec, create project (`tsp init`), install TypeSpec dependencies (`tsp install`), import from OpenAPI 3, and preview API documentation (Swagger UI in browser)
 - Added TypeSpec compile run configuration with context-menu producer for `.tsp` files
 - Added TypeSpec output tool window for CLI and workflow logs
 - Documented LSP-provided editor capabilities in `docs/lsp-capabilities.md`

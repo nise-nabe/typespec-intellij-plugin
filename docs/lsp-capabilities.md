@@ -37,6 +37,7 @@ No additional IntelliJ extension points are required for these features.
 | Show output channel | **Show TypeSpec Output** | `TypeSpec.ShowOutput` | Automated (registration + visibility) |
 | Emit from TypeSpec | **Emit from TypeSpec** (+ run configuration) | `TypeSpec.EmitFromTypeSpec` | Automated (registration); CLI args — unit tests |
 | Create TypeSpec project | **Create TypeSpec Project** | `TypeSpec.CreateProject` | Automated (registration) |
+| Install TypeSpec dependencies | **Install TypeSpec Dependencies** | `TypeSpec.InstallDependencies` | Automated (registration) |
 | Import from OpenAPI 3 | **Import TypeSpec from OpenAPI 3** | `TypeSpec.ImportFromOpenApi` | Automated (registration) |
 | Preview API documentation | **Preview API Documentation** | `TypeSpec.PreviewOpenApi` | Automated (registration); browser — Manual |
 
@@ -65,6 +66,6 @@ Use after `./gradlew build` passes and before release. Run locally with `:plugin
 2. Confirm completion and diagnostics appear.
 3. Use **Rename** (Shift+F6) on a symbol; use **Reformat Code** (Ctrl+Alt+L) for format-if-supported.
 4. Trigger a compiler diagnostic and check for intention/light bulb quick fixes.
-5. Use **Tools \| TypeSpec** actions for restart, output, emit, init, import, and preview.
+5. Use **Tools \| TypeSpec** actions for restart, output, emit, init, install, import, and preview.
 
 See [cloud-verification.md](cloud-verification.md) for Cursor Cloud and CI workflows.

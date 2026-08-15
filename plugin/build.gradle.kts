@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.example.typespec"
-version = "0.2.0-eap.1"
+version = "0.2.0"
 
 dependencies {
     intellijPlatform {
