@@ -16,7 +16,7 @@
             <li>Project settings to configure the TypeSpec Language Server package path and enable or disable the service</li>
             <li>Inspections and quick fixes for TypeSpec extension package <code>package.json</code> metadata</li>
             <li>JSON Schema validation and completion for <code>tspconfig.yaml</code> project configuration</li>
-            <li>VS Code parity commands: restart server, show output, emit, create project, OpenAPI import, API documentation preview</li>
+            <li>VS Code parity commands: restart server, show output, emit, create project, install dependencies, OpenAPI import, API documentation preview</li>
         </ul>
     ]]></description>
 
