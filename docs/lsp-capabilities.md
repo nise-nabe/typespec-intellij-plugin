@@ -62,7 +62,7 @@ Emit/import/preview use the resolved `@typespec/compiler` CLI (`cmd/tsp.js`) and
 
 | Feature | Verification |
 |---------|--------------|
-| Dynamic load/unload without IDE restart | Automated — `TypeSpecPluginDescriptorTest`, `TypeSpecPluginLifecyclePlatformTest`; install/update/disable in a running IDE — Manual |
+| Dynamic load/unload without IDE restart | Automated — `TypeSpecPluginDescriptorTest`, `TypeSpecPluginLifecyclePlatformTest`, `TypeSpecDynamicPluginPlatformTest`; install/update/disable in a running IDE — Manual |
 
 ## Manual verification checklist
 
