@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElement
 
 class TypeSpecCompileRunConfigurationProducer : LazyRunConfigurationProducer<TypeSpecCompileRunConfiguration>() {
     override fun getConfigurationFactory(): ConfigurationFactory =
-        TypeSpecCompileRunConfigurationType.INSTANCE.configurationFactories[0]
+        TypeSpecCompileRunConfigurationType.getInstance().configurationFactories[0]
 
     override fun setupConfigurationFromContext(
         configuration: TypeSpecCompileRunConfiguration,

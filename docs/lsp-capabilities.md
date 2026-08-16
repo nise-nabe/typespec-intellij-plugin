@@ -58,6 +58,12 @@ Emit/import/preview use the resolved `@typespec/compiler` CLI (`cmd/tsp.js`) and
 | TypeSpec Output tool window factory | Planned (UI test) |
 | Tools \| TypeSpec menu group | Automated (action IDs); UI smoke — `ui-test` / Manual |
 
+## Plugin lifecycle
+
+| Feature | Verification |
+|---------|--------------|
+| Dynamic load/unload without IDE restart | Automated — `TypeSpecPluginDescriptorTest`, `TypeSpecPluginLifecyclePlatformTest`, `TypeSpecDynamicPluginPlatformTest`; install/update/disable in a running IDE — Manual |
+
 ## Manual verification checklist
 
 Use after `./gradlew build` passes and before release. Run locally with `:plugin:runIde` and a project that has `@typespec/compiler` installed.
@@ -67,5 +73,6 @@ Use after `./gradlew build` passes and before release. Run locally with `:plugin
 3. Use **Rename** (Shift+F6) on a symbol; use **Reformat Code** (Ctrl+Alt+L) for format-if-supported.
 4. Trigger a compiler diagnostic and check for intention/light bulb quick fixes.
 5. Use **Tools \| TypeSpec** actions for restart, output, emit, init, install, import, and preview.
+6. Disable and re-enable the plugin in **Settings | Plugins** and confirm the IDE does not require a restart; open a `.tsp` file again and confirm LSP still works.
 
 See [cloud-verification.md](cloud-verification.md) for Cursor Cloud and CI workflows.

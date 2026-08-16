@@ -14,13 +14,17 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.PROJECT)
 internal class TypeSpecLspPackageResolutionCacheWatcher(
     private val project: Project,
 ) : Disposable {
     private val recheckScheduled = AtomicBoolean()
+    private val disposed = AtomicBoolean()
+    private val recheckFuture = AtomicReference<Future<*>>()
     private val vfsListener = object : BulkFileListener {
         override fun after(events: List<VFileEvent>) {
             for (event in events) {
@@ -36,7 +40,7 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
     }
 
     private fun onVfsEvent(event: VFileEvent) {
-        if (project.isDisposed) {
+        if (disposed.get() || project.isDisposed) {
             return
         }
         val packageRoot = TypeSpecLspServerLoader.getSelectedPackage(project).systemDependentPath
@@ -49,18 +53,22 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
     }
 
     private fun scheduleRecheck() {
-        if (project.isDisposed || ApplicationManager.getApplication().isUnitTestMode) {
+        if (disposed.get() || project.isDisposed || ApplicationManager.getApplication().isUnitTestMode) {
             return
         }
         if (!recheckScheduled.compareAndSet(false, true)) {
             return
         }
-        AppExecutorUtil.getAppExecutorService().execute {
+        val future = AppExecutorUtil.getAppExecutorService().submit {
             recheckScheduled.set(false)
-            if (project.isDisposed) {
-                return@execute
+            if (disposed.get() || project.isDisposed) {
+                return@submit
             }
             recheckPackageResolution()
+        }
+        recheckFuture.set(future)
+        if (disposed.get()) {
+            future.cancel(true)
         }
     }
 
@@ -80,7 +88,8 @@ internal class TypeSpecLspPackageResolutionCacheWatcher(
     }
 
     override fun dispose() {
-        // Message bus connection is disposed automatically via parent disposable.
+        disposed.set(true)
+        recheckFuture.getAndSet(null)?.cancel(true)
     }
 
     companion object {

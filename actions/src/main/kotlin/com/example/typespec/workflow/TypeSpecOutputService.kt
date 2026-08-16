@@ -1,10 +1,9 @@
 package com.example.typespec.workflow
 
-import com.example.typespec.TypeSpecBundle
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import java.awt.Font
@@ -14,7 +13,7 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
-class TypeSpecOutputService {
+class TypeSpecOutputService : Disposable {
     private val textArea = JBTextArea().apply {
         isEditable = false
         lineWrap = true
@@ -45,6 +44,15 @@ class TypeSpecOutputService {
     fun show(project: Project) {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID) ?: return
         toolWindow.activate(null)
+    }
+
+    override fun dispose() {
+        val reset = Runnable { textArea.text = "" }
+        if (SwingUtilities.isEventDispatchThread()) {
+            reset.run()
+        } else {
+            SwingUtilities.invokeLater(reset)
+        }
     }
 
     companion object {

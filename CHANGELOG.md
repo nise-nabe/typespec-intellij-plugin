@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Support installing, updating, enabling, and disabling the plugin without restarting the IDE (dynamic plugin loading)
+
 ## [0.2.0] - 2026-08-15
 
 ### Fixed
