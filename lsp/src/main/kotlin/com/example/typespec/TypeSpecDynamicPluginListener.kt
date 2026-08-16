@@ -10,23 +10,40 @@ const val TYPESPEC_PLUGIN_ID = "com.example.typespec"
 
 internal class TypeSpecDynamicPluginListener : DynamicPluginListener {
     override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        if (!TypeSpecPluginLifecycle.isTypeSpecPlugin(pluginDescriptor)) {
-            return
-        }
-        TypeSpecPluginLifecycle.beforeUnload(ProjectManager.getInstance().openProjects)
+        TypeSpecPluginLifecycle.onBeforeUnload(pluginDescriptor.pluginId)
     }
 
     override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        if (!TypeSpecPluginLifecycle.isTypeSpecPlugin(pluginDescriptor)) {
-            return
-        }
-        TypeSpecPluginLifecycle.afterLoad(ProjectManager.getInstance().openProjects)
+        TypeSpecPluginLifecycle.onAfterLoad(pluginDescriptor.pluginId)
     }
 }
 
-internal object TypeSpecPluginLifecycle {
+object TypeSpecPluginLifecycle {
+    fun isTypeSpecPlugin(pluginId: PluginId): Boolean =
+        pluginId == PluginId.getId(TYPESPEC_PLUGIN_ID)
+
     fun isTypeSpecPlugin(pluginDescriptor: IdeaPluginDescriptor): Boolean =
-        pluginDescriptor.pluginId == PluginId.getId(TYPESPEC_PLUGIN_ID)
+        isTypeSpecPlugin(pluginDescriptor.pluginId)
+
+    fun onBeforeUnload(
+        pluginId: PluginId,
+        projects: Array<Project> = ProjectManager.getInstance().openProjects,
+    ) {
+        if (!isTypeSpecPlugin(pluginId)) {
+            return
+        }
+        beforeUnload(projects)
+    }
+
+    fun onAfterLoad(
+        pluginId: PluginId,
+        projects: Array<Project> = ProjectManager.getInstance().openProjects,
+    ) {
+        if (!isTypeSpecPlugin(pluginId)) {
+            return
+        }
+        afterLoad(projects)
+    }
 
     fun beforeUnload(projects: Array<Project>) {
         for (project in projects) {

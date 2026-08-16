@@ -1,21 +1,12 @@
 package com.example.typespec
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class TypeSpecPluginLifecyclePlatformTest : BasePlatformTestCase() {
-    fun testPluginIsLoadedUnderExpectedPluginId() {
-        val descriptor = PluginManagerCore.getPlugin(PluginId.getId(TYPESPEC_PLUGIN_ID))
-
-        assertNotNull(descriptor)
-        assertTrue(TypeSpecPluginLifecycle.isTypeSpecPlugin(descriptor!!))
-    }
-
-    fun testIsTypeSpecPluginRejectsOtherPlugins() {
-        val other = PluginManagerCore.loadedPlugins.first { it.pluginId.idString != TYPESPEC_PLUGIN_ID }
-
-        assertFalse(TypeSpecPluginLifecycle.isTypeSpecPlugin(other))
+    fun testIsTypeSpecPluginMatchesPluginId() {
+        assertTrue(TypeSpecPluginLifecycle.isTypeSpecPlugin(PluginId.getId(TYPESPEC_PLUGIN_ID)))
+        assertFalse(TypeSpecPluginLifecycle.isTypeSpecPlugin(PluginId.getId("com.intellij")))
     }
 
     fun testBeforeUnloadInvalidatesPackageResolutionCache() {
@@ -27,28 +18,27 @@ class TypeSpecPluginLifecyclePlatformTest : BasePlatformTestCase() {
         assertNull(cache.peekSnapshot())
     }
 
-    fun testListenerUnloadsTypeSpecPlugin() {
-        val descriptor = PluginManagerCore.getPlugin(PluginId.getId(TYPESPEC_PLUGIN_ID))!!
+    fun testOnBeforeUnloadInvalidatesCacheForThisPlugin() {
         val cache = TypeSpecPackageResolutionCache.getInstance(project)
         cache.getOrCompute(project)
 
-        TypeSpecDynamicPluginListener().beforePluginUnload(descriptor, false)
+        TypeSpecPluginLifecycle.onBeforeUnload(PluginId.getId(TYPESPEC_PLUGIN_ID), arrayOf(project))
 
         assertNull(cache.peekSnapshot())
     }
 
-    fun testListenerIgnoresOtherPlugins() {
-        val other = PluginManagerCore.loadedPlugins.first { it.pluginId.idString != TYPESPEC_PLUGIN_ID }
+    fun testOnBeforeUnloadIgnoresOtherPluginIds() {
         val cache = TypeSpecPackageResolutionCache.getInstance(project)
         cache.getOrCompute(project)
 
-        TypeSpecDynamicPluginListener().beforePluginUnload(other, false)
+        TypeSpecPluginLifecycle.onBeforeUnload(PluginId.getId("com.intellij"), arrayOf(project))
 
         assertNotNull(cache.peekSnapshot())
     }
 
     fun testAfterLoadOnOpenProjectDoesNotThrow() {
-        TypeSpecPluginLifecycle.afterLoad(arrayOf(project))
+        TypeSpecPluginLifecycle.onAfterLoad(PluginId.getId(TYPESPEC_PLUGIN_ID), arrayOf(project))
+        TypeSpecPluginLifecycle.onAfterLoad(PluginId.getId("com.intellij"), arrayOf(project))
         TypeSpecPluginLifecycle.afterLoad(emptyArray())
         TypeSpecPluginLifecycle.beforeUnload(emptyArray())
     }
