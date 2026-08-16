@@ -46,7 +46,7 @@ Editor and project view context menus expose the same actions where relevant.
 
 ## Setup
 
-1. Install the plugin (build from source or install the distribution ZIP).
+1. Install the plugin (build from source or install the distribution ZIP). The plugin can be installed, updated, enabled, and disabled without restarting the IDE.
 2. Open a TypeSpec project with `tspconfig.yaml` and `.tsp` files.
 3. Optionally set the compiler package path under **Settings | Languages & Frameworks | TypeSpec** (the language server is enabled by default; disable it there if needed).
 

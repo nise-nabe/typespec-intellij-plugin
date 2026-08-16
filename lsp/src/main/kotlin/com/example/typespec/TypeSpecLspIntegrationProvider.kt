@@ -82,3 +82,17 @@ fun restartTypeSpecServerAsync(project: Project) {
         LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(TypeSpecLspIntegrationProvider::class.java)
     }, project.disposed)
 }
+
+fun stopTypeSpecServer(project: Project) {
+    if (project.isDisposed) {
+        return
+    }
+    LspClientManager.getInstance(project).stopClients(TypeSpecLspIntegrationProvider::class.java)
+}
+
+fun startTypeSpecServerIfNeeded(project: Project) {
+    if (project.isDisposed || ApplicationManager.getApplication().isUnitTestMode) {
+        return
+    }
+    LspClientManager.getInstance(project).startClientsIfNeeded(TypeSpecLspIntegrationProvider::class.java)
+}

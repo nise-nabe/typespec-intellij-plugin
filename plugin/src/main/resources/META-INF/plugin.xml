@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin require-restart="false">
     <id>com.example.typespec</id>
     <name>TypeSpec Support</name>
     <vendor>nise_nabe</vendor>
@@ -74,11 +74,6 @@
         <projectService serviceInterface="com.example.typespec.TypeSpecLanguageServerCommandExecutor"
                           serviceImplementation="com.example.typespec.TypeSpecLanguageServerCommandExecutorImpl"/>
 
-        <projectListeners>
-            <listener class="com.example.typespec.TypeSpecLspServiceSettingsListener"
-                      topic="com.example.typespec.TypeSpecServiceSettingsListener"/>
-        </projectListeners>
-
         <configurationType implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationType"/>
         <runConfigurationProducer implementation="com.example.typespec.run.TypeSpecCompileRunConfigurationProducer"/>
     </extensions>
@@ -86,6 +81,16 @@
     <extensions defaultExtensionNs="JavaScript.JsonSchema">
         <ProviderFactory implementation="com.example.typespec.inspections.TypeSpecTspConfigSchemaProviderFactory"/>
     </extensions>
+
+    <applicationListeners>
+        <listener class="com.example.typespec.TypeSpecDynamicPluginListener"
+                  topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    </applicationListeners>
+
+    <projectListeners>
+        <listener class="com.example.typespec.TypeSpecLspServiceSettingsListener"
+                  topic="com.example.typespec.TypeSpecServiceSettingsListener"/>
+    </projectListeners>
 
     <actions resource-bundle="messages.TypeSpecBundle">
         <group id="TypeSpec.Tools" popup="true">

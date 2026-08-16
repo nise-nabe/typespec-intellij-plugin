@@ -1,8 +1,8 @@
 package com.example.typespec.run
 
 import com.example.typespec.TypeSpecBundle
-import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeBase
+import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.icons.AllIcons
 
 class TypeSpecCompileRunConfigurationType : ConfigurationTypeBase(
@@ -16,7 +16,7 @@ class TypeSpecCompileRunConfigurationType : ConfigurationTypeBase(
     }
 
     companion object {
-        @JvmField
-        val INSTANCE: TypeSpecCompileRunConfigurationType = TypeSpecCompileRunConfigurationType()
+        fun getInstance(): TypeSpecCompileRunConfigurationType =
+            ConfigurationTypeUtil.findConfigurationType(TypeSpecCompileRunConfigurationType::class.java)
     }
 }
