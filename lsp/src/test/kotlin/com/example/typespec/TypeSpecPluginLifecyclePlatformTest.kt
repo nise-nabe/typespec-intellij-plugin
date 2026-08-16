@@ -13,7 +13,7 @@ class TypeSpecPluginLifecyclePlatformTest : BasePlatformTestCase() {
     }
 
     fun testIsTypeSpecPluginRejectsOtherPlugins() {
-        val other = PluginManagerCore.getPlugins().first { it.pluginId.idString != TYPESPEC_PLUGIN_ID }
+        val other = PluginManagerCore.loadedPlugins.first { it.pluginId.idString != TYPESPEC_PLUGIN_ID }
 
         assertFalse(TypeSpecPluginLifecycle.isTypeSpecPlugin(other))
     }
@@ -38,7 +38,7 @@ class TypeSpecPluginLifecyclePlatformTest : BasePlatformTestCase() {
     }
 
     fun testListenerIgnoresOtherPlugins() {
-        val other = PluginManagerCore.getPlugins().first { it.pluginId.idString != TYPESPEC_PLUGIN_ID }
+        val other = PluginManagerCore.loadedPlugins.first { it.pluginId.idString != TYPESPEC_PLUGIN_ID }
         val cache = TypeSpecPackageResolutionCache.getInstance(project)
         cache.getOrCompute(project)
 
