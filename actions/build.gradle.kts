@@ -21,6 +21,7 @@ testing {
             useJUnitJupiter(libs.versions.junit.get())
 
             dependencies {
+                implementation(testFixtures(project(":core")))
                 implementation(libs.junit.junit4)
                 runtimeOnly(libs.junit.vintage.engine)
             }

@@ -38,6 +38,7 @@ testing {
             dependencies {
                 implementation(project(":actions"))
                 implementation(project(":core"))
+                implementation(testFixtures(project(":core")))
                 implementation(project(":lsp"))
                 implementation(project(":inspections"))
                 implementation(libs.junit.junit4)

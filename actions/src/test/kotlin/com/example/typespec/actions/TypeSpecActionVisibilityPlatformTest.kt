@@ -1,5 +1,7 @@
 package com.example.typespec.actions
 
+import com.example.typespec.TypeSpecBasePlatformTestCase
+import com.example.typespec.TypeSpecFileType
 import com.example.typespec.TypeSpecPackageResolutionCache
 import com.example.typespec.TypeSpecServiceMode
 import com.example.typespec.TypeSpecServiceSettings
@@ -8,16 +10,14 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.vfs.VirtualFile
-import com.example.typespec.TypeSpecFileType
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.nio.file.Files
 import java.nio.file.Path
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
-class TypeSpecActionVisibilityPlatformTest : BasePlatformTestCase() {
+class TypeSpecActionVisibilityPlatformTest : TypeSpecBasePlatformTestCase() {
     private lateinit var packageDirectory: Path
 
     override fun setUp() {

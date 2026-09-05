@@ -5,9 +5,8 @@ import com.example.typespec.run.TypeSpecCompileRunConfigurationType
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class TypeSpecDynamicPluginPlatformTest : BasePlatformTestCase() {
+class TypeSpecDynamicPluginPlatformTest : TypeSpecBasePlatformTestCase() {
     fun testPluginDescriptorIsLoaded() {
         val descriptor = PluginManagerCore.getPlugin(PluginId.getId(TYPESPEC_PLUGIN_ID))
 

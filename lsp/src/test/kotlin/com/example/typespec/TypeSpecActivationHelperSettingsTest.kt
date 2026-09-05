@@ -1,8 +1,6 @@
 package com.example.typespec
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-
-class TypeSpecActivationHelperSettingsTest : BasePlatformTestCase() {
+class TypeSpecActivationHelperSettingsTest : TypeSpecBasePlatformTestCase() {
     fun testIsEnabledInSettingsReflectsServiceMode() {
         val settings = TypeSpecServiceSettings.getInstance(project)
 

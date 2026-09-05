@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Bump pinned IDEA SDK to IntelliJ IDEA 2026.2.2 (`262.10315.125`)
+- Suppress a 2026.2.2 Ultimate headless-test `PluginException` from `com.intellij.modules.ultimate` (`B.B.B.B.s` colliding with `product-backend.jar`)
 
 ### Added
 

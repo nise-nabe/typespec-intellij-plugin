@@ -1,8 +1,6 @@
 package com.example.typespec
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-
-class TypeSpecLspNotificationTrackerPlatformTest : BasePlatformTestCase() {
+class TypeSpecLspNotificationTrackerPlatformTest : TypeSpecBasePlatformTestCase() {
     fun testTrackerIsProjectScopedService() {
         val tracker = TypeSpecLspNotificationTracker.getInstance(project)
 

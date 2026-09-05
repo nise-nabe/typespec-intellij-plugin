@@ -5,9 +5,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class TypeSpecLspServerActivationRuleTest : BasePlatformTestCase() {
+class TypeSpecLspServerActivationRuleTest : TypeSpecBasePlatformTestCase() {
     private var previousTspFileType: FileType? = null
 
     override fun setUp() {
