@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Bump pinned IDEA SDK to IntelliJ IDEA 2026.2.2 (`262.10315.125`)
+
 ### Added
 
 - Support installing, updating, enabling, and disabling the plugin without restarting the IDE (dynamic plugin loading)

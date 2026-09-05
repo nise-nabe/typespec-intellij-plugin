@@ -60,7 +60,7 @@ Target platform: IntelliJ IDEA **2026.2** (`262.x`), JDK **25**.
 
 ### Sandbox IDE logs (IntelliJ Platform Gradle Plugin 2.x)
 
-Pinned IDE build is **`262.8665.258`** (`gradle/libs.versions.toml` → `intellij-idea`). IPGP 2.x sandboxes use a **product-version directory** (e.g. `.intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log`), not the build number and not always `plugin/build/idea-sandbox/.../system/log/idea.log` (Platform Gradle Plugin 1.x layout).
+Pinned IDE build is **`262.10315.125`** (IntelliJ IDEA 2026.2.2; `gradle/libs.versions.toml` → `intellij-idea`). IPGP 2.x sandboxes use a **product-version directory** (e.g. `.intellijPlatform/sandbox/plugin/IU-2026.2/log/idea.log`), not the build number and not always `plugin/build/idea-sandbox/.../system/log/idea.log` (Platform Gradle Plugin 1.x layout).
 
 Discover the most recently modified `idea.log` and confirm the plugin loaded:
 
