@@ -1,9 +1,8 @@
 package com.example.typespec
 
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
-class TypeSpecPluginLifecyclePlatformTest : BasePlatformTestCase() {
+class TypeSpecPluginLifecyclePlatformTest : TypeSpecBasePlatformTestCase() {
     fun testIsTypeSpecPluginMatchesPluginId() {
         assertTrue(TypeSpecPluginLifecycle.isTypeSpecPlugin(PluginId.getId(TYPESPEC_PLUGIN_ID)))
         assertFalse(TypeSpecPluginLifecycle.isTypeSpecPlugin(PluginId.getId("com.intellij")))

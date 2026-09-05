@@ -1,9 +1,9 @@
 package com.example.typespec.inspections
 
+import com.example.typespec.TypeSpecBasePlatformTestCase
 import com.intellij.json.psi.JsonFile
 import com.intellij.json.psi.JsonObject
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,7 +17,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 @RunWith(JUnit4::class)
-class TypeSpecTspConfigSchemaProviderTest : BasePlatformTestCase() {
+class TypeSpecTspConfigSchemaProviderTest : TypeSpecBasePlatformTestCase() {
     override fun getTestDataPath(): String = ""
 
     @Test

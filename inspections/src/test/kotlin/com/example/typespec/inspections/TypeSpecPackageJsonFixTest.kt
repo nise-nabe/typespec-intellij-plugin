@@ -1,8 +1,8 @@
 package com.example.typespec.inspections
 
+import com.example.typespec.TypeSpecBasePlatformTestCase
 import com.intellij.json.psi.JsonElementGenerator
 import com.intellij.json.psi.JsonFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class TypeSpecPackageJsonFixTest : BasePlatformTestCase() {
+class TypeSpecPackageJsonFixTest : TypeSpecBasePlatformTestCase() {
     override fun getTestDataPath(): String = ""
 
     override fun isWriteActionRequired(): Boolean = true

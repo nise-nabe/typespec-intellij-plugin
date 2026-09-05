@@ -1,11 +1,10 @@
 package com.example.typespec
 
 import com.intellij.javascript.nodejs.util.NodePackage
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.nio.file.Files
 import java.nio.file.Path
 
-class TypeSpecLspPackageResolutionPlatformTest : BasePlatformTestCase() {
+class TypeSpecLspPackageResolutionPlatformTest : TypeSpecBasePlatformTestCase() {
     private lateinit var packageDirectory: Path
 
     override fun setUp() {
