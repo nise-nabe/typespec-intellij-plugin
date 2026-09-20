@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
+import java.nio.file.Paths
 
 class TypeSpecSettingsConfigurable(
     private val project: Project,
@@ -20,6 +21,14 @@ class TypeSpecSettingsConfigurable(
                 cell(createNodePackageField(project, TypeSpecLspServerLoader.packageDescriptor))
                     .align(AlignX.FILL)
                     .bindPackage(settings::lspServerPackage)
+            }
+
+            row(TypeSpecBundle.message("settings.typespec.compilerVersion")) {
+                text(compilerVersionLabel())
+            }
+
+            row(TypeSpecBundle.message("settings.typespec.compilerStatus")) {
+                text(compilerStatusLabel())
             }
 
             buttonsGroup {
@@ -42,4 +51,25 @@ class TypeSpecSettingsConfigurable(
     }
 
     override fun getDisplayName(): String = TypeSpecBundle.message("settings.typespec.title")
+
+    private fun compilerVersionLabel(): String {
+        val version = runCatching {
+            TypeSpecCompilerVersionReader.readPackageVersion(
+                Paths.get(settings.lspServerPackage.systemDependentPath),
+            )
+        }.getOrNull()
+        return version ?: TypeSpecBundle.message("settings.typespec.compilerVersion.unknown")
+    }
+
+    private fun compilerStatusLabel(): String {
+        val ready = runCatching {
+            val snapshot = TypeSpecPackageResolutionCache.getInstance(project).getOrCompute(project)
+            snapshot.compilerCliResolvable && snapshot.lspServerResolvable
+        }.getOrDefault(false)
+        return if (ready) {
+            TypeSpecBundle.message("settings.typespec.compilerStatus.ready")
+        } else {
+            TypeSpecBundle.message("settings.typespec.compilerStatus.missing")
+        }
+    }
 }

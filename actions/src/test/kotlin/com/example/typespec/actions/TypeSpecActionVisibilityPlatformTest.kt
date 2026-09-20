@@ -252,6 +252,36 @@ class TypeSpecActionVisibilityPlatformTest : TypeSpecBasePlatformTestCase() {
         assertTrue(event.presentation.isEnabledAndVisible)
     }
 
+    fun testShowCompilerInfoHiddenWhenCompilerCliNotResolvable() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecShowCompilerInfoAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testShowCompilerInfoVisibleWhenCompilerCliResolvable() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        Files.createDirectories(packageDirectory.resolve("cmd"))
+        Files.writeString(packageDirectory.resolve("cmd/tsp.js"), "// compiler")
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecShowCompilerInfoAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertTrue(event.presentation.isEnabledAndVisible)
+    }
+
     private fun writeProjectTspConfig() {
         val basePath = project.basePath ?: error("project.basePath is not set in this fixture")
         Files.createDirectories(Paths.get(basePath))
