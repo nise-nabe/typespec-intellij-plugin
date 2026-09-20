@@ -1,33 +1,51 @@
-# Agent instructions (Cursor Cloud)
+# Agent instructions
 
 IntelliJ Platform plugin for TypeSpec. Gradle multi-project build (`build-logic` + `core`, `lsp`, `actions`, `inspections`, `plugin`, `ui-test`).
 
-## MCP: Gradle Tooling API
-
-The `gradle` MCP server ([nise-nabe/gradle-tapi-mcp-server](https://github.com/nise-nabe/gradle-tapi-mcp-server) v0.3.3) is configured in `.cursor/mcp.json`. The install script downloads the release JAR to `~/.local/share/gradle-tapi-mcp-server/`, verifies its SHA-256, and exposes it via a stable `gradle-tapi-mcp-server.jar` symlink. `GRADLE_PROJECT_DIR` is set to the workspace root.
-
-Prefer token-efficient MCP workflows documented in `.cursor/skills/gradle-tapi-mcp/SKILL.md`:
-
-1. `gradle_get_build_environment` for resolved Gradle/Java versions
-2. `gradle_get_project_overview` for module hierarchy
-3. `gradle_run_tasks` with `[":plugin:compileKotlin"]` for fast compile checks
-
-For **`build` and `:plugin:test`**, prefer `./gradlew --non-interactive` in Cursor Cloud — IntelliJ tests are long-running and MCP clients often time out (~60s). Use `background: true` and poll `gradle_get_build_status` for MCP builds; never overlap concurrent MCP test runs. If MCP stops responding, read `.gradle/mcp-builds/<buildId>/mcp-result.json` and fall back to shell.
+These instructions apply to any agent environment: local IDE/CLI agents (Devin CLI, Cursor, Junie), cloud agents (Cursor Cloud, Devin Cloud), and CI.
 
 ## Verify plugin changes
 
 1. Ensure **JDK 25** is available (`java -version`).
-2. Run the standard gate (same as CI). With Gradle **9.6+**, always pass **`--non-interactive`** on `./gradlew` in Cursor agent / Cloud runs so the build never blocks on console prompts (do not patch `gradlew`; it is Gradle-managed):
+2. Run the standard gate (same as CI, `.github/workflows/main.yml`). With Gradle **9.6+**, always pass **`--non-interactive`** on `./gradlew` in agent / CI runs so the build never blocks on console prompts (do not patch `gradlew`; it is Gradle-managed):
 
    ```bash
    ./gradlew --non-interactive build
    ```
 
 3. On failure, run scoped tests (`./gradlew --non-interactive :lsp:test`, etc.). See [docs/cloud-verification.md](docs/cloud-verification.md).
-
 4. Summarize results against the verification matrix in [docs/lsp-capabilities.md](docs/lsp-capabilities.md).
 
-## Do not use by default on Cloud
+## MCP: Gradle Tooling API
+
+The `gradle` MCP server ([nise-nabe/gradle-tapi-mcp-server](https://github.com/nise-nabe/gradle-tapi-mcp-server) v0.3.3) provides token-efficient Gradle access over the Tooling API. Per-tool configuration:
+
+| Tool | Config | Notes |
+|------|--------|-------|
+| Cursor | `.cursor/mcp.json` | Canonical config. Devin CLI imports this file automatically (`read_config_from.cursor` defaults to `true`), so no separate `.devin/mcp_config.json` is needed |
+| Junie | `.junie/mcp/mcp.json` | Same server, Junie config layout |
+| Other agents | stdio: `java -jar ~/.local/share/gradle-tapi-mcp-server/gradle-tapi-mcp-server.jar` | Set `GRADLE_PROJECT_DIR` to the workspace root, or call `gradle_connect` with the project path |
+
+`.cursor/install.sh` installs the JAR to `~/.local/share/gradle-tapi-mcp-server/` (SHA-256 verified, stable `gradle-tapi-mcp-server.jar` symlink). Run it on any Linux/macOS agent machine where the JAR is missing. `GRADLE_PROJECT_DIR` is set to the workspace root by the MCP configs above.
+
+Prefer token-efficient MCP workflows documented in `.cursor/skills/gradle-tapi-mcp/SKILL.md` (read the file even if your agent tool does not surface it as a skill):
+
+1. `gradle_get_build_environment` for resolved Gradle/Java versions
+2. `gradle_get_project_overview` for module hierarchy
+3. `gradle_run_tasks` with `[":plugin:compileKotlin"]` for fast compile checks
+
+For **`build` and `:plugin:test`**, prefer `./gradlew --non-interactive` in headless / cloud environments — IntelliJ tests are long-running and MCP clients often time out (~60s). Use `background: true` and poll `gradle_get_build_status` for MCP builds; never overlap concurrent MCP test runs. If MCP stops responding, read `.gradle/mcp-builds/<buildId>/mcp-result.json` and fall back to shell.
+
+## Environment setup per tool
+
+| Environment | Setup | Notes |
+|-------------|-------|-------|
+| Cursor Cloud | `.cursor/environment.json` → `.cursor/install.sh` | Runs automatically on VM start |
+| Devin Cloud | `.devin/blueprint.yaml` (git-backed blueprint) | After changing it, sync the blueprint and rebuild the snapshot in Devin (Settings → Environment → Blueprints → Sync, or the `snapshot-setup/sync` API) |
+| Local agent | Nothing required for `./gradlew` | Run `.cursor/install.sh` once if you want the `gradle` MCP server |
+| CI | `.github/workflows/main.yml` | Temurin 25 + `./gradlew --non-interactive build` |
+
+## Do not use by default in cloud / headless environments
 
 - `:plugin:runIde` — requires a display; use `scripts/run-ide-smoke.sh` or the **Run IDE smoke** workflow instead.
 - Full LSP/browser manual checklist — local IDE only.
@@ -41,12 +59,12 @@ For **`build` and `:plugin:test`**, prefer `./gradlew --non-interactive` in Curs
 
 Target platform: IntelliJ IDEA **2026.2** (`262.x`), JDK **25**.
 
-## Cursor Cloud specific instructions
+## Headless Linux environments (cloud agents)
 
 ### System prerequisites (not in the Gradle update script)
 
 - **JDK 25** on `PATH` (`java -version` → 25). CI uses Eclipse Temurin; install via [Adoptium apt repo](https://adoptium.net/installation/linux/) (`temurin-25-jdk`) if the VM image only has JDK 21.
-- **Xvfb** for sandbox IDE / UI tests: `sudo apt-get install -y xvfb`. Export `XDG_RUNTIME_DIR` (e.g. `/tmp/runtime-cursor`, mode `700`) before Platform tests or `runIde` to avoid `XDG_RUNTIME_DIR is invalid` noise in test output.
+- **Xvfb** for sandbox IDE / UI tests: `sudo apt-get install -y xvfb`. Export `XDG_RUNTIME_DIR` (e.g. `/tmp/runtime-agent`, mode `700`) before Platform tests or `runIde` to avoid `XDG_RUNTIME_DIR is invalid` noise in test output.
 - **JetBrains consent** (headless IDE): run `scripts/prepare-jetbrains-consent.sh` before `runIde` or IDE smoke (same as `scripts/run-ide-smoke.sh`).
 
 ### Standard commands
@@ -71,6 +89,6 @@ Discover the most recently modified `idea.log` and confirm the plugin loaded:
 
 `scripts/run-ide-smoke.sh` only searches `plugin/build/idea-sandbox/**/system/log/idea.log` and greps `Startup completed` / `IDE started`; on IPGP 2.x or slow EAP startups it may time out while the IDE is healthy—prefer the `find` + grep above.
 
-### What Cloud does not run by default
+### What cloud agents do not run by default
 
 Full TypeSpec LSP/CLI E2E needs **Node.js**, `npm install` in a sample project, and `@typespec/compiler`—see [docs/cloud-verification.md](docs/cloud-verification.md).
