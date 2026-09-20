@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class TypeSpecFormatProjectAction : AnAction(
@@ -22,14 +24,14 @@ class TypeSpecFormatProjectAction : AnAction(
 
     override fun update(event: AnActionEvent) {
         TypeSpecActionSupport.update(event, TypeSpecActionSupport.projectWithCompilerCliOnly)
+        if (event.presentation.isEnabledAndVisible && findTypeSpecProjectRoot(event.project) == null) {
+            event.presentation.isEnabledAndVisible = false
+        }
     }
 
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
-        val projectRoot = project.basePath?.let { Paths.get(it) } ?: return
-        if (TypeSpecProjectContext.findProjectRoot(projectRoot) == null) {
-            return
-        }
+        val projectRoot = findTypeSpecProjectRoot(project) ?: return
 
         TypeSpecCliWorkflow.runCliJob(
             project,
@@ -44,5 +46,10 @@ class TypeSpecFormatProjectAction : AnAction(
             runner.run(cli, listOf("format", "."), TypeSpecBundle.message("action.formatProject.progress"), indicator)
                 .toJobResult()
         }
+    }
+
+    private fun findTypeSpecProjectRoot(project: Project?): Path? {
+        val basePath = project?.basePath?.let { Paths.get(it) } ?: return null
+        return TypeSpecProjectContext.findProjectRoot(basePath)
     }
 }

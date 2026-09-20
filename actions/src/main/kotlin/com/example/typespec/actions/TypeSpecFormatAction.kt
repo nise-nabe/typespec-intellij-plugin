@@ -23,7 +23,7 @@ class TypeSpecFormatAction : AnAction(
     override fun getActionUpdateThread(): ActionUpdateThread = TypeSpecActionSupport.updateActionThread()
 
     override fun update(event: AnActionEvent) {
-        TypeSpecActionSupport.update(event, TypeSpecActionSupport.typeSpecFileWithCompilerCli)
+        TypeSpecActionSupport.update(event, TypeSpecActionSupport.typeSpecProjectWithCompilerCli)
     }
 
     override fun actionPerformed(event: AnActionEvent) {
