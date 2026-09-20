@@ -23,13 +23,18 @@ internal object TypeSpecTspConfigReader {
     }
 
     internal fun parseOutputDir(yamlText: String): String? {
-        val outputDirPattern = Regex("""^output-dir:\s*["']?([^"'\n#]+)["']?\s*$""")
+        val outputDirPattern = Regex("""^output-dir\s*:\s*["']?([^"'#\n]*?)["']?\s*(?:#.*)?$""")
         for (line in yamlText.lines()) {
+            if (line.startsWith(" ") || line.startsWith("\t")) {
+                continue
+            }
             val trimmed = line.trim()
             if (trimmed.isEmpty() || trimmed.startsWith("#")) {
                 continue
             }
-            outputDirPattern.matchEntire(trimmed)?.groupValues?.getOrNull(1)?.trim()?.let { return it }
+            outputDirPattern.matchEntire(line.trimEnd())
+                ?.groupValues?.getOrNull(1)?.trim()?.ifEmpty { null }
+                ?.let { return it }
         }
         return null
     }

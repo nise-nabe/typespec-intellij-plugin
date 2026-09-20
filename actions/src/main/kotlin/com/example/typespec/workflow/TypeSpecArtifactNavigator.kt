@@ -37,11 +37,15 @@ internal object TypeSpecArtifactNavigator {
                 return candidate
             }
         }
-        return Files.list(outputDirectory).use { stream ->
-            stream.filter { Files.isRegularFile(it) }
-                .sorted()
-                .findFirst()
-                .orElse(null)
+        return try {
+            Files.list(outputDirectory).use { stream ->
+                stream.filter { Files.isRegularFile(it) }
+                    .sorted()
+                    .findFirst()
+                    .orElse(null)
+            }
+        } catch (e: Exception) {
+            null
         }
     }
 
