@@ -22,6 +22,7 @@ object TypeSpecContentRootResolver {
         val normalizedStart = startDirectory.toAbsolutePath().normalize()
         val candidates = probeDirectories.map { it.toAbsolutePath().normalize() }
             .filter { normalizedStart.startsWith(it) || it.startsWith(normalizedStart) }
+            .sortedBy { kotlin.math.abs(it.nameCount - normalizedStart.nameCount) }
         for (root in candidates) {
             val config = root.resolve(TSP_CONFIG_FILE_NAME)
             if (Files.isRegularFile(config)) {

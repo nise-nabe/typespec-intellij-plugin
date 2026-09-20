@@ -25,6 +25,20 @@ class TypeSpecContentRootResolverTest {
     }
 
     @Test
+    fun prefersNearestRootWhenMultipleRootsHaveConfig() {
+        val nested = tempDir.resolve("packages/api")
+        Files.createDirectories(nested)
+        Files.writeString(tempDir.resolve("tspconfig.yaml"), "emit: []")
+        Files.writeString(nested.resolve("tspconfig.yaml"), "emit: []")
+
+        val result = TypeSpecContentRootResolver.findNearestTypeSpecProjectRoot(
+            nested.resolve("src"),
+            listOf(tempDir, nested),
+        )
+        assertEquals(nested.toAbsolutePath().normalize(), result)
+    }
+
+    @Test
     fun findsContentRootWhenStartIsAboveRoot() {
         Files.writeString(tempDir.resolve("tspconfig.yaml"), "emit: []")
 
