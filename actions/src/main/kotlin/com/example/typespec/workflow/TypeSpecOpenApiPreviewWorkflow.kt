@@ -81,12 +81,13 @@ internal object TypeSpecOpenApiPreviewWorkflow {
             return false
         }
         return try {
+            val html = TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(Files.readString(openApiFile))
+            if (TypeSpecJcefPreviewSupport.showHtml(project, html)) {
+                return true
+            }
             val previewHtml = Files.createTempFile("typespec-openapi-preview-", ".html")
             previewHtml.toFile().deleteOnExit()
-            Files.writeString(
-                previewHtml,
-                TypeSpecOpenApiPreview.buildSwaggerPreviewHtml(Files.readString(openApiFile)),
-            )
+            Files.writeString(previewHtml, html)
             ApplicationManager.getApplication().invokeLater {
                 BrowserUtil.browse(previewHtml.toUri())
             }
