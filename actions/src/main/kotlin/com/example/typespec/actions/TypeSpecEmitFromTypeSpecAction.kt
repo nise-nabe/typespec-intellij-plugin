@@ -1,6 +1,7 @@
 package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
+import com.example.typespec.workflow.TypeSpecArtifactNavigator
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliWorkflow
 import com.example.typespec.workflow.TypeSpecProjectContext
@@ -68,6 +69,9 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
                 titleKey = "action.emit.title",
                 failureMessageKey = "action.emit.failed",
             ),
+            onSuccess = {
+                TypeSpecArtifactNavigator.revealOutput(project, resolution.projectRoot)
+            },
         ) { runner, indicator ->
             runner.compile(resolution.projectRoot, entrypoint, emitters, indicator = indicator)
         }
