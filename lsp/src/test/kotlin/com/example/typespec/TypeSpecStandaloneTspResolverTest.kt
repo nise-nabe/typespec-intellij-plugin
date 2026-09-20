@@ -9,26 +9,35 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class TypeSpecStandaloneTspResolverTest {
+    @TempDir
+    lateinit var tempDir: Path
+
     @Test
-    fun buildStandaloneServerCommandLineReturnsNullWhenScriptMissing(@TempDir tempDir: Path) {
+    fun buildStandaloneServerCommandLineReturnsNullWhenScriptMissing() {
         assertNull(
             TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(
                 tempDir.resolve("missing.js"),
-            ),
+            ) { true },
         )
     }
 
     @Test
-    fun buildStandaloneServerCommandLineIncludesServerScript(@TempDir tempDir: Path) {
+    fun buildStandaloneServerCommandLineReturnsNullWhenTspUnavailable() {
         val script = tempDir.resolve("tsp-server.js")
         Files.writeString(script, "// mock server")
 
-        val commandLine = TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(script)
-        if (TypeSpecStandaloneTspResolver.isStandaloneTspAvailable()) {
-            assertNotNull(commandLine)
-            assertTrue(commandLine!!.parametersList.parameters.contains(script.toString()))
-        } else {
-            assertNull(commandLine)
-        }
+        assertNull(TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(script) { false })
+    }
+
+    @Test
+    fun buildStandaloneServerCommandLineIncludesServerScript() {
+        val script = tempDir.resolve("tsp-server.js")
+        Files.writeString(script, "// mock server")
+
+        val commandLine = TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(script) { true }
+        assertNotNull(commandLine)
+        assertTrue(commandLine!!.parametersList.parameters.contains(script.toString()))
+        assertTrue(commandLine.parametersList.parameters.contains("--server"))
+        assertTrue(commandLine.parametersList.parameters.contains("--stdio"))
     }
 }

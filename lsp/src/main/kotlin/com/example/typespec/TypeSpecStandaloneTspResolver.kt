@@ -9,12 +9,24 @@ import java.util.concurrent.TimeUnit
 
 internal object TypeSpecStandaloneTspResolver {
     private const val TSP_ON_PATH = "tsp"
+    private const val AVAILABILITY_TTL_MILLIS = 60_000L
 
     @Volatile
     private var cachedAvailability: Boolean? = null
 
-    fun isStandaloneTspAvailable(): Boolean =
-        cachedAvailability ?: probeTspOnPath().also { cachedAvailability = it }
+    @Volatile
+    private var checkedAtMillis: Long = 0L
+
+    fun isStandaloneTspAvailable(nowMillis: Long = System.currentTimeMillis()): Boolean {
+        val cached = cachedAvailability
+        if (cached != null && nowMillis - checkedAtMillis < AVAILABILITY_TTL_MILLIS) {
+            return cached
+        }
+        val result = probeTspOnPath()
+        cachedAvailability = result
+        checkedAtMillis = nowMillis
+        return result
+    }
 
     private fun probeTspOnPath(): Boolean =
         try {
@@ -30,8 +42,11 @@ internal object TypeSpecStandaloneTspResolver {
             false
         }
 
-    fun buildStandaloneServerCommandLine(serverScript: Path): GeneralCommandLine? {
-        if (!Files.isRegularFile(serverScript) || !isStandaloneTspAvailable()) {
+    fun buildStandaloneServerCommandLine(
+        serverScript: Path,
+        isTspAvailable: () -> Boolean = { isStandaloneTspAvailable() },
+    ): GeneralCommandLine? {
+        if (!Files.isRegularFile(serverScript) || !isTspAvailable()) {
             return null
         }
         return GeneralCommandLine(TSP_ON_PATH)
