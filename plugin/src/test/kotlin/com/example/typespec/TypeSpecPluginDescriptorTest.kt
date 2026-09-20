@@ -136,20 +136,28 @@ class TypeSpecPluginDescriptorTest {
         val xml = pluginXml()
 
         val expected = mapOf(
-            "TypeSpecPackageJsonInspection" to "localInspection",
-            "TypeSpecTspConfigInspection" to "localInspection",
-            "TypeSpecStructureViewFactory" to "lang.psiStructureViewFactory",
-            "TypeSpecTemplateContextType" to "liveTemplateContext",
-            "TypeSpecToolWindowFactory" to "toolWindow",
-            "TypeSpecApiPreviewToolWindowFactory" to "toolWindow",
-            "TypeSpecCompileRunConfigurationType" to "configurationType",
+            """<localInspection\b[^>]*shortName="TypeSpecPackageJsonInspection"[^>]*implementationClass="com\.example\.typespec\.inspections\.TypeSpecPackageJsonInspection"""" to
+                "TypeSpecPackageJsonInspection localInspection",
+            """<localInspection\b[^>]*shortName="TypeSpecTspConfigInspection"[^>]*implementationClass="com\.example\.typespec\.inspections\.TypeSpecTspConfigInspection"""" to
+                "TypeSpecTspConfigInspection localInspection",
+            """<lang\.psiStructureViewFactory\b[^>]*implementationClass="com\.example\.typespec\.TypeSpecStructureViewFactory"""" to
+                "TypeSpecStructureViewFactory psiStructureViewFactory",
+            """<liveTemplateContext\b[^>]*implementation="com\.example\.typespec\.TypeSpecTemplateContextType"""" to
+                "TypeSpecTemplateContextType liveTemplateContext",
+            """<toolWindow\b[^>]*factoryClass="com\.example\.typespec\.workflow\.TypeSpecToolWindowFactory"""" to
+                "TypeSpecToolWindowFactory toolWindow",
+            """<toolWindow\b[^>]*factoryClass="com\.example\.typespec\.workflow\.TypeSpecApiPreviewToolWindowFactory"""" to
+                "TypeSpecApiPreviewToolWindowFactory toolWindow",
+            """<configurationType\b[^>]*implementation="com\.example\.typespec\.run\.TypeSpecCompileRunConfigurationType"""" to
+                "TypeSpecCompileRunConfigurationType configurationType",
         )
-        for ((className, extensionTag) in expected) {
-            assertTrue(xml.contains("<$extensionTag"), "plugin.xml should declare $extensionTag")
-            assertTrue(xml.contains(className), "plugin.xml should wire $className")
+        for ((wiring, description) in expected) {
+            assertTrue(xml.contains(Regex(wiring)), "plugin.xml should wire $description")
         }
-        assertTrue(xml.contains("<defaultLiveTemplates"))
-        assertTrue(xml.contains("liveTemplates/TypeSpec.xml"))
+        assertTrue(
+            xml.contains(Regex("""<defaultLiveTemplates\b[^>]*file="liveTemplates/TypeSpec\.xml"""")),
+            "plugin.xml should register the TypeSpec live template set",
+        )
     }
 
     @Test
