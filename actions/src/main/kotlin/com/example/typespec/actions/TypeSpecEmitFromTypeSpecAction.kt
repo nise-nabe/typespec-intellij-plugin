@@ -2,8 +2,10 @@ package com.example.typespec.actions
 
 import com.example.typespec.TypeSpecBundle
 import com.example.typespec.workflow.TypeSpecArtifactNavigator
+import com.example.typespec.workflow.TypeSpecCliJobResult
 import com.example.typespec.workflow.TypeSpecCliJobSpec
 import com.example.typespec.workflow.TypeSpecCliWorkflow
+import com.example.typespec.workflow.TypeSpecEmitterDiffMonitor
 import com.example.typespec.workflow.TypeSpecProjectContext
 import com.example.typespec.workflow.TypeSpecTspConfigReader
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -62,6 +64,12 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
             }
         }
 
+        val artifact = TypeSpecArtifactNavigator.findPrimaryArtifact(
+            TypeSpecArtifactNavigator.resolveOutputDirectory(resolution.projectRoot),
+        )
+        var beforeSnapshot: String? = null
+        var afterSnapshot: String? = null
+
         TypeSpecCliWorkflow.runCliJob(
             project,
             TypeSpecCliJobSpec(
@@ -70,10 +78,22 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
                 failureMessageKey = "action.emit.failed",
             ),
             onSuccess = {
+                val before = beforeSnapshot
+                val after = afterSnapshot
+                if (artifact != null && before != null && after != null && before != after) {
+                    TypeSpecEmitterDiffMonitor.showDiff(project, artifact, before, after)
+                }
                 TypeSpecArtifactNavigator.revealOutput(project, resolution.projectRoot)
             },
         ) { runner, indicator ->
-            runner.compile(resolution.projectRoot, entrypoint, emitters, indicator = indicator)
+            if (artifact != null) {
+                beforeSnapshot = TypeSpecEmitterDiffMonitor.readIfRegularFile(artifact)
+            }
+            val result = runner.compile(resolution.projectRoot, entrypoint, emitters, indicator = indicator)
+            if (artifact != null && result is TypeSpecCliJobResult.Finished && result.exitCode == 0) {
+                afterSnapshot = TypeSpecEmitterDiffMonitor.readIfRegularFile(artifact)
+            }
+            result
         }
     }
 }
