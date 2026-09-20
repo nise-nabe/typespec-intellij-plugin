@@ -61,7 +61,7 @@ class TypeSpecOutputService : Disposable {
         val timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
         val entry = "[$timestamp] $line"
         SwingUtilities.invokeLater {
-            if (area.text.isNotEmpty()) {
+            if (area.document.length > 0) {
                 area.append("\n")
             }
             area.append(entry)
