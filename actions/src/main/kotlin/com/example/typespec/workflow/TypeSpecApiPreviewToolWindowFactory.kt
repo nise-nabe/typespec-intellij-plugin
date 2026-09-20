@@ -1,5 +1,6 @@
 package com.example.typespec.workflow
 
+import com.example.typespec.TypeSpecBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -9,8 +10,15 @@ import javax.swing.SwingConstants
 
 class TypeSpecApiPreviewToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val placeholder = JLabel("Generate an OpenAPI preview to display documentation here.", SwingConstants.CENTER)
-        val content = ContentFactory.getInstance().createContent(placeholder, "", false)
+        val placeholder = JLabel(
+            TypeSpecBundle.message("toolWindow.typespecApiPreview.placeholder"),
+            SwingConstants.CENTER,
+        )
+        val content = ContentFactory.getInstance().createContent(
+            placeholder,
+            TypeSpecBundle.message("toolWindow.typespecApiPreview.title"),
+            false,
+        )
         toolWindow.contentManager.addContent(content)
     }
 

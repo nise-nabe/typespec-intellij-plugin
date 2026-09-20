@@ -21,15 +21,16 @@ internal object TypeSpecJcefPreviewSupport {
         if (!isSupported()) {
             return false
         }
-        return try {
-            val browserClass = Class.forName("com.intellij.ui.jcef.JBCefBrowser")
-            val browser = browserClass.getConstructor().newInstance()
-            browserClass.getMethod("loadHTML", String::class.java).invoke(browser, html)
-            val component = browserClass.getMethod("getComponent").invoke(browser) as java.awt.Component
+        val toolWindow = ToolWindowManager.getInstance(project)
+            .getToolWindow(TypeSpecApiPreviewToolWindowFactory.TOOL_WINDOW_ID)
+            ?: return false
+        ApplicationManager.getApplication().invokeLater {
+            try {
+                val browserClass = Class.forName("com.intellij.ui.jcef.JBCefBrowser")
+                val browser = browserClass.getConstructor().newInstance()
+                browserClass.getMethod("loadHTML", String::class.java).invoke(browser, html)
+                val component = browserClass.getMethod("getComponent").invoke(browser) as java.awt.Component
 
-            ApplicationManager.getApplication().invokeLater {
-                val toolWindow = ToolWindowManager.getInstance(project)
-                    .getToolWindow(TypeSpecApiPreviewToolWindowFactory.TOOL_WINDOW_ID) ?: return@invokeLater
                 val panel = JPanel(BorderLayout()).apply { add(component, BorderLayout.CENTER) }
                 val content = ContentFactory.getInstance().createContent(
                     panel,
@@ -39,10 +40,10 @@ internal object TypeSpecJcefPreviewSupport {
                 toolWindow.contentManager.removeAllContents(true)
                 toolWindow.contentManager.addContent(content)
                 toolWindow.activate(null)
+            } catch (_: Exception) {
+                // JCEF is supported but failed to build; leave existing content in place.
             }
-            true
-        } catch (_: Exception) {
-            false
         }
+        return true
     }
 }
