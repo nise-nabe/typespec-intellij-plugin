@@ -132,6 +132,35 @@ class TypeSpecPluginDescriptorTest {
     }
 
     @Test
+    fun pluginXmlDeclaresFeatureExtensions() {
+        val xml = pluginXml()
+
+        val expected = mapOf(
+            """<localInspection\b[^>]*shortName="TypeSpecPackageJsonInspection"[^>]*implementationClass="com\.example\.typespec\.inspections\.TypeSpecPackageJsonInspection"""" to
+                "TypeSpecPackageJsonInspection localInspection",
+            """<localInspection\b[^>]*shortName="TypeSpecTspConfigInspection"[^>]*implementationClass="com\.example\.typespec\.inspections\.TypeSpecTspConfigInspection"""" to
+                "TypeSpecTspConfigInspection localInspection",
+            """<lang\.psiStructureViewFactory\b[^>]*implementationClass="com\.example\.typespec\.TypeSpecStructureViewFactory"""" to
+                "TypeSpecStructureViewFactory psiStructureViewFactory",
+            """<liveTemplateContext\b[^>]*implementation="com\.example\.typespec\.TypeSpecTemplateContextType"""" to
+                "TypeSpecTemplateContextType liveTemplateContext",
+            """<toolWindow\b[^>]*factoryClass="com\.example\.typespec\.workflow\.TypeSpecToolWindowFactory"""" to
+                "TypeSpecToolWindowFactory toolWindow",
+            """<toolWindow\b[^>]*factoryClass="com\.example\.typespec\.workflow\.TypeSpecApiPreviewToolWindowFactory"""" to
+                "TypeSpecApiPreviewToolWindowFactory toolWindow",
+            """<configurationType\b[^>]*implementation="com\.example\.typespec\.run\.TypeSpecCompileRunConfigurationType"""" to
+                "TypeSpecCompileRunConfigurationType configurationType",
+        )
+        for ((wiring, description) in expected) {
+            assertTrue(xml.contains(Regex(wiring)), "plugin.xml should wire $description")
+        }
+        assertTrue(
+            xml.contains(Regex("""<defaultLiveTemplates\b[^>]*file="liveTemplates/TypeSpec\.xml"""")),
+            "plugin.xml should register the TypeSpec live template set",
+        )
+    }
+
+    @Test
     fun pluginXmlActionGroupsDeclareIds() {
         val xml = pluginXml()
         val groups = Regex("""<group\b[^>]*>""").findAll(xml).map { it.value }.toList()
