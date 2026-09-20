@@ -14,6 +14,31 @@ internal object TypeSpecTspConfigReader {
         return parseEmitters(text)
     }
 
+    fun readOutputDir(projectRoot: Path): String? {
+        val configFile = projectRoot.resolve(TSP_CONFIG_FILE_NAME)
+        if (!Files.isRegularFile(configFile)) {
+            return null
+        }
+        return parseOutputDir(Files.readString(configFile))
+    }
+
+    internal fun parseOutputDir(yamlText: String): String? {
+        val outputDirPattern = Regex("""^output-dir\s*:\s*["']?([^"'#\n]*?)["']?\s*(?:#.*)?$""")
+        for (line in yamlText.lines()) {
+            if (line.startsWith(" ") || line.startsWith("\t")) {
+                continue
+            }
+            val trimmed = line.trim()
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) {
+                continue
+            }
+            outputDirPattern.matchEntire(line.trimEnd())
+                ?.groupValues?.getOrNull(1)?.trim()?.ifEmpty { null }
+                ?.let { return it }
+        }
+        return null
+    }
+
     internal fun parseEmitters(yamlText: String): List<String> {
         val lines = yamlText.lines()
         var inEmitSection = false

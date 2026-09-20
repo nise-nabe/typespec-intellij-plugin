@@ -20,6 +20,7 @@ class TypeSpecPluginDescriptorTest {
             "TypeSpec.Format",
             "TypeSpec.FormatProject",
             "TypeSpec.ShowCompilerInfo",
+            "TypeSpec.ShowGeneratedOutput",
             "TypeSpec.ImportFromOpenApi",
             "TypeSpec.PreviewOpenApi",
         )
