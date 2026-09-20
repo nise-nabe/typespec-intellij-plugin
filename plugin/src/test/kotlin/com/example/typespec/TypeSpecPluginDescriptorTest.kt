@@ -132,6 +132,27 @@ class TypeSpecPluginDescriptorTest {
     }
 
     @Test
+    fun pluginXmlDeclaresFeatureExtensions() {
+        val xml = pluginXml()
+
+        val expected = mapOf(
+            "TypeSpecPackageJsonInspection" to "localInspection",
+            "TypeSpecTspConfigInspection" to "localInspection",
+            "TypeSpecStructureViewFactory" to "lang.psiStructureViewFactory",
+            "TypeSpecTemplateContextType" to "liveTemplateContext",
+            "TypeSpecToolWindowFactory" to "toolWindow",
+            "TypeSpecApiPreviewToolWindowFactory" to "toolWindow",
+            "TypeSpecCompileRunConfigurationType" to "configurationType",
+        )
+        for ((className, extensionTag) in expected) {
+            assertTrue(xml.contains("<$extensionTag"), "plugin.xml should declare $extensionTag")
+            assertTrue(xml.contains(className), "plugin.xml should wire $className")
+        }
+        assertTrue(xml.contains("<defaultLiveTemplates"))
+        assertTrue(xml.contains("liveTemplates/TypeSpec.xml"))
+    }
+
+    @Test
     fun pluginXmlActionGroupsDeclareIds() {
         val xml = pluginXml()
         val groups = Regex("""<group\b[^>]*>""").findAll(xml).map { it.value }.toList()
