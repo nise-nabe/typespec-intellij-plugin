@@ -58,7 +58,7 @@ class TypeSpecOutputService : Disposable {
     }
 
     private fun appendTo(area: JBTextArea, line: String) {
-        val timestamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
+        val timestamp = LocalTime.now().format(TIMESTAMP_FORMAT)
         val entry = "[$timestamp] $line"
         SwingUtilities.invokeLater {
             if (area.document.length > 0) {
@@ -79,6 +79,7 @@ class TypeSpecOutputService : Disposable {
 
     companion object {
         const val TOOL_WINDOW_ID = "TypeSpec Output"
+        private val TIMESTAMP_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
         fun getInstance(project: Project): TypeSpecOutputService =
             project.getService(TypeSpecOutputService::class.java)
