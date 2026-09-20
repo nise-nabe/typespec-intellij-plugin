@@ -19,7 +19,30 @@ class TypeSpecCompilerVersionReaderTest {
     }
 
     @Test
+    fun readPackageVersionPrefersLeastIndentedVersion(@TempDir tempDir: Path) {
+        Files.writeString(
+            tempDir.resolve("package.json"),
+            """
+            {
+              "name": "@typespec/compiler",
+              "dependencies": { "dep": { "version": "0.0.0" } },
+              "version": "1.13.0"
+            }
+            """.trimIndent(),
+        )
+
+        assertEquals("1.13.0", TypeSpecCompilerVersionReader.readPackageVersion(tempDir))
+    }
+
+    @Test
     fun readPackageVersionReturnsNullWhenMissing(@TempDir tempDir: Path) {
+        assertNull(TypeSpecCompilerVersionReader.readPackageVersion(tempDir))
+    }
+
+    @Test
+    fun readPackageVersionReturnsNullForUnreadableJson(@TempDir tempDir: Path) {
+        Files.writeString(tempDir.resolve("package.json"), "{")
+
         assertNull(TypeSpecCompilerVersionReader.readPackageVersion(tempDir))
     }
 }

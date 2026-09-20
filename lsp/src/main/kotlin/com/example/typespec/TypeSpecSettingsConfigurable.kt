@@ -53,14 +53,20 @@ class TypeSpecSettingsConfigurable(
     override fun getDisplayName(): String = TypeSpecBundle.message("settings.typespec.title")
 
     private fun compilerVersionLabel(): String {
-        val packageDirectory = Paths.get(settings.lspServerPackage.systemDependentPath)
-        val version = TypeSpecCompilerVersionReader.readPackageVersion(packageDirectory)
+        val version = runCatching {
+            TypeSpecCompilerVersionReader.readPackageVersion(
+                Paths.get(settings.lspServerPackage.systemDependentPath),
+            )
+        }.getOrNull()
         return version ?: TypeSpecBundle.message("settings.typespec.compilerVersion.unknown")
     }
 
     private fun compilerStatusLabel(): String {
-        val snapshot = TypeSpecPackageResolutionCache.getInstance(project).getOrCompute(project)
-        return if (snapshot.compilerCliResolvable && snapshot.lspServerResolvable) {
+        val ready = runCatching {
+            val snapshot = TypeSpecPackageResolutionCache.getInstance(project).getOrCompute(project)
+            snapshot.compilerCliResolvable && snapshot.lspServerResolvable
+        }.getOrDefault(false)
+        return if (ready) {
             TypeSpecBundle.message("settings.typespec.compilerStatus.ready")
         } else {
             TypeSpecBundle.message("settings.typespec.compilerStatus.missing")
