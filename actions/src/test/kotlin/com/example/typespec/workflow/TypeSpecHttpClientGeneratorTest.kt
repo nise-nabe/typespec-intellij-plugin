@@ -1,6 +1,6 @@
 package com.example.typespec.workflow
 
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -34,6 +34,50 @@ class TypeSpecHttpClientGeneratorTest {
         assertTrue(http.contains("GET http://localhost:8080/pets"))
         assertTrue(http.contains("POST http://localhost:8080/pets"))
         assertTrue(http.contains("GET http://localhost:8080/pets/{id}"))
+    }
+
+    @Test
+    fun generatesRequestsFromJsonOpenApi() {
+        val openApi = tempDir.resolve("openapi.json")
+        Files.writeString(
+            openApi,
+            """
+            {
+              "openapi": "3.0.0",
+              "paths": {
+                "/pets": {
+                  "get": {
+                    "operationId": "listPets"
+                  },
+                  "post": {
+                    "operationId": "createPet"
+                  }
+                },
+                "/pets/{id}": {
+                  "delete": {
+                    "operationId": "deletePet"
+                  }
+                }
+              },
+              "components": {
+                "schemas": {
+                  "Pet": {
+                    "type": "object",
+                    "properties": {
+                      "get": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+            """.trimIndent(),
+        )
+
+        val http = TypeSpecHttpClientGenerator.generateFromOpenApiFile(openApi)
+        assertTrue(http.contains("GET http://localhost:8080/pets"))
+        assertTrue(http.contains("POST http://localhost:8080/pets"))
+        assertTrue(http.contains("DELETE http://localhost:8080/pets/{id}"))
+        assertFalse(http.contains("GET http://localhost:8080/pets/{id}"))
     }
 
     @Test

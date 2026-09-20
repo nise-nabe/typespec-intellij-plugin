@@ -6,20 +6,36 @@ import java.nio.file.Path
 internal object TypeSpecHttpClientGenerator {
     private const val BASE_URL = "http://localhost:8080"
     private const val MAX_REQUESTS = 20
-    private val pathPattern = Regex("""^ {2}(/[^:\s]+):""")
-    private val methodPattern = Regex("""^ {4}(get|put|post|delete|patch|head|options|trace):""")
+    private val yamlPathPattern = Regex("""^ {2}(/[^:\s]+):""")
+    private val yamlMethodPattern = Regex("""^ {4}(get|put|post|delete|patch|head|options|trace):""")
+    private val jsonKeyPattern = Regex("""^(\s*)"([^"]+)"\s*:""")
+    private val jsonMethodPattern = Regex("""^\s*"(get|put|post|delete|patch|head|options|trace)"\s*:""")
 
     fun generateFromOpenApiFile(openApiFile: Path): String {
-        val text = Files.readString(openApiFile)
         val requests = mutableListOf<Pair<String, String>>()
         var currentPath: String? = null
-        for (line in text.lines()) {
-            pathPattern.find(line)?.let {
-                currentPath = it.groupValues[1]
-            }
-            val path = currentPath ?: continue
-            methodPattern.find(line)?.let {
-                requests += it.groupValues[1].uppercase() to path
+        var pathIndent = -1
+        Files.newBufferedReader(openApiFile).useLines { lines ->
+            for (line in lines) {
+                yamlPathPattern.find(line)?.let {
+                    currentPath = it.groupValues[1]
+                    pathIndent = 2
+                }
+                jsonKeyPattern.find(line)?.let { match ->
+                    val indent = match.groupValues[1].length
+                    val key = match.groupValues[2]
+                    if (key.startsWith("/")) {
+                        currentPath = key
+                        pathIndent = indent
+                    } else if (indent <= pathIndent) {
+                        currentPath = null
+                        pathIndent = -1
+                    }
+                }
+                val path = currentPath ?: continue
+                (yamlMethodPattern.find(line) ?: jsonMethodPattern.find(line))?.let {
+                    requests += it.groupValues[1].uppercase() to path
+                }
             }
         }
         val builder = StringBuilder()
