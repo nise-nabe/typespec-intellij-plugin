@@ -50,15 +50,9 @@ internal class TypeSpecCreateProjectDialog : DialogWrapper(true) {
         return Paths.get(path)
     }
 
-    fun selectedTemplate(): String = template
-
-    fun templateUrl(): String? = templateUrl.trim().takeIf { it.isNotEmpty() }
-
-    fun autoAcceptPrompts(): Boolean = autoAccept
-
     fun buildInitArgs(): List<String> = buildList {
         add("init")
-        val url = templateUrl()
+        val url = templateUrl.trim().takeIf { it.isNotEmpty() }
         if (url != null) {
             add(url)
         } else if (template != DEFAULT_TEMPLATE) {
