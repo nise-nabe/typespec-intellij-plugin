@@ -18,7 +18,7 @@ These instructions apply to any agent environment: local IDE/CLI agents (Devin C
 
 ## MCP: Gradle Tooling API
 
-The `gradle` MCP server ([nise-nabe/gradle-tapi-mcp-server](https://github.com/nise-nabe/gradle-tapi-mcp-server) v0.3.3) provides token-efficient Gradle access over the Tooling API. Per-tool configuration:
+The `gradle` MCP server ([nise-nabe/gradle-tapi-mcp-server](https://github.com/nise-nabe/gradle-tapi-mcp-server) v0.13.0) provides token-efficient Gradle access over the Tooling API. Per-tool configuration:
 
 | Tool | Config | Notes |
 |------|--------|-------|
