@@ -40,6 +40,18 @@ class TypeSpecTspConfigRulesTest {
     }
 
     @Test
+    fun projectKindWithInlineCommentIsDetected() {
+        val yaml = """
+            kind: project  # explicit project config
+            entrypoint: main.tsp
+            emit:
+              - "@typespec/openapi3"
+        """.trimIndent()
+
+        assertTrue(TypeSpecTspConfigRules.evaluate(yaml).isEmpty())
+    }
+
+    @Test
     fun cleanConfigProducesNoFindings() {
         val yaml = """
             kind: project

@@ -35,7 +35,10 @@ internal object TypeSpecTspConfigRules {
     }
 
     private fun containsKeyValue(text: String, key: String, value: String): Boolean {
-        val pattern = Regex("""^\s*$key\s*:\s*["']?$value["']?\s*$""", RegexOption.MULTILINE)
+        val pattern = Regex(
+            """^\s*${Regex.escape(key)}\s*:\s*["']?${Regex.escape(value)}["']?\s*(?:#.*)?$""",
+            RegexOption.MULTILINE,
+        )
         return pattern.containsMatchIn(text)
     }
 }
