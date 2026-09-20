@@ -16,6 +16,11 @@ class TypeSpecCompileSettingsEditor(
     private var emitters: String = ""
     private var extraArgs: String = ""
     private var watch: Boolean = false
+    private var dryRun: Boolean = false
+    private var noEmit: Boolean = false
+    private var stats: Boolean = false
+    private var trace: String = ""
+    private var warnAsError: Boolean = false
 
     override fun createEditor(): JComponent = panel {
         row(TypeSpecBundle.message("runConfiguration.typespecCompile.projectRoot")) {
@@ -34,6 +39,21 @@ class TypeSpecCompileSettingsEditor(
             checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.watch"))
                 .bindSelected(::watch)
         }
+        row {
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.dryRun"))
+                .bindSelected(::dryRun)
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.noEmit"))
+                .bindSelected(::noEmit)
+        }
+        row {
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.stats"))
+                .bindSelected(::stats)
+            checkBox(TypeSpecBundle.message("runConfiguration.typespecCompile.warnAsError"))
+                .bindSelected(::warnAsError)
+        }
+        row(TypeSpecBundle.message("runConfiguration.typespecCompile.trace")) {
+            textField().bindText(::trace)
+        }
     }
 
     override fun resetEditorFrom(configuration: TypeSpecCompileRunConfiguration) {
@@ -43,6 +63,11 @@ class TypeSpecCompileSettingsEditor(
         emitters = settings.emitters
         extraArgs = settings.extraArgs
         watch = settings.watch
+        dryRun = settings.dryRun
+        noEmit = settings.noEmit
+        stats = settings.stats
+        trace = settings.trace
+        warnAsError = settings.warnAsError
     }
 
     override fun applyEditorTo(configuration: TypeSpecCompileRunConfiguration) {
@@ -52,5 +77,10 @@ class TypeSpecCompileSettingsEditor(
         settings.emitters = emitters
         settings.extraArgs = extraArgs
         settings.watch = watch
+        settings.dryRun = dryRun
+        settings.noEmit = noEmit
+        settings.stats = stats
+        settings.trace = trace
+        settings.warnAsError = warnAsError
     }
 }
