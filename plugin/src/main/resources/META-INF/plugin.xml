@@ -129,6 +129,7 @@
             <action id="TypeSpec.FormatProject" class="com.example.typespec.actions.TypeSpecFormatProjectAction"/>
             <action id="TypeSpec.ShowCompilerInfo" class="com.example.typespec.actions.TypeSpecShowCompilerInfoAction"/>
             <action id="TypeSpec.ShowGeneratedOutput" class="com.example.typespec.actions.TypeSpecShowGeneratedOutputAction"/>
+            <action id="TypeSpec.GenerateHttpClient" class="com.example.typespec.actions.TypeSpecGenerateHttpClientAction"/>
             <action id="TypeSpec.ImportFromOpenApi" class="com.example.typespec.actions.TypeSpecImportFromOpenApiAction"/>
             <separator/>
             <action id="TypeSpec.PreviewOpenApi" class="com.example.typespec.actions.TypeSpecPreviewOpenApiAction"/>
@@ -140,6 +141,7 @@
             <reference ref="TypeSpec.EmitFromTypeSpec"/>
             <reference ref="TypeSpec.Format"/>
             <reference ref="TypeSpec.ShowGeneratedOutput"/>
+            <reference ref="TypeSpec.GenerateHttpClient"/>
             <reference ref="TypeSpec.InstallDependencies"/>
             <reference ref="TypeSpec.PreviewOpenApi"/>
             <reference ref="TypeSpec.RestartServer"/>
