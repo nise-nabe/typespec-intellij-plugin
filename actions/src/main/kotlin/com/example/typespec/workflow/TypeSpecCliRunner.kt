@@ -32,7 +32,11 @@ internal class TypeSpecCliRunner(
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                     event.text?.trimEnd()?.lines()?.forEach { line ->
                         if (line.isNotEmpty()) {
-                            output.append(line)
+                            if (line.startsWith("[trace]") || line.contains("trace:", ignoreCase = true)) {
+                                output.appendTrace(line)
+                            } else {
+                                output.append(line)
+                            }
                         }
                     }
                 }
