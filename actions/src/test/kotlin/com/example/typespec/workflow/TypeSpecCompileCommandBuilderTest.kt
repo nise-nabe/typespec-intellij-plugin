@@ -23,4 +23,33 @@ class TypeSpecCompileCommandBuilderTest {
             args.drop(2),
         )
     }
+
+    @Test
+    fun buildTspArgsIncludesExtendedCompilerOptions() {
+        val request = TypeSpecCompileRequest(
+            projectRoot = Paths.get("/project"),
+            entrypoint = Paths.get("/project/main.tsp"),
+            emitters = emptyList(),
+            dryRun = true,
+            noEmit = true,
+            stats = true,
+            trace = "compiler",
+            warnAsError = true,
+        )
+
+        val args = buildTypeSpecCompileTspArgs(request)
+        assertEquals(
+            listOf(
+                "compile",
+                request.entrypoint.toString(),
+                "--dry-run",
+                "--no-emit",
+                "--stats",
+                "--trace",
+                "compiler",
+                "--warn-as-error",
+            ),
+            args,
+        )
+    }
 }
