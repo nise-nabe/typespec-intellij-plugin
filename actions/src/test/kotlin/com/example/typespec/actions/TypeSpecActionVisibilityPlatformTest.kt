@@ -154,6 +154,58 @@ class TypeSpecActionVisibilityPlatformTest : TypeSpecBasePlatformTestCase() {
         assertFalse(event.presentation.isEnabledAndVisible)
     }
 
+    fun testFormatHiddenForNonTypeSpecFile() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        val action = TypeSpecFormatAction()
+        val jsonFile = myFixture.configureByText("sample.json", "{}").virtualFile
+        val event = testEvent(action, jsonFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatHiddenWhenCompilerCliNotResolvable() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        val action = TypeSpecFormatAction()
+        val tspFile = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
+        val event = testEvent(action, tspFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatProjectHiddenWhenCompilerCliNotResolvable() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecFormatProjectAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatProjectVisibleWhenCompilerCliResolvable() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        Files.createDirectories(packageDirectory.resolve("cmd"))
+        Files.writeString(packageDirectory.resolve("cmd/tsp.js"), "// compiler")
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecFormatProjectAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertTrue(event.presentation.isEnabledAndVisible)
+    }
+
     fun testInstallGlobalCompilerVisibleForOpenProject() {
         val action = TypeSpecInstallGlobalCompilerAction()
         val event = testEvent(action)
