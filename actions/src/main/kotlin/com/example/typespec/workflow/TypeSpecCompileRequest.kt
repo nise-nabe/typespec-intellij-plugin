@@ -34,9 +34,10 @@ internal fun buildTypeSpecCompileTspArgs(request: TypeSpecCompileRequest): List<
         if (request.stats) {
             add("--stats")
         }
-        if (request.trace.isNotBlank()) {
+        val trace = request.trace.trim()
+        if (trace.isNotEmpty()) {
             add("--trace")
-            add(request.trace)
+            add(trace)
         }
         if (request.warnAsError) {
             add("--warn-as-error")
