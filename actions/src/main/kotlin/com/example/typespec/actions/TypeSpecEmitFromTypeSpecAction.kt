@@ -29,7 +29,7 @@ class TypeSpecEmitFromTypeSpecAction : AnAction(
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
         val file = event.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-        val resolution = TypeSpecProjectContext.resolveFromVirtualFile(file) ?: return
+        val resolution = TypeSpecProjectContext.resolveFromVirtualFile(project, file) ?: return
         val entrypoint = resolution.entrypointFile
         if (entrypoint == null) {
             Messages.showErrorDialog(

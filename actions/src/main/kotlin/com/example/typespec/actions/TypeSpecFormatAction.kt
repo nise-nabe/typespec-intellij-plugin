@@ -29,7 +29,7 @@ class TypeSpecFormatAction : AnAction(
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
         val file = event.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
-        val resolution = TypeSpecProjectContext.resolveFromVirtualFile(file) ?: return
+        val resolution = TypeSpecProjectContext.resolveFromVirtualFile(project, file) ?: return
         val formatTarget = when {
             file.name == TSP_CONFIG_FILE_NAME -> "."
             file.extension == "tsp" -> formatTargetPath(resolution.projectRoot, resolution.contextFile)

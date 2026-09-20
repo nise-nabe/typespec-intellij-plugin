@@ -23,7 +23,7 @@ class TypeSpecCompileRunConfigurationProducer : LazyRunConfigurationProducer<Typ
         if (virtualFile.fileType != TypeSpecFileType && virtualFile.name != TSP_CONFIG_FILE_NAME) {
             return false
         }
-        val resolution = TypeSpecProjectContext.resolveFromVirtualFile(virtualFile) ?: return false
+        val resolution = TypeSpecProjectContext.resolveFromVirtualFile(context.project, virtualFile) ?: return false
         val entrypoint = resolution.entrypointFile ?: return false
         val settings = configuration.settings()
         settings.projectRootPath = resolution.projectRoot.toString()

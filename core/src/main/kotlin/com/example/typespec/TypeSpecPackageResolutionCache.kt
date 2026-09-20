@@ -83,10 +83,12 @@ internal fun computePackageResolutionSnapshot(
     project: Project,
     packageDirectory: Path,
 ): TypeSpecPackageResolutionCache.Snapshot {
-    val probeDirectory = project.basePath?.let { Paths.get(it) } ?: packageDirectory.parent
-    val openApi3CliResolvable = probeDirectory?.let {
+    val probeDirectories = TypeSpecContentRootResolver.probeDirectories(project).ifEmpty {
+        listOfNotNull(project.basePath?.let { Paths.get(it) }, packageDirectory.parent)
+    }
+    val openApi3CliResolvable = probeDirectories.any {
         TypeSpecOpenApi3PackageResolver.isResolvable(it, packageDirectory)
-    } ?: false
+    }
     return TypeSpecPackageResolutionCache.Snapshot(
         compilerCliResolvable = TypeSpecCompilerPackageResolver.hasCompilerCli(packageDirectory),
         lspServerResolvable = TypeSpecCompilerPackageResolver.hasLspServerScript(packageDirectory),
