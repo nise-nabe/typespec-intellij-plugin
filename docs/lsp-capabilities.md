@@ -75,4 +75,4 @@ Use after `./gradlew build` passes and before release. Run locally with `:plugin
 5. Use **Tools \| TypeSpec** actions for restart, output, emit, init, install, import, and preview.
 6. Disable and re-enable the plugin in **Settings | Plugins** and confirm the IDE does not require a restart; open a `.tsp` file again and confirm LSP still works.
 
-See [cloud-verification.md](cloud-verification.md) for Cursor Cloud and CI workflows.
+See [cloud-verification.md](cloud-verification.md) for cloud-agent and CI workflows.

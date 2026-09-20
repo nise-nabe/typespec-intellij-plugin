@@ -1,6 +1,8 @@
-# Cursor Cloud verification
+# Cloud verification
 
-This document describes how to verify the TypeSpec IntelliJ plugin in **Cursor Cloud** and other headless Linux environments.
+This document describes how to verify the TypeSpec IntelliJ plugin in cloud agent environments (**Cursor Cloud**, **Devin Cloud**) and other headless Linux environments.
+
+Environment setup is tool-specific: Cursor Cloud runs `.cursor/install.sh` via `.cursor/environment.json`; Devin Cloud builds its snapshot from `.devin/blueprint.yaml`. Everything below applies regardless of the tool.
 
 ## Standard gate (every change)
 
@@ -28,7 +30,7 @@ Run module-scoped tests to narrow the failure:
 ./gradlew --non-interactive :plugin:test
 ```
 
-## What Cloud can and cannot verify
+## What cloud agents can and cannot verify
 
 | Layer | Command / approach | Cloud-friendly |
 |-------|------------------|----------------|

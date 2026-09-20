@@ -1,0 +1,59 @@
+# Devin Cloud environment blueprint (git-backed).
+# Repo-level blueprint: steps run from the cloned repository root.
+# After editing this file, sync it in Devin (Settings > Environment > Blueprints >
+# Sync, or POST /v3beta1/organizations/{org}/snapshot-setup/sync) and let the
+# snapshot build finish. Reference:
+# https://docs.devin.ai/onboard-devin/environment/blueprint-reference
+
+initialize:
+  # If `uses:` with setup-java is not supported in your Devin version, replace
+  # this step with the Adoptium apt install documented in AGENTS.md
+  # ("Headless Linux environments" section).
+  - name: Install JDK 25
+    uses: github.com/actions/setup-java@v6
+    with:
+      distribution: temurin
+      java-version: "25"
+
+  - name: Install Xvfb (sandbox IDE / UI tests)
+    run: sudo apt-get update && sudo apt-get install -y xvfb
+
+  # Downloads the gradle-tapi-mcp-server JAR to ~/.local/share/ (SHA-256
+  # verified). The gh CLI portion warns and skips on non-Cursor environments.
+  - name: Install gradle-tapi-mcp-server JAR
+    run: ./.cursor/install.sh
+
+  - name: Pre-accept JetBrains consent for headless IDE
+    run: ./scripts/prepare-jetbrains-consent.sh
+
+  - name: Set XDG_RUNTIME_DIR for headless Platform tests
+    run: |
+      mkdir -p /tmp/runtime-devin
+      chmod 700 /tmp/runtime-devin
+      echo 'export XDG_RUNTIME_DIR=/tmp/runtime-devin' >> "$ENVRC"
+
+# Warms Gradle caches and resolves the IntelliJ SDK into the snapshot so
+# sessions start fast. See AGENTS.md for the full verification workflow.
+maintenance:
+  - name: Warm Gradle caches (compile plugin, resolve IntelliJ SDK)
+    run: ./gradlew --non-interactive :plugin:compileKotlin
+
+knowledge:
+  - name: test
+    contents: |
+      Standard gate (same as CI, .github/workflows/main.yml):
+        ./gradlew --non-interactive build
+      Scoped tests: ./gradlew --non-interactive :lsp:test
+        (also :core / :actions / :inspections / :plugin)
+  - name: build
+    contents: |
+      Distributable plugin ZIP:
+        ./gradlew --non-interactive :plugin:buildPlugin
+      Output: plugin/build/distributions/TypeSpecPlugin-*.zip
+  - name: verification-guide
+    contents: |
+      Read AGENTS.md first. It covers the gradle MCP server workflow,
+      headless-Linux prerequisites, sandbox IDE log locations, and what
+      cloud agents should not run. docs/cloud-verification.md has the
+      detailed verification guide; docs/lsp-capabilities.md has the
+      per-feature verification matrix.
