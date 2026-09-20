@@ -154,6 +154,15 @@ class TypeSpecActionVisibilityPlatformTest : TypeSpecBasePlatformTestCase() {
         assertFalse(event.presentation.isEnabledAndVisible)
     }
 
+    fun testInstallGlobalCompilerVisibleForOpenProject() {
+        val action = TypeSpecInstallGlobalCompilerAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertTrue(event.presentation.isEnabledAndVisible)
+    }
+
     private fun testEvent(action: AnAction, file: VirtualFile? = null) =
         TestActionEvent.createTestEvent(action, dataContext(file))
 

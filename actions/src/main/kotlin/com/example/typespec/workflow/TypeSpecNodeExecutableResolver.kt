@@ -5,6 +5,7 @@ import com.intellij.javascript.nodejs.interpreter.local.NodeJsLocalInterpreter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 
 internal object TypeSpecNodeExecutableResolver {
@@ -12,12 +13,12 @@ internal object TypeSpecNodeExecutableResolver {
 
     fun resolveExecutable(project: Project): String {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-            resolveFromNodeJsInterpreter(project)?.let { return it }
+            resolveLocalInterpreterPath(project)?.let { return it.toString() }
         }
         return NODE_ON_PATH
     }
 
-    private fun resolveFromNodeJsInterpreter(project: Project): String? {
+    fun resolveLocalInterpreterPath(project: Project): Path? {
         val interpreter = NodeJsInterpreterManager.getInstance(project).interpreter as? NodeJsLocalInterpreter
             ?: return null
         val path = interpreter.interpreterSystemIndependentPath
@@ -25,6 +26,6 @@ internal object TypeSpecNodeExecutableResolver {
             return null
         }
         val executable = Paths.get(path)
-        return if (Files.isRegularFile(executable)) path else null
+        return if (Files.isRegularFile(executable)) executable else null
     }
 }
