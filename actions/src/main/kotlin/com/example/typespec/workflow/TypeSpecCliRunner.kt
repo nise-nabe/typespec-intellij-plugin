@@ -8,6 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import java.nio.file.Path
 
+internal fun isTraceLine(line: String): Boolean {
+    val trimmed = line.trimStart()
+    return trimmed.startsWith("[trace]", ignoreCase = true) || trimmed.startsWith("trace:", ignoreCase = true)
+}
+
 internal class TypeSpecCliRunner(
     private val project: Project,
 ) {
@@ -32,7 +37,11 @@ internal class TypeSpecCliRunner(
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                     event.text?.trimEnd()?.lines()?.forEach { line ->
                         if (line.isNotEmpty()) {
-                            output.append(line)
+                            if (isTraceLine(line)) {
+                                output.appendTrace(line)
+                            } else {
+                                output.append(line)
+                            }
                         }
                     }
                 }
