@@ -21,8 +21,8 @@ object TypeSpecContentRootResolver {
     fun findNearestTypeSpecProjectRoot(startDirectory: Path, probeDirectories: List<Path>): Path? {
         val normalizedStart = startDirectory.toAbsolutePath().normalize()
         val candidates = probeDirectories.map { it.toAbsolutePath().normalize() }
-            .filter { normalizedStart.startsWith(it) || it.startsWith(normalizedStart) }
-            .sortedBy { kotlin.math.abs(it.nameCount - normalizedStart.nameCount) }
+            .filter { normalizedStart.startsWith(it) }
+            .sortedByDescending { it.nameCount }
         for (root in candidates) {
             val config = root.resolve(TSP_CONFIG_FILE_NAME)
             if (Files.isRegularFile(config)) {
