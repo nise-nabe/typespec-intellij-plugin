@@ -145,7 +145,7 @@ If every MCP call times out but `./gradlew` still works:
 
 Locate types/symbols inside dependency `*-sources.jar` without browsing `~/.gradle`.
 
-1. **Index** — `gradle_index_dependency_sources` (required before searching that `tokenMode`). Idea keep-set by default; scope with `projectPath`, or pass explicit `artifacts[]` / `sourcePaths[]`. `tokenMode`: `all` (default) or `idents` (faster on large first indexes). `background: true` returns `indexId`; foreground auto-detaches after ~45s. Poll `gradle_get_dependency_sources_index_status`
+1. **Index** — `gradle_index_dependency_sources` (required before searching that `tokenMode`). IDEA keep-set by default; scope with `projectPath`, or pass explicit `artifacts[]` / `sourcePaths[]`. `tokenMode`: `all` (default) or `idents` (faster on large first indexes). `background: true` returns `indexId`; foreground auto-detaches after ~45s. Poll `gradle_get_dependency_sources_index_status`
 2. **Search** — `gradle_search_dependency_sources` (`query`) or `gradle_search_dependency_sources_multi` (`queries`). Exact simple-name only; `tokenMode` must match the index (no silent reindex). `limit` / `perQueryLimit` omit = unlimited
 3. **Read** — `gradle_read_dependency_source` with a hit's `gav` + `path` (optional `line` + `contextLines`, default 10). Pass `sourceRoot` explicitly only when the index/cache cannot resolve it
 
