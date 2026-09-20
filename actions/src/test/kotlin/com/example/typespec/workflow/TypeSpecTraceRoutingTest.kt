@@ -11,6 +11,16 @@ class TypeSpecTraceRoutingTest {
     }
 
     @Test
+    fun bracketTracePrefixIsCaseInsensitive() {
+        assertTrue(isTraceLine("[TRACE] compiler: resolved import"))
+    }
+
+    @Test
+    fun bracketTracePrefixWithLeadingWhitespaceIsTrace() {
+        assertTrue(isTraceLine("   [trace] compiler: resolved import"))
+    }
+
+    @Test
     fun tracePrefixIsTrace() {
         assertTrue(isTraceLine("trace: compiler: emit finished"))
     }
