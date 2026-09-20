@@ -1,6 +1,8 @@
 package com.example.typespec.workflow
 
 import com.example.typespec.TSP_CONFIG_FILE_NAME
+import com.example.typespec.TypeSpecContentRootResolver
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Files
 import java.nio.file.Path
@@ -34,13 +36,16 @@ internal object TypeSpecProjectContext {
         return null
     }
 
-    fun resolveFromVirtualFile(file: VirtualFile): TypeSpecProjectResolution? {
+    fun resolveFromVirtualFile(project: Project, file: VirtualFile): TypeSpecProjectResolution? {
         if (!file.isInLocalFileSystem) {
             return null
         }
         val path = Paths.get(file.path)
         if (file.extension == "tsp") {
-            val projectRoot = findProjectRoot(path.parent) ?: path.parent
+            val probeDirectories = TypeSpecContentRootResolver.probeDirectories(project)
+            val projectRoot = TypeSpecContentRootResolver.findNearestTypeSpecProjectRoot(path.parent, probeDirectories)
+                ?: findProjectRoot(path.parent)
+                ?: path.parent
             val entrypoint = resolveEntrypointFile(projectRoot, path)
             return TypeSpecProjectResolution(projectRoot, entrypoint, path)
         }

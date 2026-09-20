@@ -51,6 +51,9 @@ class TypeSpecSettingsConfigurable(
             row {
                 comment(TypeSpecBundle.message("settings.typespec.standaloneTsp.help"))
             }
+            row {
+                comment(TypeSpecBundle.message("settings.typespec.contentRoots.help"))
+            }
         }
     }
 
