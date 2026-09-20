@@ -47,6 +47,10 @@ class TypeSpecSettingsConfigurable(
             }.apply {
                 bind(settings::serviceMode)
             }
+
+            row {
+                comment(TypeSpecBundle.message("settings.typespec.standaloneTsp.help"))
+            }
         }
     }
 
