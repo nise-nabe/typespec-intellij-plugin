@@ -14,6 +14,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.TestActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
@@ -154,6 +155,94 @@ class TypeSpecActionVisibilityPlatformTest : TypeSpecBasePlatformTestCase() {
         assertFalse(event.presentation.isEnabledAndVisible)
     }
 
+    fun testFormatHiddenForNonTypeSpecFile() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        val action = TypeSpecFormatAction()
+        val jsonFile = myFixture.configureByText("sample.json", "{}").virtualFile
+        val event = testEvent(action, jsonFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatHiddenWhenCompilerCliNotResolvable() {
+        TypeSpecServiceSettings.getInstance(project).serviceMode = TypeSpecServiceMode.ENABLED
+        val action = TypeSpecFormatAction()
+        val tspFile = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
+        val event = testEvent(action, tspFile)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatVisibleWhenCompilerCliResolvable() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        Files.createDirectories(packageDirectory.resolve("cmd"))
+        Files.writeString(packageDirectory.resolve("cmd/tsp.js"), "// compiler")
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecFormatAction()
+        val tspFile = myFixture.configureByText("main.tsp", "namespace Demo {}").virtualFile
+        val event = testEvent(action, tspFile)
+
+        action.update(event)
+
+        assertTrue(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatProjectHiddenWhenCompilerCliNotResolvable() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        writeProjectTspConfig()
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecFormatProjectAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatProjectHiddenWhenNoTypeSpecProjectRoot() {
+        project.basePath?.let { Files.deleteIfExists(Paths.get(it).resolve("tspconfig.yaml")) }
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        Files.createDirectories(packageDirectory.resolve("cmd"))
+        Files.writeString(packageDirectory.resolve("cmd/tsp.js"), "// compiler")
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecFormatProjectAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertFalse(event.presentation.isEnabledAndVisible)
+    }
+
+    fun testFormatProjectVisibleWhenCompilerCliResolvable() {
+        val settings = TypeSpecServiceSettings.getInstance(project)
+        settings.serviceMode = TypeSpecServiceMode.DISABLED
+        Files.createDirectories(packageDirectory.resolve("cmd"))
+        Files.writeString(packageDirectory.resolve("cmd/tsp.js"), "// compiler")
+        settings.lspServerPackage = NodePackage(packageDirectory.toString())
+        writeProjectTspConfig()
+        TypeSpecPackageResolutionCache.getInstance(project).invalidate()
+
+        val action = TypeSpecFormatProjectAction()
+        val event = testEvent(action)
+
+        action.update(event)
+
+        assertTrue(event.presentation.isEnabledAndVisible)
+    }
+
     fun testInstallGlobalCompilerVisibleForOpenProject() {
         val action = TypeSpecInstallGlobalCompilerAction()
         val event = testEvent(action)
@@ -161,6 +250,12 @@ class TypeSpecActionVisibilityPlatformTest : TypeSpecBasePlatformTestCase() {
         action.update(event)
 
         assertTrue(event.presentation.isEnabledAndVisible)
+    }
+
+    private fun writeProjectTspConfig() {
+        val basePath = project.basePath ?: error("project.basePath is not set in this fixture")
+        Files.createDirectories(Paths.get(basePath))
+        Files.writeString(Paths.get(basePath).resolve("tspconfig.yaml"), "emit: []\n")
     }
 
     private fun testEvent(action: AnAction, file: VirtualFile? = null) =
