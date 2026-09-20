@@ -46,6 +46,20 @@ class TypeSpecStructureParserTest {
     }
 
     @Test
+    fun blockCommentDoesNotMergeTokens() {
+        val nodes = TypeSpecStructureParser.parse("model/*c*/Pet {}")
+        assertEquals(listOf("model Pet"), nodes.map { "${it.kind} ${it.name}" })
+    }
+
+    @Test
+    fun escapedQuoteDoesNotEndString() {
+        val text = """model Pet { name: "a\"}"; }""" + "\nmodel Next {}"
+
+        val nodes = TypeSpecStructureParser.parse(text)
+        assertEquals(listOf("model Pet", "model Next"), nodes.map { "${it.kind} ${it.name}" })
+    }
+
+    @Test
     fun parseTracksLineNumbers() {
         val text = "namespace Demo;\n\nop listPets(): void;"
 

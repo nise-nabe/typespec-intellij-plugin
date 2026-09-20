@@ -4,7 +4,6 @@ internal data class TypeSpecStructureNode(
     val name: String,
     val kind: String,
     val line: Int,
-    val children: List<TypeSpecStructureNode> = emptyList(),
 )
 
 internal object TypeSpecStructureParser {
@@ -70,10 +69,11 @@ internal object TypeSpecStructureParser {
                 line.startsWith("/*", i) -> {
                     comment = true
                     i += 2
+                    result.append(' ')
                 }
                 line[i] == '"' -> {
-                    val end = line.indexOf('"', i + 1)
-                    i = if (end < 0) line.length else end + 1
+                    val end = findStringEnd(line, i + 1)
+                    i = if (end < 0) line.length else end
                     result.append(' ')
                 }
                 else -> {
@@ -83,5 +83,20 @@ internal object TypeSpecStructureParser {
             }
         }
         return StrippedLine(result.toString(), comment)
+    }
+
+    private fun findStringEnd(line: String, start: Int): Int {
+        var i = start
+        while (i < line.length) {
+            if (line[i] == '\\') {
+                i += 2
+                continue
+            }
+            if (line[i] == '"') {
+                return i + 1
+            }
+            i++
+        }
+        return -1
     }
 }
