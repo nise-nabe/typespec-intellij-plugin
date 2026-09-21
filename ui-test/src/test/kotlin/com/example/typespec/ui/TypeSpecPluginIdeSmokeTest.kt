@@ -124,27 +124,32 @@ class TypeSpecPluginIdeSmokeTest {
     private fun npmCommand(): List<String> =
         if (System.getProperty("os.name").lowercase().contains("win")) listOf("cmd", "/c", "npm") else listOf("npm")
 
-    private fun npmAvailable(): Boolean =
-        try {
-            val process = ProcessBuilder(npmCommand() + "--version")
-                .redirectErrorStream(true)
-                .start()
-            process.waitFor(15, TimeUnit.SECONDS) && process.exitValue() == 0
-        } catch (_: Exception) {
-            false
-        }
+    private fun npmAvailable(): Boolean = runNpm(listOf("--version"), null, 15, TimeUnit.SECONDS)
 
     private fun npmInstall(projectDir: Path): Boolean =
+        runNpm(
+            listOf("install", "--no-audit", "--no-fund", "@typespec/compiler"),
+            projectDir,
+            4,
+            TimeUnit.MINUTES,
+        ) && isRegularFile(compilerServerScript(projectDir))
+
+    private fun runNpm(args: List<String>, workingDir: Path?, timeout: Long, unit: TimeUnit): Boolean =
         try {
-            val process = ProcessBuilder(
-                npmCommand() + listOf("install", "--no-audit", "--no-fund", "@typespec/compiler"),
-            )
-                .directory(projectDir.toFile())
+            val builder = ProcessBuilder(npmCommand() + args)
                 .redirectErrorStream(true)
-                .start()
-            process.waitFor(4, TimeUnit.MINUTES) &&
-                process.exitValue() == 0 &&
-                isRegularFile(compilerServerScript(projectDir))
+            if (workingDir != null) {
+                builder.directory(workingDir.toFile())
+                builder.redirectOutput(ProcessBuilder.Redirect.to(workingDir.resolve("npm.log").toFile()))
+            } else {
+                builder.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+            }
+            val process = builder.start()
+            if (!process.waitFor(timeout, unit)) {
+                process.destroyForcibly()
+                return false
+            }
+            process.exitValue() == 0
         } catch (_: Exception) {
             false
         }
@@ -187,7 +192,7 @@ kv('tspFileType', FileTypeManager.getInstance().getFileTypeByExtension('tsp').ge
 var am = ActionManager.getInstance();
 kv('toolsGroup', am.getAction('TypeSpec.Tools') != null);
 kv('restartAction', am.getAction('TypeSpec.RestartServer') != null);
-var ids = am.getAction('ToolsMenu').getChildren(am).map(function (a) { return am.getId(a); }).join(',');
+var ids = am.getAction('ToolsMenu').getChildActionsOrStubs().map(function (a) { return am.getId(a); }).join(',');
 kv('toolsMenuHasTypeSpec', ids.indexOf('TypeSpec.Tools') >= 0);
 kv('inspections', Extensions.getRootArea().getExtensionPoint('com.intellij.localInspection')
     .getExtensionList().toArray()

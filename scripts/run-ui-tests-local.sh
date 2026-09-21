@@ -28,6 +28,7 @@ if robot_server_up; then
   echo "Robot server already up at ${ROBOT_URL}; reusing running IDE"
 else
   echo "Starting :plugin:runIdeForUiTests (log: ${RUN_IDE_LOG})"
+  "${ROOT_DIR}/scripts/prepare-jetbrains-consent.sh"
   mkdir -p "${ROOT_DIR}/build"
   nohup ./gradlew --non-interactive :plugin:runIdeForUiTests >"${RUN_IDE_LOG}" 2>&1 &
 fi
