@@ -8,6 +8,7 @@ intellij-idea = "262.10968.63"
 changelog = "2.5.0"
 foojay-resolver = "1.0.0"
 remote-robot = "0.11.23"
+okhttp = "3.14.9"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -15,6 +16,9 @@ intellij-platform-gradle-plugin = { module = "org.jetbrains.intellij.platform:or
 junit-junit4 = { module = "junit:junit", version.ref = "junit4" }
 junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit" }
 remote-robot = { module = "com.intellij.remoterobot:remote-robot", version.ref = "remote-robot" }
+# Pinned to remote-robot's transitive OkHttp version; needed on the compile
+# classpath to configure RemoteRobot timeouts.
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

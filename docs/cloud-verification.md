@@ -36,15 +36,33 @@ Run module-scoped tests to narrow the failure:
 |-------|------------------|----------------|
 | Compile + unit tests | `./gradlew --non-interactive build` | Yes |
 | Headless Platform tests | Included in `build` | Yes |
-| Sandbox IDE startup | `scripts/run-ide-smoke.sh` | Yes (xvfb, slow first run) |
-| UI automation | `:plugin:runIdeForUiTests` + `./gradlew :ui-test:test` (Remote Robot) | Yes (xvfb + `runIdeForUiTests`, manual/CI workflow) |
+| Sandbox IDE startup | `scripts/run-ide-smoke.sh` | Partially — IDE starts, but the plugin cannot load without a license (see below) |
+| UI automation | `:plugin:runIdeForUiTests` + `./gradlew :ui-test:test` (Remote Robot) | No — requires a licensed sandbox IDE (local only) |
 | Interactive LSP / browser preview | Local `:plugin:runIde` | No (needs desktop IDE + Node) |
+
+### Sandbox licensing (local only)
+
+Since the 2025.3 unified IntelliJ IDEA distribution, an unlicensed sandbox disables
+`com.intellij.modules.ultimate`. NodeJS/JavaScript then fail to load, and this plugin
+(which `<depends>` on them) is excluded as well — so `runIde`/`runIdeForUiTests`
+verify nothing about the plugin until the sandbox is licensed once:
+
+1. `./gradlew :plugin:runIde` (or `:plugin:runIdeForUiTests` for UI tests)
+2. In the sandbox IDE: **Help | Manage Licenses** (or the startup dialog) → Activate.
+   Ultimate plugins then load dynamically; no restart is required.
+3. The key persists in `.intellijPlatform/sandbox/plugin/<ver>/config_<task>/idea.key`,
+   so later runs stay licensed. Each `runIde*` variant has its own config dir.
+   Alternatively, point IPGP's `subscriptionKey` property at an existing `idea.key`.
+
+CI and cloud agents have no license, so plugin-load and UI verification are
+local-only. `run-ide-smoke.sh` still passes on CI but only proves the IDE starts.
 
 See [lsp-capabilities.md](lsp-capabilities.md) for a per-feature verification matrix.
 
 ## Optional: IDE startup smoke
 
-Confirms the plugin loads in a sandbox IDE (no UI interaction):
+Confirms the sandbox IDE starts and prints a warning if the plugin did not load
+(unlicensed sandbox — see "Sandbox licensing"):
 
 ```bash
 ./scripts/run-ide-smoke.sh
@@ -54,22 +72,23 @@ Or trigger the GitHub Actions workflow **Run IDE smoke** (`.github/workflows/run
 
 First run downloads IntelliJ IDEA (~several GB) and may take more than 10 minutes.
 
-## Optional: UI tests (Remote Robot)
+## Optional: UI tests (Remote Robot) — local only
 
-UI tests live in the `ui-test` module. They require a running IDE with the robot-server plugin:
+UI tests live in the `ui-test` module. They require a running **licensed** sandbox
+IDE with the robot-server plugin (see "Sandbox licensing" above). Feature checks
+skip when the robot server is unreachable or the sandbox is unlicensed.
 
 ```bash
-# Terminal 1 (Linux): virtual display + IDE for UI tests
-export DISPLAY=:99
-Xvfb :99 -screen 0 1920x1080x24 &
-./scripts/prepare-jetbrains-consent.sh
-./gradlew --non-interactive :plugin:runIdeForUiTests &
+# Local (real display; auto-starts runIdeForUiTests if needed):
+./scripts/run-ui-tests-local.sh
 
-# Wait until http://127.0.0.1:8082 responds, then:
+# Or manually:
+./gradlew --non-interactive :plugin:runIdeForUiTests &   # activate once if first run
 ./gradlew --non-interactive :ui-test:test -Drobot.server.url=http://127.0.0.1:8082
 ```
 
-Or run `./scripts/run-ui-tests-ci.sh` locally, or use the **Run UI tests** workflow (`.github/workflows/run-ui-tests.yml`).
+The CI workflow (`.github/workflows/run-ui-tests.yml`, via `scripts/run-ui-tests-ci.sh`)
+still runs, but on an unlicensed runner only robot-server reachability is verified.
 
 ## Local full manual check
 

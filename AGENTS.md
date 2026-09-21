@@ -54,8 +54,8 @@ For **`build` and `:plugin:test`**, prefer `./gradlew --non-interactive` in head
 
 | Goal | Command / workflow |
 |------|-------------------|
-| IDE loads with plugin | `scripts/run-ide-smoke.sh` or `.github/workflows/run-ide-smoke.yml` |
-| Tools menu UI smoke | `.github/workflows/run-ui-tests.yml` or steps in [docs/cloud-verification.md](docs/cloud-verification.md) |
+| IDE loads with plugin | `scripts/run-ide-smoke.sh` or `.github/workflows/run-ide-smoke.yml` — plugin load needs a licensed sandbox (below); unlicensed runs only prove IDE startup |
+| UI smoke via Remote Robot | `scripts/run-ui-tests-local.sh` (licensed local sandbox; CI/cloud unlicensed → feature checks skip) or `.github/workflows/run-ui-tests.yml` |
 
 Target platform: IntelliJ IDEA **2026.2** (`262.x`), JDK **25**.
 
@@ -87,7 +87,11 @@ Discover the most recently modified `idea.log` and confirm the plugin loaded:
       -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2-)"
     test -n "$IDEA_LOG" && grep -F "Loaded custom plugins: TypeSpec Support" "$IDEA_LOG"
 
-`scripts/run-ide-smoke.sh` only searches `plugin/build/idea-sandbox/**/system/log/idea.log` and greps `Startup completed` / `IDE started`; on IPGP 2.x or slow EAP startups it may time out while the IDE is healthy—prefer the `find` + grep above.
+`scripts/run-ide-smoke.sh` accepts `Startup completed`/`IDE started` as success and warns when `TypeSpec Support` is absent from `Loaded custom plugins`.
+
+### Sandbox IDE licensing (unified distribution)
+
+IntelliJ IDEA 2025.3+ ships a unified distribution: without a license the sandbox disables `com.intellij.modules.ultimate`, which cascades to NodeJS/JavaScript and to this plugin (`has dependency on 'Node.js' which cannot be loaded`). Verifying the plugin in `runIde`/`runIdeForUiTests` therefore requires a **one-time manual activation** in the sandbox IDE (Help | Manage Licenses → Activate); the key persists in `.intellijPlatform/sandbox/plugin/<ver>/config_<task>/idea.key`. Each runIde variant has its own config dir. IPGP's `subscriptionKey` property can automate this. CI and cloud agents have no license, so plugin-load and UI verification are local-only — see [docs/cloud-verification.md](docs/cloud-verification.md).
 
 ### What cloud agents do not run by default
 

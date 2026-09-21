@@ -87,6 +87,13 @@ while [[ "${elapsed}" -lt "${STARTUP_TIMEOUT_SECONDS}" ]]; do
   log_file="$(find_idea_log || true)"
   if ide_startup_ok "${log_file}"; then
     echo "IDE smoke OK: startup message found in ${log_file}"
+    if ! grep -F 'Loaded custom plugins' "${log_file}" | grep -qF 'TypeSpec Support'; then
+      echo "WARNING: IDE started but 'TypeSpec Support' was not loaded." >&2
+      echo "         Unlicensed unified-IDEA sandboxes disable com.intellij.modules.ultimate," >&2
+      echo "         so NodeJS/JavaScript (and this plugin, which depends on them) never load." >&2
+      echo "         Plugin-load verification needs a locally activated sandbox; see" >&2
+      echo "         docs/cloud-verification.md." >&2
+    fi
     exit 0
   fi
   if ! kill -0 "${GRADLE_PID}" 2>/dev/null; then
