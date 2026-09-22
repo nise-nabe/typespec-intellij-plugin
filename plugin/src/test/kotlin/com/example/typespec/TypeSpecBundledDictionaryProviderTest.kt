@@ -7,7 +7,7 @@ class TypeSpecBundledDictionaryProviderTest : TypeSpecBasePlatformTestCase() {
         for (name in TypeSpecBundledDictionaryProvider().bundledDictionaries) {
             assertNotNull(
                 "Dictionary resource must resolve via provider class: $name",
-                TypeSpecBundledDictionaryProvider::class.java.getResourceAsStream(name),
+                TypeSpecBundledDictionaryProvider::class.java.getResource(name),
             )
         }
     }
