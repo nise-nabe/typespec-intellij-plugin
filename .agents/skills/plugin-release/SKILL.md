@@ -3,8 +3,9 @@ name: plugin-release
 description: >-
   Cut a release of the TypeSpec IntelliJ plugin: bump the version in
   plugin/build.gradle.kts, update CHANGELOG.md (Keep a Changelog format, rendered
-  into changeNotes by the changelog Gradle plugin), run ./gradlew build, and
-  produce the distribution ZIP via :plugin:buildPlugin. Use when the user asks to
+  into changeNotes by the changelog Gradle plugin), run
+  ./gradlew --non-interactive build, and produce the distribution ZIP via
+  :plugin:buildPlugin. Use when the user asks to
   release, tag a version, or build the installable plugin ZIP.
 ---
 
