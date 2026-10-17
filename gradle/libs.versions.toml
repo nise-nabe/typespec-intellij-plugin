@@ -8,7 +8,7 @@ intellij-idea = "262.10968.63"
 changelog = "2.5.0"
 foojay-resolver = "1.0.0"
 remote-robot = "0.11.23"
-okhttp = "3.14.9"
+okhttp = "5.5.0"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
