@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$comment": "Aligned with @typespec/compiler packages/compiler/src/config/config-schema.ts (TypeSpecConfigJsonSchema)",
+  "$comment": "Aligned with @typespec/compiler 1.17.0 packages/compiler/src/config/config-schema.ts (TypeSpecConfigJsonSchema). Unchanged from 1.13.0.",
   "title": "TypeSpec Project Configuration",
   "type": "object",
   "additionalProperties": false,

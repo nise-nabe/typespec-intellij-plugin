@@ -60,6 +60,31 @@ class TypeSpecStructureParserTest {
     }
 
     @Test
+    fun parseUnionExtendsClause() {
+        val text = """
+            union Pet extends PetBase {
+              cat: Cat,
+            }
+        """.trimIndent()
+
+        val nodes = TypeSpecStructureParser.parse(text)
+        assertEquals(listOf("union Pet"), nodes.map { "${it.kind} ${it.name}" })
+    }
+
+    @Test
+    fun parseIgnoresNestedDeclarationExpressions() {
+        val text = """
+            model Foo {
+              status: enum { active, inactive };
+              unit: scalar extends string;
+            }
+        """.trimIndent()
+
+        val nodes = TypeSpecStructureParser.parse(text)
+        assertEquals(listOf("model Foo"), nodes.map { "${it.kind} ${it.name}" })
+    }
+
+    @Test
     fun parseTracksLineNumbers() {
         val text = "namespace Demo;\n\nop listPets(): void;"
 

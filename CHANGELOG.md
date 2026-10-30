@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Bump the default downloadable `@typespec/compiler` from 1.13.0 to 1.17.0 when a project has no local compiler (CLI and language server)
+- Create Project template ids match compiler 1.17 scaffolding: `empty`, `rest`, `library-ts`, and `emitter-ts`
 - Bump pinned IDEA SDK to IntelliJ IDEA 2026.2.3 (`262.10968.63`)
 - Suppress a 2026.2.2 Ultimate headless-test `PluginException` from `com.intellij.modules.ultimate` (`B.B.B.B.s` colliding with `product-backend.jar`)
 
