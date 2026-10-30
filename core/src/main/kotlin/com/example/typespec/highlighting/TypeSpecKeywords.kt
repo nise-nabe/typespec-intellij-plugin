@@ -1,9 +1,10 @@
 package com.example.typespec.highlighting
 
 /**
- * TypeSpec keyword set aligned with `@typespec/compiler` `Keywords` in
+ * TypeSpec keyword set aligned with `@typespec/compiler` 1.17.0 `Keywords` in
  * `packages/compiler/src/core/scanner.ts` (including reserved keywords the
- * compiler still tokenizes as keywords).
+ * compiler still tokenizes as keywords). The tokenized set is unchanged from
+ * 1.13.0; `auto` is a modifier keyword as of 1.14.0 and was already listed here.
  */
 internal object TypeSpecKeywords {
     val KEYWORDS = setOf(

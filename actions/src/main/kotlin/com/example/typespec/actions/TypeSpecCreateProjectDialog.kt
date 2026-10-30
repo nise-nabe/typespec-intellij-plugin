@@ -29,7 +29,7 @@ internal class TypeSpecCreateProjectDialog : DialogWrapper(true) {
             ).bindText(::targetDirectory)
         }
         row(TypeSpecBundle.message("action.createProject.template")) {
-            comboBox(TEMPLATES.toList())
+            comboBox(TEMPLATES)
                 .onChanged { combo -> template = combo.selectedItem as? String ?: DEFAULT_TEMPLATE }
                 .apply { component.selectedItem = template }
         }
@@ -50,27 +50,37 @@ internal class TypeSpecCreateProjectDialog : DialogWrapper(true) {
         return Paths.get(path)
     }
 
-    fun buildInitArgs(): List<String> = buildList {
-        add("init")
-        val url = templateUrl.trim().takeIf { it.isNotEmpty() }
-        if (url != null) {
-            add(url)
-        } else if (template != DEFAULT_TEMPLATE) {
-            add("--template")
-            add(template)
-        }
-        if (autoAccept) {
-            add("-y")
-        }
-    }
+    fun buildInitArgs(): List<String> = buildTypeSpecInitArgs(template, templateUrl, autoAccept)
 
     companion object {
-        private const val DEFAULT_TEMPLATE = "default"
-        private val TEMPLATES = arrayOf(
-            "default",
-            "generic-rest-api",
+        /**
+         * Built-in `tsp init` template ids from `@typespec/compiler` `templates/scaffolding.json`.
+         * `empty` was restored in 1.15.0. The REST scaffold key is `rest` (not `generic-rest-api`).
+         */
+        internal const val DEFAULT_TEMPLATE = "empty"
+        internal val TEMPLATES = listOf(
+            "empty",
+            "rest",
             "library-ts",
             "emitter-ts",
         )
+    }
+}
+
+internal fun buildTypeSpecInitArgs(
+    template: String,
+    templateUrl: String = "",
+    autoAccept: Boolean = false,
+): List<String> = buildList {
+    add("init")
+    val url = templateUrl.trim().takeIf { it.isNotEmpty() }
+    if (url != null) {
+        add(url)
+    } else {
+        add("--template")
+        add(template)
+    }
+    if (autoAccept) {
+        add("-y")
     }
 }
