@@ -18,6 +18,7 @@ When the language server is running and the project compiler package resolves, t
 |------------|--------|--------------|
 | Code completion | `textDocument/completion` | Manual |
 | Diagnostics | `textDocument/publishDiagnostics` | Manual |
+| Emitter diagnostics during live checking | Server reads `typespec.lsp.emit`. Empty matches the VS Code default and skips emitters. `<config:defaults>` includes emitters from `tspconfig.yaml`. | Automated mapping — `TypeSpecWorkspaceConfigurationTest`, `TypeSpecLspWorkspaceConfigurationTest`; editor result — Manual |
 | Go to definition | `textDocument/definition` | Manual |
 | Find references | `textDocument/references` | Manual |
 | Hover | `textDocument/hover` when supported by server | Manual |
@@ -49,7 +50,7 @@ Emit/import/preview use the resolved `@typespec/compiler` CLI (`cmd/tsp.js`) and
 |---------|--------------|
 | `package.json` inspection and quick fixes | Automated — `TypeSpecPackageJsonFixTest`, `TypeSpecPackageRulesTest` |
 | `tspconfig.yaml` JSON Schema validation and completion | Automated — `TypeSpecTspConfigSchemaProviderTest`, `TypeSpecPluginDescriptorTest` |
-| TypeSpec project settings service | Automated — `TypeSpecActivationHelperSettingsTest` |
+| TypeSpec project settings service | Automated — `TypeSpecActivationHelperSettingsTest`, `TypeSpecLspWorkspaceConfigurationTest` |
 
 ## UI and tool window
 
@@ -74,5 +75,6 @@ Use after `./gradlew build` passes and before release. Run locally with `:plugin
 4. Trigger a compiler diagnostic and check for intention/light bulb quick fixes.
 5. Use **Tools \| TypeSpec** actions for restart, output, emit, init, install, import, and preview.
 6. Disable and re-enable the plugin in **Settings | Plugins** and confirm the IDE does not require a restart; open a `.tsp` file again and confirm LSP still works.
+7. In **Settings | Languages & Frameworks | TypeSpec**, set **Emitters for live checking** to `<config:defaults>` (or a specific emitter such as `@typespec/openapi3`) and confirm the language server restarts and emitter diagnostics appear. Clear the field to match the VS Code default, which skips emitters.
 
 See [cloud-verification.md](cloud-verification.md) for cloud-agent and CI workflows.

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Answer `workspace/configuration` for the `typespec` section so tsp-server receives `lsp.emit` and `entrypoint` during live checking
 - Start the standalone language server with `tsp-server --stdio`, or `node` and `cmd/tsp-server.js --stdio`, instead of the invalid `tsp --server` command
 
 ### Changed
@@ -17,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Project settings for the emitters used in live checking (`<config:defaults>` or emitter names) and for entrypoint file names
 - Support installing, updating, enabling, and disabling the plugin without restarting the IDE (dynamic plugin loading)
 
 ## [0.2.0] - 2026-08-15
