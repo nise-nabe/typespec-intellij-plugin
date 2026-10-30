@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Answer `workspace/configuration` for the `typespec` section so tsp-server receives `lsp.emit` and `entrypoint` during live checking
+- Start the standalone language server with `tsp-server --stdio`, or `node` and `cmd/tsp-server.js --stdio`, instead of the invalid `tsp --server` command
 
 ### Changed
 

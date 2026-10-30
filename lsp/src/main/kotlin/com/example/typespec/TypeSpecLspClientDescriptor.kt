@@ -29,9 +29,11 @@ class TypeSpecLspClientDescriptor(project: Project) :
         try {
             return super.startServerProcess()
         } catch (e: ExecutionException) {
-            val serverScript = TypeSpecStandaloneTspResolver.resolveServerScriptPath(project)
-            val commandLine = serverScript?.let(TypeSpecStandaloneTspResolver::buildStandaloneServerCommandLine)
-                ?: throw e
+            // Null when the package script is absent. tsp-server on PATH can still start;
+            // the node fallback runs only when that script exists.
+            val commandLine = TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(
+                TypeSpecStandaloneTspResolver.resolveServerScriptPath(project),
+            ) ?: throw e
             return KillableProcessHandler(commandLine)
         }
     }
