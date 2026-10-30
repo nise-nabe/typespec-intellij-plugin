@@ -8,12 +8,25 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
+import com.intellij.ui.dsl.builder.bindText
 import java.nio.file.Paths
 
 class TypeSpecSettingsConfigurable(
     private val project: Project,
 ) : UiDslUnnamedConfigurable.Simple(), Configurable {
     private val settings = TypeSpecServiceSettings.getInstance(project)
+
+    private var lspEmitText: String
+        get() = TypeSpecWorkspaceConfiguration.formatList(settings.lspEmit)
+        set(value) {
+            settings.lspEmit = TypeSpecWorkspaceConfiguration.parseList(value)
+        }
+
+    private var entrypointText: String
+        get() = TypeSpecWorkspaceConfiguration.formatList(settings.entrypoints)
+        set(value) {
+            settings.entrypoints = TypeSpecWorkspaceConfiguration.parseList(value)
+        }
 
     override fun Panel.createContent() {
         group(TypeSpecBundle.message("settings.typespec.service.group")) {
@@ -29,6 +42,25 @@ class TypeSpecSettingsConfigurable(
 
             row(TypeSpecBundle.message("settings.typespec.compilerStatus")) {
                 text(compilerStatusLabel())
+            }
+
+            row(TypeSpecBundle.message("settings.typespec.lsp.emit")) {
+                textField()
+                    .align(AlignX.FILL)
+                    .bindText(::lspEmitText)
+                    .comment(
+                        TypeSpecBundle.message(
+                            "settings.typespec.lsp.emit.help",
+                            TypeSpecWorkspaceConfiguration.CONFIG_DEFAULTS,
+                        ),
+                    )
+            }
+
+            row(TypeSpecBundle.message("settings.typespec.entrypoint")) {
+                textField()
+                    .align(AlignX.FILL)
+                    .bindText(::entrypointText)
+                    .comment(TypeSpecBundle.message("settings.typespec.entrypoint.help"))
             }
 
             buttonsGroup {
