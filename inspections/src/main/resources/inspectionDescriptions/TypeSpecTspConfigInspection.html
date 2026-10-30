@@ -2,5 +2,6 @@
 <html>
 <body>
 <p>Validates <code>tspconfig.yaml</code> for common TypeSpec project configuration issues.</p>
+<p>For <code>kind: project</code>, a missing <code>entrypoint</code> is reported only when the compiler would not resolve one from <code>package.json</code> <code>exports["."].typespec</code>, <code>tspMain</code>, or <code>main.tsp</code>.</p>
 </body>
 </html>
