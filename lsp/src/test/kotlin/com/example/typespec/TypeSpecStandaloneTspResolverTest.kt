@@ -14,6 +14,29 @@ class TypeSpecStandaloneTspResolverTest {
     lateinit var tempDir: Path
 
     @Test
+    fun buildStandaloneServerCommandLineUsesTspServerWhenPackageScriptUnresolved() {
+        val commandLine = TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(
+            null,
+            isTspServerAvailable = { true },
+            tspServerExecutable = { "tsp-server" },
+        )
+
+        assertEquals("tsp-server", commandLine!!.exePath)
+        assertEquals(listOf("--stdio"), commandLine.parametersList.parameters)
+        assertSkipCompilerResolve(commandLine)
+    }
+
+    @Test
+    fun buildStandaloneServerCommandLineReturnsNullWhenPackageScriptUnresolvedAndTspServerUnavailable() {
+        assertNull(
+            TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(
+                null,
+                isTspServerAvailable = { false },
+            ),
+        )
+    }
+
+    @Test
     fun buildStandaloneServerCommandLineReturnsNullWhenScriptMissingAndTspServerUnavailable() {
         assertNull(
             TypeSpecStandaloneTspResolver.buildStandaloneServerCommandLine(

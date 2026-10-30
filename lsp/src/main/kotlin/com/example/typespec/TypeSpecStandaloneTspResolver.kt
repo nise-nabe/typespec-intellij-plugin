@@ -69,11 +69,12 @@ internal object TypeSpecStandaloneTspResolver {
     }
 
     /**
-     * Prefer `tsp-server --stdio` from PATH. Otherwise run `node <package>/cmd/tsp-server.js --stdio`
-     * when [serverScript] exists. `@typespec/compiler` does not accept `tsp --server`.
+     * Prefer `tsp-server --stdio` from PATH, including when [serverScript] is null.
+     * Otherwise run `node <package>/cmd/tsp-server.js --stdio` when [serverScript] exists.
+     * `@typespec/compiler` does not accept `tsp --server`.
      */
     fun buildStandaloneServerCommandLine(
-        serverScript: Path,
+        serverScript: Path?,
         isTspServerAvailable: () -> Boolean = { isStandaloneTspServerAvailable() },
         tspServerExecutable: () -> String = {
             resolveTspServerExecutable() ?: TSP_SERVER_ON_PATH
@@ -83,7 +84,7 @@ internal object TypeSpecStandaloneTspResolver {
         if (isTspServerAvailable()) {
             return languageServerCommand(tspServerExecutable(), listOf("--stdio"))
         }
-        if (!Files.isRegularFile(serverScript)) {
+        if (serverScript == null || !Files.isRegularFile(serverScript)) {
             return null
         }
         return languageServerCommand(nodeExecutable, listOf(serverScript.toString(), "--stdio"))
