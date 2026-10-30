@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Suggest known `@typespec/compiler` 1.17.0 feature names in the bundled `tspconfig.yaml` schema, and still accept names added by a newer compiler
+- Accept `null` for `tspconfig.yaml` properties that the compiler marks nullable, including an empty key such as `emit:`
+- Report `kind: project` without `entrypoint` only when `package.json` `exports["."].typespec`, `tspMain`, and `main.tsp` do not resolve one
+- Format the current `tspconfig.yaml` with `tsp format <file>` so the rest of the project is left unchanged
 - Answer `workspace/configuration` for the `typespec` section so tsp-server receives `lsp.emit` and `entrypoint` during live checking
 - Create Project always runs `tsp init` non-interactively (`-y` and `--project-name`, defaulting to the target folder name) and passes `--template` together with a template index URL, so URL init no longer errors and the CLI is not left waiting on prompts
 - Start the standalone language server with `tsp-server --stdio`, or `node` and `cmd/tsp-server.js --stdio`, instead of the invalid `tsp --server` command

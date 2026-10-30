@@ -37,6 +37,7 @@ No additional IntelliJ extension points are required for these features.
 | Restart TypeSpec server | **Restart TypeSpec Server** | `TypeSpec.RestartServer` | Automated (registration + visibility) |
 | Show output channel | **Show TypeSpec Output** | `TypeSpec.ShowOutput` | Automated (registration + visibility) |
 | Emit from TypeSpec | **Emit from TypeSpec** (+ run configuration) | `TypeSpec.EmitFromTypeSpec` | Automated (registration); CLI args — unit tests |
+| Format TypeSpec file | **Format TypeSpec File** | `TypeSpec.Format` | Automated (CLI target — `TypeSpecFormatTargetTest`; visibility — `TypeSpecActionVisibilityPlatformTest`) |
 | Create TypeSpec project | **Create TypeSpec Project** | `TypeSpec.CreateProject` | Automated (registration) |
 | Install TypeSpec dependencies | **Install TypeSpec Dependencies** | `TypeSpec.InstallDependencies` | Automated (registration) |
 | Import from OpenAPI 3 | **Import TypeSpec from OpenAPI 3** | `TypeSpec.ImportFromOpenApi` | Automated (registration) |
@@ -49,7 +50,8 @@ Emit/import/preview use the resolved `@typespec/compiler` CLI (`cmd/tsp.js`) and
 | Feature | Verification |
 |---------|--------------|
 | `package.json` inspection and quick fixes | Automated — `TypeSpecPackageJsonFixTest`, `TypeSpecPackageRulesTest` |
-| `tspconfig.yaml` JSON Schema validation and completion | Automated — `TypeSpecTspConfigSchemaProviderTest`, `TypeSpecPluginDescriptorTest` |
+| `tspconfig.yaml` JSON Schema validation and completion (known `features`, nullable properties) | Automated — `TypeSpecTspConfigSchemaProviderTest`, `TypeSpecPluginDescriptorTest` |
+| `tspconfig.yaml` project checks (entrypoint fallbacks) | Automated — `TypeSpecTspConfigRulesTest`, `TypeSpecTspConfigEntrypointHintsTest` |
 | TypeSpec project settings service | Automated — `TypeSpecActivationHelperSettingsTest`, `TypeSpecLspWorkspaceConfigurationTest` |
 
 ## UI and tool window
