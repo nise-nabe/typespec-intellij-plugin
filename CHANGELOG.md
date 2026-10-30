@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Create Project always runs `tsp init` non-interactively (`-y` and `--project-name`, defaulting to the target folder name) and passes `--template` together with a template index URL, so URL init no longer errors and the CLI is not left waiting on prompts
 - Start the standalone language server with `tsp-server --stdio`, or `node` and `cmd/tsp-server.js --stdio`, instead of the invalid `tsp --server` command
 
 ### Changed
@@ -17,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Create Project can add emitters with repeated `--template-emitters` flags: checkboxes for the built-in `rest` template, and a comma-separated list when a template index URL is set
 - Support installing, updating, enabling, and disabling the plugin without restarting the IDE (dynamic plugin loading)
 
 ## [0.2.0] - 2026-08-15
