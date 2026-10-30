@@ -5,6 +5,15 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    # okhttp is pinned to remote-robot's transitive version
+    # (gradle/libs.versions.toml). Ignore every semver bump so Dependabot
+    # cannot drift that pin.
+    ignore:
+      - dependency-name: "com.squareup.okhttp3:okhttp"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
