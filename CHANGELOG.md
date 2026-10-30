@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Start the standalone language server with `tsp-server --stdio`, or `node` and `cmd/tsp-server.js --stdio`, instead of the invalid `tsp --server` command
+
 ### Changed
 
 - Bump the default downloadable `@typespec/compiler` from 1.13.0 to 1.17.0 when a project has no local compiler (CLI and language server)
