@@ -83,6 +83,14 @@ class TypeSpecCreateProjectDialogTest {
     }
 
     @Test
+    fun buildInitArgsKeepsProjectNameAsOneArgument() {
+        assertEquals(
+            listOf("init", "--template", "empty", "-y", "--project-name", "My Service"),
+            buildTypeSpecInitArgs(template = "empty", projectName = " My Service "),
+        )
+    }
+
+    @Test
     fun buildInitArgsRejectsBlankTemplateAndProjectName() {
         val missingTemplate = assertThrows(IllegalArgumentException::class.java) {
             buildTypeSpecInitArgs(template = "  ", projectName = "service")
