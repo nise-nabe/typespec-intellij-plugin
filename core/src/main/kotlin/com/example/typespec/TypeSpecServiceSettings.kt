@@ -43,9 +43,31 @@ class TypeSpecServiceSettings(
             }
         }
 
+    var lspEmit: List<String>
+        get() = TypeSpecWorkspaceConfiguration.parseList(state.lspEmit)
+        set(value) = updateWorkspaceList(state.lspEmit, value) { state.lspEmit = it }
+
+    var entrypoints: List<String>
+        get() = TypeSpecWorkspaceConfiguration.parseList(state.entrypoint)
+        set(value) = updateWorkspaceList(state.entrypoint, value) { state.entrypoint = it }
+
+    private fun updateWorkspaceList(current: String?, value: List<String>, assign: (String) -> Unit) {
+        val normalized = TypeSpecWorkspaceConfiguration.formatList(value)
+        if (current.orEmpty() == normalized) {
+            return
+        }
+        assign(normalized)
+        notifyWorkspaceConfigurationChanged()
+    }
+
     private fun notifySettingsChanged() {
         TypeSpecPackageResolutionCache.getInstance(project).invalidate()
         project.messageBus.syncPublisher(TypeSpecServiceSettingsListener.TOPIC).onServiceSettingsChanged(project)
+    }
+
+    private fun notifyWorkspaceConfigurationChanged() {
+        project.messageBus.syncPublisher(TypeSpecServiceSettingsListener.TOPIC)
+            .onWorkspaceConfigurationChanged(project)
     }
 
     companion object {
@@ -56,4 +78,6 @@ class TypeSpecServiceSettings(
 class TypeSpecServiceState : BaseState() {
     var serviceModeName by string(TypeSpecServiceMode.ENABLED.name)
     var lspServerPackageName by string(defaultPackageKey)
+    var lspEmit by string("")
+    var entrypoint by string("")
 }
