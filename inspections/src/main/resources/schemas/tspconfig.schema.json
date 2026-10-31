@@ -1,28 +1,69 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$comment": "Aligned with @typespec/compiler 1.17.0 packages/compiler/src/config/config-schema.ts (TypeSpecConfigJsonSchema). Unchanged from 1.13.0.",
+  "$comment": "Aligned with @typespec/compiler 1.17.0 packages/compiler/src/config/config-schema.ts (TypeSpecConfigJsonSchema) and packages/compiler/src/core/features.ts. AJV nullable:true is represented as JSON Schema type null. features items suggest known compiler feature names and still allow other strings.",
   "title": "TypeSpec Project Configuration",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "kind": {
-      "type": "string",
-      "enum": ["project"]
+      "description": "Set to \"project\" to mark this directory as a TypeSpec project root.",
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": ["project"]
+        },
+        { "type": "null" }
+      ]
     },
     "entrypoint": {
-      "type": "string"
+      "description": "Main TypeSpec file for this project, relative to the config directory. Requires kind: project. When omitted, the compiler resolves exports[\".\"].typespec, then tspMain, then main.tsp.",
+      "type": ["string", "null"]
     },
     "extends": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "features": {
-      "type": "array",
+      "description": "Experimental compiler features enabled for this project. Meaningful when kind is project. Known names are suggested. Other strings are allowed so a feature added by a newer compiler is not flagged here; the compiler reports unknown names as config-unknown-feature.",
+      "type": ["array", "null"],
       "items": {
-        "type": "string"
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "function-declarations",
+              "declaration-expressions",
+              "auto-decorators",
+              "type-info-provider",
+              "union-extends"
+            ],
+            "x-intellij-enum-order-sensitive": true,
+            "x-intellij-enum-metadata": {
+              "function-declarations": {
+                "description": "Allows use of function declarations without experimental warnings in project code."
+              },
+              "declaration-expressions": {
+                "description": "Allows use of declaration expressions (named or anonymous model, scalar, enum and union declarations in expression position) in project code."
+              },
+              "auto-decorators": {
+                "description": "Allows use of auto decorator declarations without experimental warnings in project code."
+              },
+              "type-info-provider": {
+                "description": "Enables the experimental `$provideTypeInfo` provider allowing libraries to contribute extra information about types to IDE hover and tooling (queried via `program.getTypeInfo`)."
+              },
+              "union-extends": {
+                "description": "Enables experimental union `extends` clauses in project code."
+              }
+            }
+          },
+          {
+            "type": "string",
+            "description": "Compiler feature name. Names that are not in the bundled list are still accepted by this schema."
+          }
+        ]
       }
     },
     "parameters": {
-      "type": "object",
+      "type": ["object", "null"],
       "additionalProperties": {
         "type": "object",
         "properties": {
@@ -35,7 +76,7 @@
       }
     },
     "environment-variables": {
-      "type": "object",
+      "type": ["object", "null"],
       "additionalProperties": {
         "type": "object",
         "properties": {
@@ -48,22 +89,22 @@
       }
     },
     "output-dir": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "emit": {
-      "type": "array",
+      "type": ["array", "null"],
       "items": {
         "type": "string"
       }
     },
     "options": {
-      "type": "object",
+      "type": ["object", "null"],
       "additionalProperties": {
         "type": "object",
         "additionalProperties": true,
         "properties": {
           "emitter-output-dir": {
-            "type": "string"
+            "type": ["string", "null"]
           }
         }
       }
@@ -78,25 +119,25 @@
       ]
     },
     "warn-as-error": {
-      "type": "boolean"
+      "type": ["boolean", "null"]
     },
     "imports": {
-      "type": "array",
+      "type": ["array", "null"],
       "items": {
         "type": "string"
       }
     },
     "linter": {
-      "type": "object",
+      "type": ["object", "null"],
       "properties": {
         "extends": {
-          "type": "array",
+          "type": ["array", "null"],
           "items": {
             "type": "string"
           }
         },
         "enable": {
-          "type": "object",
+          "type": ["object", "null"],
           "additionalProperties": {
             "oneOf": [
               { "type": "boolean" },
@@ -105,7 +146,7 @@
           }
         },
         "disable": {
-          "type": "object",
+          "type": ["object", "null"],
           "additionalProperties": {
             "type": "string"
           }

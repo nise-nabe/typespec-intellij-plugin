@@ -15,7 +15,8 @@ class TypeSpecTspConfigInspection : LocalInspectionTool() {
                 if (file.name != TSP_CONFIG_FILE_NAME) {
                     return
                 }
-                for (finding in TypeSpecTspConfigRules.evaluate(file.text)) {
+                val hints = entrypointHintsForConfigFile(file)
+                for (finding in TypeSpecTspConfigRules.evaluate(file.text, hints)) {
                     holder.registerProblem(
                         file,
                         TypeSpecBundle.message(finding.messageKey),

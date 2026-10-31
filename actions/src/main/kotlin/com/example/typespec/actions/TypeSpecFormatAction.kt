@@ -30,11 +30,12 @@ class TypeSpecFormatAction : AnAction(
         val project = event.project ?: return
         val file = event.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
         val resolution = TypeSpecProjectContext.resolveFromVirtualFile(project, file) ?: return
-        val formatTarget = when {
-            file.name == TSP_CONFIG_FILE_NAME -> "."
-            file.extension == "tsp" -> formatTargetPath(resolution.projectRoot, resolution.contextFile)
-            else -> return
-        }
+        val formatTarget = typeSpecFormatTarget(
+            fileName = file.name,
+            extension = file.extension,
+            projectRoot = resolution.projectRoot,
+            contextFile = resolution.contextFile,
+        ) ?: return
 
         TypeSpecCliWorkflow.runCliJob(
             project,
@@ -54,11 +55,26 @@ class TypeSpecFormatAction : AnAction(
             ).toJobResult()
         }
     }
+}
 
-    private fun formatTargetPath(projectRoot: Path, contextFile: Path): String =
-        if (contextFile.startsWith(projectRoot)) {
-            projectRoot.relativize(contextFile).toString()
-        } else {
-            contextFile.toString()
-        }
+/**
+ * Path passed to `tsp format` for the current editor file.
+ *
+ * Since @typespec/compiler 1.0.0, `tsp format` accepts a `tspconfig.yaml` path and formats that file.
+ * The path is relative to the project root when the file lives inside it.
+ */
+internal fun typeSpecFormatTarget(
+    fileName: String,
+    extension: String?,
+    projectRoot: Path,
+    contextFile: Path,
+): String? {
+    if (fileName != TSP_CONFIG_FILE_NAME && extension != "tsp") {
+        return null
+    }
+    return if (contextFile.startsWith(projectRoot)) {
+        projectRoot.relativize(contextFile).toString()
+    } else {
+        contextFile.toString()
+    }
 }
